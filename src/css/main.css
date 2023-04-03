@@ -1,0 +1,256 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight&family=PT+Sans&display=swap');
+
+
+:root {
+    --color-primary: #c0c0c0e5;
+    --color-secondary: #fff8f2;
+    --color-text: #000000;
+    --font-primary: 'PT Sans', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    line-height: 1;
+}
+
+body {
+    background: linear-gradient(190deg,
+            #edd7bf 100%,
+            var(--color-secondary) 0%);
+    color: var(--color-text);
+    font-family: var(--font-primary);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-attachment: fixed;
+    color: #222;
+    overflow: auto;
+}
+
+.App {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.App h1 {
+    display: flex;
+    align-self: center;
+    text-align: center;
+    margin-top: 2vh;
+    margin: 1vh;
+    color: #e1edbf;
+    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c
+}
+
+
+.Scoreboard {
+    padding: 1vh;
+}
+
+.Scoreboard h2 {
+    align-self: center;
+    text-align: center;
+    color: #e1edbf;
+    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c
+}
+
+.TeamScores {
+    justify-content: space-between;
+    flex-direction: row;
+    justify-content: stretch;
+
+}
+
+.Score {
+    display: flex;
+    justify-content: space-around;
+    margin: 1vh;
+    background-color: var(--color-primary);
+    padding: 2vh;
+    border-radius: 1.5rem;
+
+}
+
+.Score h3 {
+    justify-content: space-between;
+}
+
+.points {
+    align-self: center;
+    text-align: center;
+    left: 50%;
+    color: #e1edbf;
+    padding: 1vh;
+    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c
+}
+
+.displayteams {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 2vh 0 4vh 0;
+}
+
+.TeamSelector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.TeamSelector button {
+    padding: 0.5rem 1.2rem;
+    border-radius: 20px;
+    cursor: pointer;
+    border: 0.5px solid var(--color-text);
+    font-size: 1.1rem;
+}
+
+.TeamSelector .buttons button :focus {
+    outline: none;
+}
+
+.Selector {
+    display: flex;
+    height: 100%;
+    margin: 1vh;
+    padding: 0 2vh 0 0;
+    align-items: center;
+}
+
+.SelectPlayer {
+    height: 7vh;
+    width: 45vw;
+    font-size: 2.4vh;
+    border-radius: 15px;
+}
+
+.player {
+    min-width: 15vh;
+    width: 40vw;
+
+    max-height: 7vh;
+    background-color: #ffffffd3;
+    border-radius: 1rem;
+    border-color: #000000;
+    padding: 0.5rem 1rem;
+    font-size: 1.5rem;
+    text-align: center;
+
+    align-self: center;
+}
+
+.playerpage {
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.5);
+    position: absolute;
+    top: 0;
+    left: 0;
+    max-height: max-content;
+    background-color: #e2e2e22d;
+    backdrop-filter: blur(8px);
+    margin: 2rem;
+    padding: 2rem;
+}
+
+.playerlist {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+}
+
+.player-btn {
+    display: flex;
+    flex-direction: row;
+    text-align: center;
+    align-items: center;
+    background-color: var(--color-secondary);
+    border-radius: 2rem;
+    margin: 2rem;
+    height: 20vh;
+    width: 20vh;
+    padding: 0.7rem;
+    font-size: 3vh;
+    cursor: pointer;
+}
+
+.Controls {
+    display: flex;
+    display: inline-block;
+    justify-content: space-around;
+    padding: 0 2vh 0 2vh;
+}
+
+.Remote {
+    font-size: 2.6vh;
+    ;
+}
+
+.addpoints {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    text-align: center;
+
+}
+
+.stat {
+    /* display: inline; */
+    align-items: center;
+    justify-content: space-between;
+    padding: 2vw;
+    background-color: #0000002d;
+    border-radius: 15px;
+    font-size: 1.6rem;
+    color: #fff8f2;
+    text-align: center;
+    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c
+}
+
+.otherstat {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.card {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    background-color: #ffffffb6;
+    margin: 0.2rem 0 0 0;
+    height: 7vh;
+    width: 25vw;
+    padding: 1rem;
+    font-size: 2.6vh;
+
+}
+
+.card-miss {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    background-color: #e4e4e45d;
+    margin: 0.2rem 0 0 0;
+    height: 7vh;
+    width: 25vw;
+    padding: 1rem;
+    font-size: 2.6vh;
+
+}
+
+.bg-img {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    z-index: -1;
+}

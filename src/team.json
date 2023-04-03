@@ -1,0 +1,242 @@
+{
+    "teamA": {
+        "name": "Ball Boys",
+        "score": 0,
+        "players": [
+            {
+                "name": "Abdou Ali",
+                "id": 1,
+                "stats": {
+                    "points": {
+                        "attempted": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        "made": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "rebounds": {
+                        "offensive": 0,
+                        "defensive": 0
+                    },
+                    "assists": 0,
+                    "fouls": 0
+                }
+            },
+            {
+                "name": "Amine Djouder",
+                "id": 2,
+                "stats": {
+                    "points": {
+                        "attempted": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        "made": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "rebounds": {
+                        "offensive": 0,
+                        "defensive": 0
+                    },
+                    "assists": 0,
+                    "fouls": 0
+                }
+            },
+            {
+                "name": "Amir Serrar",
+                "id": 3,
+                "stats": {
+                    "points": {
+                        "attempted": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        "made": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "rebounds": {
+                        "offensive": 0,
+                        "defensive": 0
+                    },
+                    "assists": 0,
+                    "fouls": 0
+                }
+            },
+            {
+                "name": "Frank Fankem",
+                "id": 4,
+                "stats": {
+                    "points": {
+                        "attempted": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        "made": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "rebounds": {
+                        "offensive": 0,
+                        "defensive": 0
+                    },
+                    "assists": 0,
+                    "fouls": 0
+                }
+            },
+            {
+                "name": "Fred Jean",
+                "id": 5,
+                "stats": {
+                    "points": {
+                        "attempted": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        "made": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "rebounds": {
+                        "offensive": 0,
+                        "defensive": 0
+                    },
+                    "assists": 0,
+                    "fouls": 0
+                }
+            },
+            {
+                "name": "Ivan Angelo Valdez",
+                "id": 6,
+                "stats": {
+                    "points": {
+                        "attempted": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        "made": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "rebounds": {
+                        "offensive": 0,
+                        "defensive": 0
+                    },
+                    "assists": 0,
+                    "fouls": 0
+                }
+            },
+            {
+                "name": "Marc Lévesque",
+                "id": 7,
+                "stats": {
+                    "points": {
+                        "attempted": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        "made": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "rebounds": {
+                        "offensive": 0,
+                        "defensive": 0
+                    },
+                    "assists": 0,
+                    "fouls": 0
+                }
+            },
+            {
+                "name": "Mariano Alognon",
+                "id": 8,
+                "stats": {
+                    "points": {
+                        "attempted": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        "made": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "rebounds": {
+                        "offensive": 0,
+                        "defensive": 0
+                    },
+                    "assists": 0,
+                    "fouls": 0
+                }
+            },
+            {
+                "name": "Nabil Chaib-draa",
+                "id": 9,
+                "stats": {
+                    "points": {
+                        "attempted": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ],
+                        "made": [
+                            0,
+                            0,
+                            0,
+                            0
+                        ]
+                    },
+                    "rebounds": {
+                        "offensive": 0,
+                        "defensive": 0
+                    },
+                    "assists": 0,
+                    "fouls": 0
+                }
+            }
+        ]
+    }
+}
