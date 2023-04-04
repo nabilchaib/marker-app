@@ -20,7 +20,7 @@ const GameResults = ({ onBackClick }) => {
             return (
                 <tr key={player.id}>
                     <td>{player.name}</td>
-                    <td>{player.stats.points.made[1] + player.stats.points.made[2] * 2 + player.stats.points.made[3] * 3} pts </td>
+                    <td className='number'>{player.stats.points.made[1] + player.stats.points.made[2] * 2 + player.stats.points.made[3] * 3} pts </td>
                     <td>{player.stats.rebounds.offensive+player.stats.rebounds.defensive}</td>
                     <td>{player.stats.assists}</td>
                     <td>{player.stats.fouls}</td>

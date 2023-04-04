@@ -90,14 +90,14 @@ const GameControls = () => {
 
         </div>
         <div className='TeamSelector'>
-        <motion.button
+          <motion.button
             whileHover={{ scale: 1.4 }}
             onClick={() => handleTeamChange('teamB')}
             animate={{ scale: selectedTeam === 'teamB' ? 1.4 : 1 }}
           >
             TeamB
           </motion.button>
-          
+
         </div>
       </div>
 
@@ -105,7 +105,14 @@ const GameControls = () => {
         <PlayerSelection players={playerOptions} onSelect={handlePlayerSelect} />
       ) : (
         <div className='Selector'>
-          <button className='SelectPlayer' onClick={() => setShowPlayerSelection(true)}>{buttonText}</button>
+          <motion.button
+            className='SelectPlayer'
+            whileHover={{ scale: 1.1 }}
+
+            onClick={() => setShowPlayerSelection(true)}
+          >
+            {buttonText}
+          </motion.button>
           <label htmlFor="player">Player:</label>
           <select className='player' id="player" value={selectedPlayer} onChange={handlePlayerChange}>
             <option value=""></option>
@@ -150,8 +157,10 @@ const GameControls = () => {
           </div>
         </div>
       </div>
-      <button onClick={handleShowGameResult}>Show Game Result</button>
-      {showGameResult && <GameResult onBackClick={handleBackClick}/>}
+      <div className='addpoints'>
+        <button className='card' onClick={handleShowGameResult}>Game Stats</button>
+      </div>
+      {showGameResult && <GameResult onBackClick={handleBackClick} />}
 
     </div>
   );
