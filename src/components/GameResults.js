@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import '../css/gameresults.css';
 import { motion } from 'framer-motion';
-import { selectTeamScore, selectTeamPlayers } from './selectors/selectors'
+import { selectTeamScore } from './selectors/selectors'
 
 
 const GameResults = ({ onBackClick }) => {
@@ -12,8 +12,8 @@ const GameResults = ({ onBackClick }) => {
     const teamAScore = useSelector(state => selectTeamScore(state, 'teamA'));
     const teamBScore = useSelector(state => selectTeamScore(state, 'teamB'));
 
-    const teamAPlayers = useSelector((state) => selectTeamPlayers(state, "teamA"));
-    const teamBPlayers = useSelector((state) => selectTeamPlayers(state, "team2"));
+    // const teamAPlayers = useSelector((state) => selectTeamPlayers(state, "teamA"));
+    // const teamBPlayers = useSelector((state) => selectTeamPlayers(state, "team2"));
 
     const playerStats = (team) => {
         return team.players.map((player) => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   addRebound,
@@ -6,13 +6,13 @@ import {
   addFoul,
   addAttemptedShot,
   addMadeShot,
+  undoLastAction,
+  updateLastActions
 } from '../redux/reducer';
 import '../css/main.css'
 import PlayerSelection from './PlayerSelection';
 import { motion } from 'framer-motion';
 import GameResult from './GameResults';
-
-
 
 
 const GameControls = () => {
@@ -21,6 +21,8 @@ const GameControls = () => {
   const [selectedPlayer, setSelectedPlayer] = useState('');
   const [showPlayerSelection, setShowPlayerSelection] = useState(false);
   const [showGameResult, setShowGameResult] = useState(false);
+  const [lastActions, setLastActions] = useState([]);
+
 
   const teamA = useSelector((state) => state.game.teamA);
   const teamB = useSelector((state) => state.game.teamB);
@@ -40,7 +42,11 @@ const GameControls = () => {
   };
 
   const handleAttempt = (points) => {
+    if (!selectedPlayer) {
+      setShowPlayerSelection(true)
+    } else 
     dispatch(addAttemptedShot({ team: selectedTeam, playerId: selectedPlayer, points }))
+    setLastActions([...lastActions, { action: 'miss', points, selectedPlayer }])
   };
 
   const handleMade = (points) => {
@@ -48,6 +54,7 @@ const GameControls = () => {
       setShowPlayerSelection(true)
     } else {
       dispatch(addMadeShot({ team: selectedTeam, playerId: selectedPlayer, points }))
+      setLastActions([...lastActions, { action: 'made', points, selectedPlayer }])
     }
   }
 
@@ -71,8 +78,19 @@ const GameControls = () => {
     setShowGameResult(false);
   };
 
-  const buttonText = selectedPlayer ? selectedPlayer : 'Select Player';
+  useEffect(() => {
+    dispatch(updateLastActions(lastActions));
+  }, [lastActions, dispatch]);  
 
+
+  const handleDeleteLastAction = () => {
+    // const lastAction = lastActions.pop()
+    // console.log(lastAction)
+    dispatch(undoLastAction({lastActions}));
+  };
+
+
+  const buttonText = selectedPlayer ? selectedPlayer : 'Select Player';
 
   const playerOptions = selectedTeam === 'teamA' ? teamA.players : teamB.players;
 
@@ -157,6 +175,19 @@ const GameControls = () => {
           </div>
         </div>
       </div>
+
+      <div>
+        <h1>Last Actions</h1>
+        <ul>
+          {lastActions.slice(-3).map((action, index) => (
+            <li className='title' key={index}>
+              {action.action} - {action.points} points by #{action.selectedPlayer}
+            </li>
+          ))}
+        </ul>
+      </div>
+      <button onClick={handleDeleteLastAction}>Undo last action</button>
+
       <div className='addpoints'>
         <button className='card' onClick={handleShowGameResult}>Game Stats</button>
       </div>

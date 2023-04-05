@@ -3,7 +3,10 @@ import '../css/main.css'
 const PlayerSelection = ({ players, onSelect }) => {
     return (
         <div className='playerpage'>
+            <div className='title'>
             <h2>Select a player:</h2>
+
+            </div>
             <div className='playerlist'>
                 {players.map((player) => (
                     <div
