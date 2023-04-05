@@ -1,8 +1,5 @@
 import teamData from '../team.json';
 import { createSlice } from '@reduxjs/toolkit';
-import { useSelector } from 'react-redux';
-
-
 
 const initialState = {
   ...teamData,
@@ -48,6 +45,7 @@ export const gameSlice = createSlice({
       state[team].players.push(player);
     },
     addAttemptedShot: (state, action) => {
+      console.log(action.payload);
       const { team, playerId, points } = action.payload;
       const player = state[team].players.find((p) => p.id === parseInt(playerId, 10));
       player.stats.points.attempted[points]++;
@@ -83,16 +81,18 @@ export const gameSlice = createSlice({
 
     undoLastAction: (state, action) => {
       state.lastActions = action.payload;
-      const lastAction = state.lastActions
-      console.log(lastAction);
+      const lastAction = state.lastActions.lastActions[state.lastActions.lastActions.length - 1]
+
       
       if (lastAction) {
-        switch (lastAction.type) {
+        switch (lastAction.action) {
           case 'addAttemptedShot':
-          case 'addMadeShot':
-            const { team, playerId, points } = lastAction.payload;
+            case 'addMadeShot':
+            console.log(lastAction);
+            const { team, playerId, points } = lastAction;
+            console.log(points);
             const player = state[team].players.find((p) => p.id === parseInt(playerId, 10));
-            player.stats.points[lastAction.type === 'addAttemptedShot' ? 'attempted' : 'made'][points]--;
+            player.stats.points[lastAction.action === 'addAttemptedShot' ? 'attempted' : 'made'][points]--;
             state[team].score -= parseInt(points);
             break;
           case 'addRebound':
@@ -113,7 +113,7 @@ export const gameSlice = createSlice({
           default:
             break;
         }
-        console.log('Well done');
+        // state.lastActions.lastActions.pop();
       }
     }
   },

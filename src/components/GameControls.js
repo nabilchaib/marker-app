@@ -46,7 +46,7 @@ const GameControls = () => {
       setShowPlayerSelection(true)
     } else 
     dispatch(addAttemptedShot({ team: selectedTeam, playerId: selectedPlayer, points }))
-    setLastActions([...lastActions, { action: 'miss', points, selectedPlayer }])
+    setLastActions([...lastActions, { action: 'addAttemptedShot', points, playerId: selectedPlayer, team: selectedTeam }])
   };
 
   const handleMade = (points) => {
@@ -54,20 +54,25 @@ const GameControls = () => {
       setShowPlayerSelection(true)
     } else {
       dispatch(addMadeShot({ team: selectedTeam, playerId: selectedPlayer, points }))
-      setLastActions([...lastActions, { action: 'made', points, selectedPlayer }])
+      setLastActions([...lastActions, { action: 'addMadeShot', points, playerId: selectedPlayer, team: selectedTeam }])
     }
   }
 
   const handleRebound = (type) => {
     dispatch(addRebound({ team: selectedTeam, playerId: selectedPlayer, type }));
+    setLastActions([...lastActions, { action: 'addRebound', type, playerId: selectedPlayer, team: selectedTeam }])
   };
 
   const handleAssist = () => {
     dispatch(addAssist({ team: selectedTeam, playerId: selectedPlayer }));
+    setLastActions([...lastActions, { action: 'addAssist', playerId: selectedPlayer, team: selectedTeam }])
+
   };
 
   const handleFoul = () => {
     dispatch(addFoul({ team: selectedTeam, playerId: selectedPlayer }));
+    setLastActions([...lastActions, { action: 'addFoul', playerId: selectedPlayer, team: selectedTeam }])
+
   };
 
   const handleShowGameResult = () => {
