@@ -92,6 +92,10 @@ const GameControls = () => {
     // const lastAction = lastActions.pop()
     // console.log(lastAction)
     dispatch(undoLastAction({lastActions}));
+    setLastActions(prevLastActions => {
+      console.log(prevLastActions);
+      return prevLastActions.slice(0, -1);
+    })
   };
 
 

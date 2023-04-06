@@ -88,9 +88,7 @@ export const gameSlice = createSlice({
         switch (lastAction.action) {
           case 'addAttemptedShot':
             case 'addMadeShot':
-            console.log(lastAction);
             const { team, playerId, points } = lastAction;
-            console.log(points);
             const player = state[team].players.find((p) => p.id === parseInt(playerId, 10));
             player.stats.points[lastAction.action === 'addAttemptedShot' ? 'attempted' : 'made'][points]--;
             state[team].score -= parseInt(points);
@@ -113,6 +111,8 @@ export const gameSlice = createSlice({
           default:
             break;
         }
+
+        // state.lastActions.lastActions.pop();
         // state.lastActions.lastActions.pop();
       }
     }
