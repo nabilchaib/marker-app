@@ -270,15 +270,15 @@ h2 {
 }
 
 .card-in {
-    display: flex;
+    /* display: flex; */
     align-items: center;
-    flex-direction: column;
+    /* flex-direction: column; */
     border-radius: 15px;
-    margin: 0.2rem 0 0 0;
+    /* margin: 0.2rem 0 0 0; */
     height: 8vh;
     width: 25vw;
     font-size: 2.2rem;
-    padding: 1rem;
+    /* padding: 1rem; */
     background-color: #bdbdbd;
     border-color: #000000;
     -webkit-text-stroke: 0.4px black;
@@ -291,7 +291,7 @@ h2 {
 }
 
 .card-miss {
-    display: flex;
+    /* display: flex; */
     align-items: center;
     flex-direction: column;
     border-radius: 15px;

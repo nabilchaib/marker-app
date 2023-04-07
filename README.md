@@ -1,5 +1,7 @@
 # Getting Started with Create React App
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/2ae99ee7-72e5-4a9f-9043-65f2597a6ade/deploy-status)](https://app.netlify.com/sites/cosmic-macaron-a1b2a1/deploys)
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
