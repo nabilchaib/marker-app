@@ -1,20 +1,16 @@
 .GameResults {
     width: 100%;
-    /* height: 100%; */
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.71);
     position: absolute;
     top: 0;
     left: 0;
-    background-color: #e2e2e22d;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(10px);
 
-    /* justify-content: space-between; */
     align-items: center;
-    border-radius: 10px;
     text-align: center;
     align-content: center;
     padding: 0 2rem 0 2rem;
-    
+
 }
 
 .GameResults img {
@@ -29,12 +25,12 @@
 
 .GameResults h2 {
     margin: 1vh;
-    font-size: 7vw;
+    font-size: 6vw;
     font-weight: bold;
     color: #e1edbf;
-    padding: 1vh;
-    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c
-
+    padding: 2vh;
+    -webkit-text-stroke: 1px black;
+    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c;
 }
 
 .GameResults p {
@@ -44,7 +40,9 @@
 }
 
 .GameResults .scores {
-    font-size: 12px;
+    display: flex;
+    justify-content: space-evenly;
+    font-size: 1.6rem;
     font-weight: bold;
     padding: 1vh 0 1vh 0;
 }
@@ -55,19 +53,25 @@
 
 
 .GameResults .button {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
+    display: inline-block;
+    /* align-items: center; */
+    border-radius: 15px;
     background-color: #ffffffb6;
-    margin: 0.2rem 0 0 0;
-    height: 7vh;
+    margin: 2rem;
+    height: 8vh;
     width: 25vw;
-    padding: 1rem;
-    font-size: 2.6vh;
-}
+    font-size: 1.4rem;
+    font-weight: 600;
+    background-color: #a0a0a0;
+    color: #fff8f2;
+    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s ease-in-out;
+    cursor: pointer;
+  }
 
 .GameResults table {
-    
+
     width: 100%;
     border-collapse: collapse;
     border-spacing: 0;

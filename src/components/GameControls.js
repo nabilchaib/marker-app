@@ -44,8 +44,8 @@ const GameControls = () => {
   const handleAttempt = (points) => {
     if (!selectedPlayer) {
       setShowPlayerSelection(true)
-    } else 
-    dispatch(addAttemptedShot({ team: selectedTeam, playerId: selectedPlayer, points }))
+    } else
+      dispatch(addAttemptedShot({ team: selectedTeam, playerId: selectedPlayer, points }))
     setLastActions([...lastActions, { action: 'addAttemptedShot', points, playerId: selectedPlayer, team: selectedTeam }])
   };
 
@@ -85,13 +85,13 @@ const GameControls = () => {
 
   useEffect(() => {
     dispatch(updateLastActions(lastActions));
-  }, [lastActions, dispatch]);  
+  }, [lastActions, dispatch]);
 
 
   const handleDeleteLastAction = () => {
     // const lastAction = lastActions.pop()
     // console.log(lastAction)
-    dispatch(undoLastAction({lastActions}));
+    dispatch(undoLastAction({ lastActions }));
     setLastActions(prevLastActions => {
       console.log(prevLastActions);
       return prevLastActions.slice(0, -1);
@@ -108,9 +108,9 @@ const GameControls = () => {
       <div className='displayteams'>
         <div className='TeamSelector'>
           <motion.button
-            whileHover={{ scale: 1.4 }}
+            whileHover={{ scale: 1.5 }}
             onClick={() => handleTeamChange('teamA')}
-            animate={{ scale: selectedTeam === 'teamA' ? 1.4 : 1 }}
+            animate={{ scale: selectedTeam === 'teamA' ? 1.5 : 1 }}
           >
             TeamA
           </motion.button>
@@ -118,9 +118,9 @@ const GameControls = () => {
         </div>
         <div className='TeamSelector'>
           <motion.button
-            whileHover={{ scale: 1.4 }}
+            whileHover={{ scale: 1.5 }}
             onClick={() => handleTeamChange('teamB')}
-            animate={{ scale: selectedTeam === 'teamB' ? 1.4 : 1 }}
+            animate={{ scale: selectedTeam === 'teamB' ? 1.5 : 1 }}
           >
             TeamB
           </motion.button>
@@ -138,9 +138,11 @@ const GameControls = () => {
 
             onClick={() => setShowPlayerSelection(true)}
           >
-            {buttonText}
+            <h2>
+              {buttonText}
+            </h2>
           </motion.button>
-          <label htmlFor="player">Player:</label>
+          <h2>Player:</h2>
           <select className='player' id="player" value={selectedPlayer} onChange={handlePlayerChange}>
             <option value=""></option>
             {playerOptions.map((player) => (
@@ -156,15 +158,15 @@ const GameControls = () => {
         <div className='addpoints'>
 
           <div className='stat'> FT
-            <button className='card' onClick={() => handleMade(1)}>+1</button>
+            <button className='card-in' onClick={() => handleMade(1)}>+ 1</button>
             <button className='card-miss' onClick={() => handleAttempt(1)}>Miss</button>
           </div>
           <div className='stat'> 2 pts
-            <button className='card' onClick={() => handleMade(2)}>+2</button>
+            <button className='card-in' onClick={() => handleMade(2)}>+ 2</button>
             <button className='card-miss' onClick={() => handleAttempt(2)}>Miss</button>
           </div>
           <div className='stat'> 3 pts
-            <button className='card' onClick={() => handleMade(3)}>+3</button>
+            <button className='card-in' onClick={() => handleMade(3)}>+ 3</button>
             <button className='card-miss' onClick={() => handleAttempt(3)}>Miss</button>
           </div>
         </div>
@@ -172,34 +174,45 @@ const GameControls = () => {
         <div className='addpoints'>
 
           <div className='stat'> Rebound
-            <button className='card' onClick={() => handleRebound('offensive')}>Offensive </button>
-            <button className='card' onClick={() => handleRebound('defensive')}>Defensive </button>
+            <button className='card' onClick={() => handleRebound('offensive')}>Offense </button>
+            <button className='card' onClick={() => handleRebound('defensive')}>Defense </button>
           </div>
-          <div className='stat'> Fouls
+          <div className='stat'>
             <button className='card' onClick={handleFoul}>Foul</button>
           </div>
-          <div className='stat'> Assist
+          <div className='stat'>
             <button className='card' onClick={handleAssist}>Assist</button>
 
           </div>
         </div>
       </div>
-
-      <div>
-        <h1>Last Actions</h1>
-        <ul>
-          {lastActions.slice(-3).map((action, index) => (
-            <li className='title' key={index}>
-              {action.action} - {action.points} points by #{action.selectedPlayer}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <button onClick={handleDeleteLastAction}>Undo last action</button>
-
       <div className='addpoints'>
         <button className='card' onClick={handleShowGameResult}>Game Stats</button>
       </div>
+
+      <div>
+        <h1>Last Actions</h1>
+        <table>
+          <thead>
+            <tr>
+              <th>Action</th>
+              <th>Points</th>
+              <th>Player ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lastActions.slice(-10).map((action, index) => (
+              <tr key={index}>
+                <td>{action.action}</td>
+                <td>{action.points}</td>
+                <td>#{action.playerId}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <button className='button' onClick={handleDeleteLastAction}>Undo last action</button>
+
       {showGameResult && <GameResult onBackClick={handleBackClick} />}
 
     </div>

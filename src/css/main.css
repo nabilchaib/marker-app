@@ -62,6 +62,13 @@ body {
     text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c
 }
 
+h2 {
+    align-self: center;
+    text-align: center;
+    color: #fff8f2;
+    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c
+}
+
 .TeamScores {
     justify-content: space-between;
     flex-direction: row;
@@ -72,7 +79,7 @@ body {
 .Score {
     display: flex;
     justify-content: space-around;
-    margin: 1vh;
+    margin: 0 6vw 0 6vw;
     background-color: var(--color-primary);
     padding: 2vh;
     border-radius: 1.5rem;
@@ -94,7 +101,7 @@ body {
 
 .displayteams {
     display: flex;
-    justify-content: space-around;
+    justify-content:space-around;
     align-items: center;
     padding: 2vh 0 4vh 0;
 }
@@ -102,7 +109,7 @@ body {
 .TeamSelector {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
 }
 
 .TeamSelector button {
@@ -111,11 +118,12 @@ body {
     cursor: pointer;
     border: 0.5px solid var(--color-text);
     font-size: 1.1rem;
-}   
+}
 
 .TeamSelector .buttons button :focus {
     outline: none;
 }
+
 
 .Selector {
     display: flex;
@@ -123,13 +131,15 @@ body {
     margin: 1vh;
     padding: 0 2vh 0 0;
     align-items: center;
+    justify-content: space-between;
 }
 
 .SelectPlayer {
     height: 7vh;
     width: 45vw;
-    font-size: 2.4vh;
-    border-radius: 15px;
+    /* font-size: 1.6rem; */
+    border-radius: 25px;
+    background-color: var(--color-primary);
 }
 
 .player {
@@ -147,17 +157,21 @@ body {
 }
 
 .playerpage {
-    
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.71);
     position: absolute;
     top: 0;
     left: 0;
-    background-color: #e2e2e22d;
-    backdrop-filter: blur(8px);
-    padding: 0 2rem 0 2rem;
+    /* background-color: #e2e2e22d; */
+    backdrop-filter: blur(10px);
+
+    /* justify-content: space-between; */
+    align-items: center;
+    border-radius: 10px;
     text-align: center;
+    align-content: center;
+    padding: 0 2rem 0 2rem;
 
 }
 
@@ -180,17 +194,18 @@ body {
 
 .player-btn {
     display: flex;
-    flex-direction: row;
-    text-align: center;
+    justify-self: center;
     align-items: center;
-    background-color: var(--color-secondary);
+    font-size: 2.5vw;
+    background-color: #acacac;
     border-radius: 2rem;
     margin: 2rem;
-    height: 20vh;
-    width: 20vh;
+    height: 20vw;
+    width: 20vw;
     padding: 0.7rem;
-    font-size: 3vh;
     cursor: pointer;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+
 }
 
 .Controls {
@@ -241,29 +256,78 @@ body {
     border-radius: 15px;
     background-color: #ffffffb6;
     margin: 0.2rem 0 0 0;
-    height: 7vh;
+    height: 8vh;
     width: 25vw;
+    font-size: 1.6rem;
+    font-weight: 600;
     padding: 1rem;
-    font-size: 1.2rem;
+    background-color: #a0a0a0;
+    color: #fff8f2;
+    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s ease-in-out;
     cursor: pointer;
-    background-image: linear-gradient(to bottom, #ffffffce, #00000062);
+}
 
+.card-in {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    border-radius: 15px;
+    margin: 0.2rem 0 0 0;
+    height: 8vh;
+    width: 25vw;
+    font-size: 2.2rem;
+    padding: 1rem;
+    background-color: #bdbdbd;
+    border-color: #000000;
+    -webkit-text-stroke: 0.4px black;
 
+    color: #fff;
+    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s ease-in-out;
+    cursor: pointer;
 }
 
 .card-miss {
     display: flex;
     align-items: center;
     flex-direction: column;
-    background-color: #d8d8d89c;
     border-radius: 15px;
+    background-color: #ffffffb6;
     margin: 0.2rem 0 0 0;
-    height: 7vh;
+    height: 8vh;
     width: 25vw;
+    font-size: 1.6rem;
+    font-weight: 600;
     padding: 1rem;
-    font-size: 1.2rem;
+    background-color: #444444;
+    /* green */
+    color: #fff;
+    /* white */
+    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s ease-in-out;
     cursor: pointer;
+}
 
+.button {
+    display: inline-block;
+    /* align-items: center; */
+    border-radius: 15px;
+    background-color: #ffffffb6;
+    margin: 0.2rem 0 0 0;
+    height: 8vh;
+    width: 25vw;
+    font-size: 1.4rem;
+    font-weight: 600;
+    background-color: #a0a0a0;
+    color: #fff8f2;
+    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c;
+    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+    transition: transform 0.2s ease-in-out;
+    cursor: pointer;
 }
 
 .bg-img {
@@ -277,14 +341,64 @@ body {
     z-index: -1;
 }
 
-/* button {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    background-color: #e4e4e45d;
-    margin: 0.2rem 0 0 0;
-    height: 7vh;
-    width: 5vw;
-    padding: 1rem;
-    font-size: 2.6vh;
-} */
+table {
+
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-size: 1.3rem;
+    line-height: 1.4;
+    font-weight: normal;
+    color: #333;
+    background-color: #ffffffc2;
+}
+
+table th,
+table td {
+    padding: 10px 15px;
+    text-align: left;
+    vertical-align: middle;
+    border-bottom: 1px solid #ccc;
+}
+
+table th {
+    background-color: #f7f7f7;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+table tr:hover {
+    background-color: #f5f5f5;
+}
+
+
+table td:last-child,
+table th:last-child {
+    text-align: right;
+}
+
+table td:nth-child(2),
+table th:nth-child(2) {
+    text-align: center;
+}
+
+table td:nth-child(3),
+table th:nth-child(3) {
+    text-align: center;
+}
+
+table td:nth-child(4),
+table th:nth-child(4) {
+    text-align: center;
+}
+
+table td:nth-child(5),
+table th:nth-child(5) {
+    text-align: center;
+}
+
+.number {
+    font-weight: bold;
+    color: #000000;
+}

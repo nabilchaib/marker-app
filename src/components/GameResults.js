@@ -48,17 +48,17 @@ const GameResults = ({ onBackClick }) => {
                 <div className='scores'>
                     <div>
                         <p>{teamA.name}</p>
-                        <p>{teamAScore}</p>
+                        <h2>{teamAScore}</h2>
                     </div>
 
                     <div>
                         <p>{teamB.name}</p>
-                        <p>{teamBScore}</p>
+                        <h2>{teamBScore}</h2>
                     </div>
                 </div>
 
                 <div className='table'>
-                    <h2>Team A: {teamA.points}</h2>
+                    <h2>{teamA.name}: {teamA.points}</h2>
                     <table>
                         <thead>
                             <tr>
@@ -71,7 +71,7 @@ const GameResults = ({ onBackClick }) => {
                         </thead>
                         <tbody>{playerStats(teamA)}</tbody>
                     </table>
-                    <h2>Team B: {teamB.points}</h2>
+                    <h2>{teamB.name}: {teamB.points}</h2>
                     <table>
                         <thead>
                             <tr>
