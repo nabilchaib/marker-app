@@ -1,38 +1,49 @@
 import React, { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import { addPlayer } from '../redux/reducer';
-import { selectTeamPlayers } from './selectors/selectors';
+import { useDispatch } from 'react-redux';
+import '../css/main.css'
 
 
-const PlayerSelector = ({ team }) => {
-  const players = useSelector((state) => selectTeamPlayers(state, team));
+const PlayerAdder = ({ team }) => {
   const dispatch = useDispatch();
   const [playerName, setPlayerName] = useState('');
+  const [playerId, setPlayerId] = useState('');
 
   const handleAddPlayer = () => {
-    if (playerName.trim() !== '') {
-      dispatch(addPlayer({ team, player: { name: playerName } }));
-      setPlayerName('');
-    }
+    dispatch(addPlayer({ team, player: { name: playerName, id: playerId } }));
+    setPlayerName('');
+    setPlayerId('');
   };
 
   return (
     <div>
-      <ul>
-        {players.map((player) => (
-          <li key={player.id}>{player.name}</li>
-        ))}
-      </ul>
-      {players.length === 0 && <p>Please add a player to this team</p>}
-      <input
-        type="text"
-        value={playerName}
-        onChange={(e) => setPlayerName(e.target.value)}
-        placeholder="Player Name"
-      />
-      <button onClick={handleAddPlayer}>Add Player</button>
+      <form onSubmit={handleAddPlayer} className='player-form'>
+        <div>
+          <label htmlFor='playerName'>Player Name:</label>
+          <input
+            type='text'
+            id='playerName'
+            placeholder='Enter player name'
+            value={playerName}
+            onChange={(e) => setPlayerName(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor='playerId'>Player ID:</label>
+          <input
+            type='number'
+            id='playerId'
+            placeholder='Enter player ID'
+            value={playerId}
+            onChange={(e) => setPlayerId(e.target.value)}
+            required
+          />
+        </div>
+        <button type='submit'>Add Player</button>
+      </form>
     </div>
   );
 };
 
-export default PlayerSelector;
+export default PlayerAdder;

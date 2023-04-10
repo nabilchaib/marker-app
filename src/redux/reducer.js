@@ -41,6 +41,7 @@ export const gameSlice = createSlice({
   initialState,
   reducers: {
     addPlayer: (state, action) => {
+      // console.log(action.payload);
       const { team, player } = action.payload;
       state[team].players.push(player);
     },

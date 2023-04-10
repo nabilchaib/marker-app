@@ -127,9 +127,12 @@ const GameControls = () => {
 
         </div>
       </div>
+        
+      <div>
+      </div>
 
       {showPlayerSelection ? (
-        <PlayerSelection players={playerOptions} onSelect={handlePlayerSelect} />
+        <PlayerSelection team={selectedTeam} players={playerOptions} onSelect={handlePlayerSelect} />
       ) : (
         <div className='Selector'>
           <motion.button

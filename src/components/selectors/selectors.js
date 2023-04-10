@@ -1,5 +1,4 @@
 export const selectGame = state => {
-  // console.log(state);
   return state.game;
 };
 
