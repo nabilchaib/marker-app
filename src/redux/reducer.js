@@ -41,7 +41,6 @@ export const gameSlice = createSlice({
   initialState,
   reducers: {
     addPlayer: (state, action) => {
-      // console.log(action.payload);
       const { team, player } = action.payload;
       state[team].players.push(player);
     },
@@ -95,26 +94,23 @@ export const gameSlice = createSlice({
             state[team].score -= parseInt(points);
             break;
           case 'addRebound':
-            const { team: rTeam, playerId: rPlayerId, type: rType } = lastAction.payload;
+            const { team: rTeam, playerId: rPlayerId, type: rType } = lastAction;
             const rPlayer = state[rTeam].players.find((p) => p.id === parseInt(rPlayerId, 10));
             rPlayer.stats.rebounds[rType]--;
             break;
           case 'addAssist':
-            const { team: aTeam, playerId: aPlayerId } = lastAction.payload;
+            const { team: aTeam, playerId: aPlayerId } = lastAction;
             const aPlayer = state[aTeam].players.find((p) => p.id === parseInt(aPlayerId, 10));
             aPlayer.stats.assists--;
             break;
           case 'addFoul':
-            const { team: fTeam, playerId: fPlayerId } = lastAction.payload;
+            const { team: fTeam, playerId: fPlayerId } = lastAction;
             const fPlayer = state[fTeam].players.find((p) => p.id === parseInt(fPlayerId, 10));
             fPlayer.stats.fouls--;
             break;
           default:
             break;
         }
-
-        // state.lastActions.lastActions.pop();
-        // state.lastActions.lastActions.pop();
       }
     }
   },

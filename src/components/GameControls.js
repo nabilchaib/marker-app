@@ -59,22 +59,29 @@ const GameControls = () => {
   }
 
   const handleRebound = (type) => {
-    dispatch(addRebound({ team: selectedTeam, playerId: selectedPlayer, type }));
-    setLastActions([...lastActions, { action: 'addRebound', type, playerId: selectedPlayer, team: selectedTeam }])
-  };
-
+    if (!selectedPlayer) {
+      setShowPlayerSelection(true)
+    } else {
+      dispatch(addRebound({ team: selectedTeam, playerId: selectedPlayer, type }));
+      setLastActions([...lastActions, { action: 'addRebound', type, playerId: selectedPlayer, team: selectedTeam }])
+    };
+  }
   const handleAssist = () => {
-    dispatch(addAssist({ team: selectedTeam, playerId: selectedPlayer }));
-    setLastActions([...lastActions, { action: 'addAssist', playerId: selectedPlayer, team: selectedTeam }])
-
-  };
-
+    if (!selectedPlayer) {
+      setShowPlayerSelection(true)
+    } else {
+      dispatch(addAssist({ team: selectedTeam, playerId: selectedPlayer }));
+      setLastActions([...lastActions, { action: 'addAssist', playerId: selectedPlayer, team: selectedTeam }])
+    };
+  }
   const handleFoul = () => {
-    dispatch(addFoul({ team: selectedTeam, playerId: selectedPlayer }));
-    setLastActions([...lastActions, { action: 'addFoul', playerId: selectedPlayer, team: selectedTeam }])
-
-  };
-
+    if (!selectedPlayer) {
+      setShowPlayerSelection(true)
+    } else {
+      dispatch(addFoul({ team: selectedTeam, playerId: selectedPlayer }));
+      setLastActions([...lastActions, { action: 'addFoul', playerId: selectedPlayer, team: selectedTeam }])
+    };
+  }
   const handleShowGameResult = () => {
     setShowGameResult(true);
   };
@@ -127,7 +134,7 @@ const GameControls = () => {
 
         </div>
       </div>
-        
+
       <div>
       </div>
 
