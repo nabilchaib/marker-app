@@ -13,7 +13,6 @@ const App =() => {
       <BgImg/>
       <Scoreboard />
       <GameControls/>
-      {/* <PlayerSelector /> */}
     </div>
   );
 }
