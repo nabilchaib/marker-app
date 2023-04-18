@@ -1,92 +1,47 @@
+
+const teamData = require('../src/team.json');
 const express = require('express');
 const router = express.Router();
-const {
-  getTeams,
-  addPlayer,
-  updatePlayer,
-  deletePlayer,
-} = require('./firebaseMethods');
 
-router.get('/teams/:team/players', async (req, res) => {
-  const team = req.params.team;
 
-  try {
-    const teams = await getTeams();
-    const teamData = teams.find((t) => t.name === team);
-    if (teamData) {
-      res.json(teamData.players);
-    } else {
-      res.status(404).json({ error: 'Team not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+// add custom routes
+
+router.get('/teams', (req,res) => (
+    res.json(teamData,'hello')
+) )
+
+router.get('/teams/players', (req, res) => {
+    res.json(teamData.teamA.players);
+  });
+  
+
+router.post('teams/players', (req, res) => {
+    const newPlayer = req.body;
+    teamData.players.push(newPlayer);
+    res.json(newPlayer);
 });
 
-router.post('/teams/:team/players', async (req, res) => {
-  const team = req.params.team;
-  const newPlayer = req.body;
-
-  try {
-    const teams = await getTeams();
-    const teamData = teams.find((t) => t.name === team);
-    if (teamData) {
-      const player = { ...newPlayer, teamId: teamData.id };
-      const playerId = await addPlayer(player);
-      res.json({ ...player, id: playerId });
+router.put('teams/players/:id', (req, res) => {
+    const playerId = parseInt(req.params.id, 10);
+    const updatedPlayer = req.body;
+    const index = teamData.players.findIndex((p) => p.id === playerId);
+    if (index !== -1) {
+        teamData.players[index] = updatedPlayer;
+        res.json(updatedPlayer);
     } else {
-      res.status(404).json({ error: 'Team not found' });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-router.put('/teams/:team/players/:id', async (req, res) => {
-  const team = req.params.team;
-  const playerId = req.params.id;
-  const updatedPlayer = req.body;
-
-  try {
-    const teams = await getTeams();
-    const teamData = teams.find((t) => t.name === team);
-    if (teamData) {
-      const player = teamData.players.find((p) => p.id === playerId);
-      if (player) {
-        await updatePlayer(playerId, updatedPlayer);
-        res.json({ ...updatedPlayer, id: playerId });
-      } else {
         res.status(404).json({ error: 'Player not found' });
-      }
-    } else {
-      res.status(404).json({ error: 'Team not found' });
     }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 });
 
-router.delete('/teams/:team/players/:id', async (req, res) => {
-  const team = req.params.team;
-  const playerId = req.params.id;
-
-  try {
-    const teams = await getTeams();
-    const teamData = teams.find((t) => t.name === team);
-    if (teamData) {
-      const player = teamData.players.find((p) => p.id === playerId);
-      if (player) {
-        await deletePlayer(playerId);
+router.delete('/players/:id', (req, res) => {
+    const playerId = parseInt(req.params.id, 10);
+    const index = teamData.players.findIndex((p) => p.id === playerId);
+    if (index !== -1) {
+        teamData.players.splice(index, 1);
         res.json({ success: true });
-      } else {
-        res.status(404).json({ error: 'Player not found' });
-      }
     } else {
-      res.status(404).json({ error: 'Team not found' });
+        res.status(404).json({ error: 'Player not found' });
     }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
 });
 
 module.exports = router;
