@@ -55,28 +55,37 @@ export const gameSlice = createSlice({
 
       if (lastAction) {
         switch (lastAction.action) {
-          case 'addAttemptedShot':
-            case 'addMadeShot':
+          case 'addMadeShot': {
             const { team, playerId, points } = lastAction;
             const player = state[team].players.find((p) => p.id === playerId);
-            player.stats.points[lastAction.action === 'addAttemptedShot' ? 'attempted' : 'made'][points]--;
+            player.stats.points.made[points]--;
             state[team].score -= parseInt(points);
             break;
-          case 'addRebound':
+          }
+          case 'addAttemptedShot': {
+            const { team, playerId, points } = lastAction;
+            const player = state[team].players.find((p) => p.id === playerId);
+            player.stats.points.attempted[points]--;
+            break;
+          }
+          case 'addRebound': {
             const { team: rTeam, playerId: rPlayerId, type: rType } = lastAction;
             const rPlayer = state[rTeam].players.find((p) => p.id === rPlayerId);
             rPlayer.stats.rebounds[rType]--;
             break;
-          case 'addAssist':
+          }
+          case 'addAssist': {
             const { team: aTeam, playerId: aPlayerId } = lastAction;
             const aPlayer = state[aTeam].players.find((p) => p.id === aPlayerId);
             aPlayer.stats.assists--;
             break;
-          case 'addFoul':
+          }
+          case 'addFoul': {
             const { team: fTeam, playerId: fPlayerId } = lastAction;
             const fPlayer = state[fTeam].players.find((p) => p.id === fPlayerId);
             fPlayer.stats.fouls--;
             break;
+          }
           default:
             break;
         }

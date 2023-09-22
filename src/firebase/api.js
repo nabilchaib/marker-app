@@ -1,4 +1,4 @@
-import { addDoc, getDocs, query, collection, where, doc, updateDoc } from 'firebase/firestore';
+import { FieldValue, getDoc, setDoc, addDoc, getDocs, query, collection, where, doc, updateDoc } from 'firebase/firestore';
 import { db } from '.';
 
 export const initializeDataApi = async (userEmail) => {
@@ -195,7 +195,124 @@ export const addPlayerApi = async ({ team, player }) => {
         reject('number exists already');
       }
     } catch (err) {
-      console.log('ADD FOUL API ERR: ', err);
+      console.log('ADD PLAYER API ERR: ', err);
+      reject(err);
+    }
+  });
+};
+
+export const updateLastActionsApi = async (lastActions, userEmail) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const lastActionsRef = doc(db, 'last-actions', userEmail);
+      await setDoc(lastActionsRef, { actions: lastActions }, { merge: true });
+      resolve();
+    } catch (err) {
+      console.log('UPDATE LAST ACTIONS API ERR: ', err);
+      reject(err);
+    }
+  });
+};
+
+export const getLastActionsApi = async (userEmail) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const docRef = doc(db, 'last-actions', userEmail);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const lastActions = docSnap.data();
+        resolve(lastActions.actions);
+      } else {
+        resolve([]);
+      }
+    } catch (err) {
+      console.log('GET LAST ACTIONS API ERR: ', err);
+      reject(err);
+    }
+  });
+};
+
+export const undoLastActionApi = async (lastActions, teamData) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const lastAction = lastActions[lastActions.length - 1];
+      if (lastAction) {
+        if (lastAction.action === 'addMadeShot' || lastAction.action === 'addAttemptedShot') {
+          const { team, playerId, points } = lastAction;
+          const player = teamData[team].players.find((p) => p.id === playerId);
+          const type = lastAction.action === 'addAttemptedShot' ? 'attempted' : 'made'
+
+          const newStats = {
+            ...player.stats,
+            points: {
+              ...player.stats.points,
+              [type]: player.stats.points[type].map((val, index) => {
+                if (index === points) {
+                  return val - 1;
+                }
+
+                return val;
+              })
+            }
+          };
+
+          const playerRef = doc(db, 'players', playerId);
+          await updateDoc(playerRef, {
+            stats: JSON.stringify(newStats)
+          });
+
+          if (type === 'made') {
+            const newScore = teamData[team].score - parseInt(points);
+            const teamRef = doc(db, 'teams', teamData[team].id);
+            await updateDoc(teamRef, {
+              score: newScore
+            });
+          }
+        } else if (lastAction.action === 'addRebound') {
+          const { team, playerId, type } = lastAction;
+          const player = teamData[team].players.find((p) => p.id === playerId);
+          const newStats = {
+            ...player.stats,
+            rebounds: {
+              ...player.stats.rebounds,
+              [type]: player.stats.rebounds[type] - 1
+            }
+          };
+
+          const playerRef = doc(db, 'players', playerId);
+          await updateDoc(playerRef, {
+            stats: JSON.stringify(newStats)
+          });
+        } else if (lastAction.action === 'addAssist') {
+          const { team, playerId } = lastAction;
+          const player = teamData[team].players.find((p) => p.id === playerId);
+          const newStats = {
+            ...player.stats,
+            assists: player.stats.assists - 1
+          };
+
+          const playerRef = doc(db, 'players', playerId);
+          await updateDoc(playerRef, {
+            stats: JSON.stringify(newStats)
+          });
+        } else if (lastAction.action === 'addFoul') {
+          const { team, playerId } = lastAction;
+          const player = teamData[team].players.find((p) => p.id === playerId);
+          const newStats = {
+            ...player.stats,
+            fouls: player.stats.fouls - 1
+          };
+
+          const playerRef = doc(db, 'players', playerId);
+          await updateDoc(playerRef, {
+            stats: JSON.stringify(newStats)
+          });
+        }
+      }
+
+      resolve();
+    } catch (err) {
+      console.log('UNDO LAST ACTION API ERR: ', err);
       reject(err);
     }
   });

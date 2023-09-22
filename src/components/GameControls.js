@@ -7,6 +7,9 @@ import {
   addReboundApi,
   addAssistApi,
   addFoulApi,
+  updateLastActionsApi,
+  getLastActionsApi,
+  undoLastActionApi,
 } from '../firebase/api';
 import {
   addRebound,
@@ -27,11 +30,17 @@ import GameResult from './GameResults';
 const GameControls = () => {
   const dispatch = useDispatch();
   const [selectedTeam, setSelectedTeam] = useState('teamA');
-  const [selectedPlayer, setSelectedPlayer] = useState('');
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [showPlayerSelection, setShowPlayerSelection] = useState(false);
   const [showGameResult, setShowGameResult] = useState(false);
   const [lastActions, setLastActions] = useState([]);
-
+  const [userEmail, setUserEmail] = useState('');
+  const [undoLoading, setUndoLoading] = useState(false);
+  const [madeLoading, setMadeLoading] = useState(false);
+  const [attemptLoading, setAttemptLoading] = useState(false);
+  const [reboundLoading, setReboundLoading] = useState(false);
+  const [assistLoading, setAssistLoading] = useState(false);
+  const [foulLoading, setFoulLoading] = useState(false);
 
   const teamA = useSelector((state) => state.game.teamA);
   const teamB = useSelector((state) => state.game.teamB);
@@ -40,7 +49,9 @@ const GameControls = () => {
     const fetchData = async userEmail => {
       try {
         const teams = await initializeDataApi(userEmail);
+        const lastActions = await getLastActionsApi(userEmail);
         dispatch(initializeData({ teams }));
+        setLastActions(lastActions);
       } catch (err) {
         console.log('FETCH ERR: ', err);
       }
@@ -51,14 +62,24 @@ const GameControls = () => {
       const user = JSON.parse(userString);
       if (user) {
         const userEmail = user.user.email;
+        setUserEmail(userEmail);
         fetchData(userEmail);
       }
     }
   }, []);
 
   useEffect(() => {
+    const updateActions = async () => {
+      try {
+        await updateLastActionsApi(lastActions, userEmail);
+        dispatch(updateLastActions(lastActions));
+      } catch (err) {
+
+      }
+    };
+
     if (teamA && teamB) {
-      dispatch(updateLastActions(lastActions));
+      updateActions();
     }
   }, [lastActions, dispatch]);
 
@@ -68,87 +89,121 @@ const GameControls = () => {
 
   const handleTeamChange = (teamValue) => {
     setSelectedTeam(teamValue);
-    setSelectedPlayer('');
+    setSelectedPlayer(null);
   };
 
   const handlePlayerChange = (e) => {
-    setSelectedPlayer(e.target.value);
+    setSelectedPlayer(JSON.parse(e.target.value));
   };
 
-  const handlePlayerSelect = (playerId) => {
-    setSelectedPlayer(playerId);
+  const handlePlayerSelect = (player) => {
+    const newPlayer = {
+      id: player.id,
+      number: player.number
+    };
+    setSelectedPlayer(newPlayer);
     setShowPlayerSelection(false);
   };
 
   const handleAttempt = async (points) => {
+    if (attemptLoading) {
+      return false;
+    }
+
     if (!selectedPlayer) {
       setShowPlayerSelection(true)
     } else {
       try {
+        setAttemptLoading(points);
         const team = selectedTeam === 'teamA' ? teamA : teamB;
-        await addAttemptedShotApi({ team, playerId: selectedPlayer, points });
-        dispatch(addAttemptedShot({ team: selectedTeam, playerId: selectedPlayer, points }))
-        setLastActions([...lastActions, { action: 'addAttemptedShot', points, playerId: selectedPlayer, team: selectedTeam }])
+        await addAttemptedShotApi({ team, playerId: selectedPlayer.id, points });
+        dispatch(addAttemptedShot({ team: selectedTeam, playerId: selectedPlayer.id, points }))
+        setLastActions(prev => [...prev, { action: 'addAttemptedShot', points, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setAttemptLoading(false);
       } catch (err) {
-
+        setAttemptLoading(false);
       }
     }
   };
 
   const handleMade = async (points) => {
+    if (madeLoading) {
+      return false;
+    }
+
     if (!selectedPlayer) {
       setShowPlayerSelection(true)
     } else {
       try {
+        setMadeLoading(points);
         const team = selectedTeam === 'teamA' ? teamA : teamB;
-        await addMadeShotApi({ team, playerId: selectedPlayer, points });
-        dispatch(addMadeShot({ team: selectedTeam, playerId: selectedPlayer, points }))
-        setLastActions([...lastActions, { action: 'addMadeShot', points, playerId: selectedPlayer, team: selectedTeam }])
+        await addMadeShotApi({ team, playerId: selectedPlayer.id, points });
+        dispatch(addMadeShot({ team: selectedTeam, playerId: selectedPlayer.id, points }))
+        setLastActions(prev => [...prev, { action: 'addMadeShot', points, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setMadeLoading(false);
       } catch (err) {
-
+        setMadeLoading(false);
       }
     }
   }
 
   const handleRebound = async (type) => {
+    if (reboundLoading) {
+      return false;
+    }
+
     if (!selectedPlayer) {
       setShowPlayerSelection(true)
     } else {
       try {
+        setReboundLoading(type);
         const team = selectedTeam === 'teamA' ? teamA : teamB;
-        await addReboundApi({ team, playerId: selectedPlayer, type });
-        dispatch(addRebound({ team: selectedTeam, playerId: selectedPlayer, type }));
-        setLastActions([...lastActions, { action: 'addRebound', type, playerId: selectedPlayer, team: selectedTeam }])
+        await addReboundApi({ team, playerId: selectedPlayer.id, type });
+        dispatch(addRebound({ team: selectedTeam, playerId: selectedPlayer.id, type }));
+        setLastActions(prev => [...prev, { action: 'addRebound', type, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setReboundLoading(false);
       } catch (err) {
-
+        setReboundLoading(false);
       }
     };
   }
   const handleAssist = async () => {
+    if (assistLoading) {
+      return false;
+    }
+
     if (!selectedPlayer) {
       setShowPlayerSelection(true)
     } else {
       try {
+        setAssistLoading(true);
         const team = selectedTeam === 'teamA' ? teamA : teamB;
-        await addAssistApi({ team, playerId: selectedPlayer });
-        dispatch(addAssist({ team: selectedTeam, playerId: selectedPlayer }));
-        setLastActions([...lastActions, { action: 'addAssist', playerId: selectedPlayer, team: selectedTeam }])
+        await addAssistApi({ team, playerId: selectedPlayer.id });
+        dispatch(addAssist({ team: selectedTeam, playerId: selectedPlayer.id }));
+        setLastActions(prev => [...prev, { action: 'addAssist', playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setAssistLoading(false);
       } catch (err) {
-
+        setAssistLoading(false);
       }
     };
   }
   const handleFoul = async () => {
+    if (foulLoading) {
+      return false;
+    }
+
     if (!selectedPlayer) {
       setShowPlayerSelection(true)
     } else {
       try {
+        setFoulLoading(true);
         const team = selectedTeam === 'teamA' ? teamA : teamB;
-        await addFoulApi({ team, playerId: selectedPlayer });
-        dispatch(addFoul({ team: selectedTeam, playerId: selectedPlayer }));
-        setLastActions([...lastActions, { action: 'addFoul', playerId: selectedPlayer, team: selectedTeam }])
+        await addFoulApi({ team, playerId: selectedPlayer.id });
+        dispatch(addFoul({ team: selectedTeam, playerId: selectedPlayer.id }));
+        setLastActions(prev => [...prev, { action: 'addFoul', playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setFoulLoading(false);
       } catch (err) {
-
+        setFoulLoading(false);
       }
     };
   }
@@ -160,18 +215,28 @@ const GameControls = () => {
     setShowGameResult(false);
   };
 
-  const handleDeleteLastAction = () => {
+  const handleDeleteLastAction = async () => {
     // const lastAction = lastActions.pop()
     // console.log(lastAction)
-    dispatch(undoLastAction({ lastActions }));
-    setLastActions(prevLastActions => {
-      console.log(prevLastActions);
-      return prevLastActions.slice(0, -1);
-    })
+    if (undoLoading) {
+      return true;
+    }
+
+    try {
+      setUndoLoading(true);
+      await undoLastActionApi(lastActions, { teamA, teamB });
+      dispatch(undoLastAction({ lastActions }));
+      setLastActions(prevLastActions => {
+        return prevLastActions.slice(0, -1);
+      })
+      setUndoLoading(false);
+    } catch (err) {
+      setUndoLoading(false);
+    }
   };
 
 
-  const buttonText = selectedPlayer ? selectedPlayer : 'Select Player';
+  const buttonText = selectedPlayer ? selectedPlayer?.number : 'Select Player';
 
   const playerOptions = selectedTeam === 'teamA' ? teamA.players : teamB.players;
 
@@ -218,13 +283,19 @@ const GameControls = () => {
             </h2>
           </motion.button>
           <h2>Player:</h2>
-          <select className='player' id="player" value={selectedPlayer} onChange={handlePlayerChange}>
+          <select className='player' id="player" value={JSON.stringify(selectedPlayer)} onChange={handlePlayerChange}>
             <option value=""></option>
-            {playerOptions.map((player) => (
-              <option key={player.number} value={player.number}>
-                {player.name}
-              </option>
-            ))}
+            {playerOptions.map((player) => {
+              const newPlayer = {
+                id: player.id,
+                number: player.number
+              };
+              return (
+                <option key={newPlayer.number} value={JSON.stringify(newPlayer)}>
+                  {player.name}
+                </option>
+              );
+            })}
           </select>
         </div>
       )}
@@ -233,30 +304,30 @@ const GameControls = () => {
         <div className='addpoints'>
 
           <div className='stat'> FT
-            <button className='card-in' onClick={() => handleMade(1)}>+ 1</button>
-            <button className='card-miss' onClick={() => handleAttempt(1)}>Miss</button>
+            <button disabled={madeLoading} className='card-in' onClick={() => handleMade(1)}>{madeLoading === 1 ? 'Loading...' : '+ 1'}</button>
+            <button disabled={attemptLoading} className='card-miss' onClick={() => handleAttempt(1)}>{attemptLoading === 1 ? 'Loading...' : 'Miss'}</button>
           </div>
           <div className='stat'> 2 pts
-            <button className='card-in' onClick={() => handleMade(2)}>+ 2</button>
-            <button className='card-miss' onClick={() => handleAttempt(2)}>Miss</button>
+            <button disabled={madeLoading} className='card-in' onClick={() => handleMade(2)}>{madeLoading === 2 ? 'Loading...' : '+ 2'}</button>
+            <button disabled={attemptLoading} className='card-miss' onClick={() => handleAttempt(2)}>{attemptLoading === 2 ? 'Loading...' : 'Miss'}</button>
           </div>
           <div className='stat'> 3 pts
-            <button className='card-in' onClick={() => handleMade(3)}>+ 3</button>
-            <button className='card-miss' onClick={() => handleAttempt(3)}>Miss</button>
+            <button className='card-in' onClick={() => handleMade(3)}>{madeLoading === 3 ? 'Loading...' : '+ 3'}</button>
+            <button className='card-miss' onClick={() => handleAttempt(3)}>{attemptLoading === 3 ? 'Loading...' : 'Miss'}</button>
           </div>
         </div>
 
         <div className='addpoints'>
 
           <div className='stat'> Rebound
-            <button className='card' onClick={() => handleRebound('offensive')}>Offense </button>
-            <button className='card' onClick={() => handleRebound('defensive')}>Defense </button>
+            <button disabled={reboundLoading} className='card' onClick={() => handleRebound('offensive')}>{reboundLoading === 'offensive' ? 'Loading...' : 'Offense'}</button>
+            <button disabled={reboundLoading} className='card' onClick={() => handleRebound('defensive')}>{reboundLoading === 'defensive' ? 'Loading...' : 'Defense'}</button>
           </div>
           <div className='stat'>
-            <button className='card' onClick={handleFoul}>Foul</button>
+            <button disabled={foulLoading} className='card' onClick={handleFoul}>{foulLoading ? 'Loading...' : 'Foul'}</button>
           </div>
           <div className='stat'>
-            <button className='card' onClick={handleAssist}>Assist</button>
+            <button disabled={assistLoading} className='card' onClick={handleAssist}>{assistLoading ? 'Loading...' : 'Assist'}</button>
 
           </div>
         </div>
@@ -280,13 +351,13 @@ const GameControls = () => {
               <tr key={index}>
                 <td>{action.action}</td>
                 <td>{action.points}</td>
-                <td>#{action.playerId}</td>
+                <td>#{action.playerNumber}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <button className='button' onClick={handleDeleteLastAction}>Undo last action</button>
+      <button disabled={undoLoading} className='button' onClick={handleDeleteLastAction}>{undoLoading ? 'Loading...' : 'Undo last action'}</button>
 
       {showGameResult && <GameResult onBackClick={handleBackClick} />}
 

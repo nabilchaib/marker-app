@@ -22,7 +22,7 @@ const PlayerSelection = ({team, onSelect, onClose}) => {
             key={player.number}
             className='player-btn'
             onClick={() => {
-              onSelect(player.number)
+              onSelect(player)
             }}>
             {player.name} #{player.number}
           </div>
