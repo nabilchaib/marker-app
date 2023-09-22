@@ -7,21 +7,30 @@ const BgImg = () => {
     const [bgUrl, setBgUrl] = useState('');
 
     useEffect(() => {
-        const fetchBgImg = async () => {
-            const query = 'basketball'
-            const response = await fetch(`${API_URL}&query=${query}`);
+      const fetchBgImg = async () => {
+        try{
+          const query = 'basketball'
+          const response = await fetch(`${API_URL}&query=${query}`);
+          if (response.status === 200) {
             const json = await response.json();
             setBgUrl(json.urls.regular);
-        };
+          } else {
+            const text = await response.text();
+            throw new Error(text);
+          }
+        } catch (err) {
+          console.log('ERR: ', err)
+        }
+      };
 
-        fetchBgImg();
+      fetchBgImg();
     }, []);
 
     return (
-        <div
-            className="bg-img"
-            style={{ backgroundImage: `url(${bgUrl})` }}
-        ></div>
+      <div
+        className="bg-img"
+        style={{ backgroundImage: `url(${bgUrl})` }}
+      />
     );
 };
 

@@ -1,3 +1,4 @@
+import React from 'react';
 import { useSelector } from 'react-redux';
 import { selectTeamScore } from './selectors/selectors'
 import '../css/main.css'
@@ -8,13 +9,13 @@ const Scoreboard = () => {
   const teamBScore = useSelector(state => selectTeamScore(state, 'teamB'));
 
   return (
-    
+
     <div className='Scoreboard'>
       <div className='TeamScores'>
         <div className='Score'>
       <h2 >Scoreboard</h2>
           <h3>Home:
-            <br></br> 
+            <br></br>
             <div className='points'>
             {teamAScore}
             </div>
@@ -23,7 +24,7 @@ const Scoreboard = () => {
 
           <h3>Away:
           <br></br>
-          <div className='points'> 
+          <div className='points'>
            {teamBScore}
           </div>
 
