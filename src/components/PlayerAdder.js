@@ -1,25 +1,60 @@
 import React, { useState } from 'react';
 import { addPlayer } from '../redux/reducer';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  addPlayerApi
+} from '../firebase/api';
 import '../css/main.css'
 
 
 const PlayerAdder = ({ team }) => {
   const dispatch = useDispatch();
   const [playerName, setPlayerName] = useState('');
-  const [playerId, setPlayerId] = useState('');
+  const [playerNumber, setPlayerNumber] = useState('');
+  const [error, setError] = useState('');
+  const game = useSelector((state) => state.game);
 
-  const handleAddPlayer = () => {
-    dispatch(addPlayer({ team, player: { name: playerName, id: playerId } }));
-    setPlayerName('');
-    setPlayerId('');
+  const handleAddPlayer = async (e) => {
+    e.preventDefault();
+    try {
+      if (playerName && playerNumber) {
+        const stats = {
+          points: {
+            attempted: [0, 0, 0, 0],
+            made: [0, 0, 0, 0]
+          },
+          rebounds: {
+            offensive: 0,
+            defensive: 0
+          },
+          assists: 0,
+          fouls: 0
+        };
+        const teamData = game[team];
+        const { player } = await addPlayerApi({ team: teamData, player: { name: playerName, number: playerNumber, stats: JSON.stringify(stats), team: teamData.id } });
+        dispatch(addPlayer({ team, player }));
+        setError('');
+        setPlayerName('');
+        setPlayerNumber('');
+      } else {
+        throw 'empty fields';
+      }
+    } catch (err) {
+      if (err === 'number exists already') {
+        setError('This number is already taken');
+      }
+
+      if (err === 'empty fields') {
+        setError('Please enter a player name and player number');
+      }
+    }
   };
 
   return (
     <div>
       <form onSubmit={handleAddPlayer} className='player-form'>
         <div>
-          <label htmlFor='playerName'>Player Name:</label>
+          <label htmlFor='playerName'>Player Name: </label>
           <input
             type='text'
             id='playerName'
@@ -29,19 +64,20 @@ const PlayerAdder = ({ team }) => {
             required
           />
         </div>
-        <div>
-          <label htmlFor='playerId'>Player ID:</label>
+        <div className="player-number-container">
+          <label htmlFor='playerNumber'>Player Number: </label>
           <input
             type='number'
-            id='playerId'
+            id='playerNumber'
             placeholder='Enter player ID'
-            value={playerId}
-            onChange={(e) => setPlayerId(e.target.value)}
+            value={playerNumber}
+            onChange={(e) => setPlayerNumber(e.target.value)}
             required
           />
         </div>
-        <button type='submit'>Add Player</button>
+        <button className="player-adder-button" type='submit'>Add Player</button>
       </form>
+      {error && <div className="error">{error}</div>}
     </div>
   );
 };

@@ -4,8 +4,6 @@ import GameControls from './components/GameControls';
 import './css/main.css'
 import BgImg from './components/Image';
 
-
-
 const App =() => {
   return (
     <div className='App'>

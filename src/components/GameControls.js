@@ -1,13 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
+  initializeDataApi,
+  addMadeShotApi,
+  addAttemptedShotApi,
+  addReboundApi,
+  addAssistApi,
+  addFoulApi,
+} from '../firebase/api';
+import {
   addRebound,
   addAssist,
   addFoul,
   addAttemptedShot,
   addMadeShot,
   undoLastAction,
-  updateLastActions
+  updateLastActions,
+  initializeData
 } from '../redux/reducer';
 import '../css/main.css'
 import PlayerSelection from './PlayerSelection';
@@ -27,6 +36,36 @@ const GameControls = () => {
   const teamA = useSelector((state) => state.game.teamA);
   const teamB = useSelector((state) => state.game.teamB);
 
+  useEffect(() => {
+    const fetchData = async userEmail => {
+      try {
+        const teams = await initializeDataApi(userEmail);
+        dispatch(initializeData({ teams }));
+      } catch (err) {
+        console.log('FETCH ERR: ', err);
+      }
+    };
+
+    const userString = localStorage.getItem('auth');
+    if (userString) {
+      const user = JSON.parse(userString);
+      if (user) {
+        const userEmail = user.user.email;
+        fetchData(userEmail);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (teamA && teamB) {
+      dispatch(updateLastActions(lastActions));
+    }
+  }, [lastActions, dispatch]);
+
+  if (!teamA || !teamB) {
+    return <div className="loading">loading...</div>
+  }
+
   const handleTeamChange = (teamValue) => {
     setSelectedTeam(teamValue);
     setSelectedPlayer('');
@@ -41,45 +80,76 @@ const GameControls = () => {
     setShowPlayerSelection(false);
   };
 
-  const handleAttempt = (points) => {
-    if (!selectedPlayer) {
-      setShowPlayerSelection(true)
-    } else
-      dispatch(addAttemptedShot({ team: selectedTeam, playerId: selectedPlayer, points }))
-    setLastActions([...lastActions, { action: 'addAttemptedShot', points, playerId: selectedPlayer, team: selectedTeam }])
-  };
-
-  const handleMade = (points) => {
+  const handleAttempt = async (points) => {
     if (!selectedPlayer) {
       setShowPlayerSelection(true)
     } else {
-      dispatch(addMadeShot({ team: selectedTeam, playerId: selectedPlayer, points }))
-      setLastActions([...lastActions, { action: 'addMadeShot', points, playerId: selectedPlayer, team: selectedTeam }])
+      try {
+        const team = selectedTeam === 'teamA' ? teamA : teamB;
+        await addAttemptedShotApi({ team, playerId: selectedPlayer, points });
+        dispatch(addAttemptedShot({ team: selectedTeam, playerId: selectedPlayer, points }))
+        setLastActions([...lastActions, { action: 'addAttemptedShot', points, playerId: selectedPlayer, team: selectedTeam }])
+      } catch (err) {
+
+      }
+    }
+  };
+
+  const handleMade = async (points) => {
+    if (!selectedPlayer) {
+      setShowPlayerSelection(true)
+    } else {
+      try {
+        const team = selectedTeam === 'teamA' ? teamA : teamB;
+        await addMadeShotApi({ team, playerId: selectedPlayer, points });
+        dispatch(addMadeShot({ team: selectedTeam, playerId: selectedPlayer, points }))
+        setLastActions([...lastActions, { action: 'addMadeShot', points, playerId: selectedPlayer, team: selectedTeam }])
+      } catch (err) {
+
+      }
     }
   }
 
-  const handleRebound = (type) => {
+  const handleRebound = async (type) => {
     if (!selectedPlayer) {
       setShowPlayerSelection(true)
     } else {
-      dispatch(addRebound({ team: selectedTeam, playerId: selectedPlayer, type }));
-      setLastActions([...lastActions, { action: 'addRebound', type, playerId: selectedPlayer, team: selectedTeam }])
+      try {
+        const team = selectedTeam === 'teamA' ? teamA : teamB;
+        await addReboundApi({ team, playerId: selectedPlayer, type });
+        dispatch(addRebound({ team: selectedTeam, playerId: selectedPlayer, type }));
+        setLastActions([...lastActions, { action: 'addRebound', type, playerId: selectedPlayer, team: selectedTeam }])
+      } catch (err) {
+
+      }
     };
   }
-  const handleAssist = () => {
+  const handleAssist = async () => {
     if (!selectedPlayer) {
       setShowPlayerSelection(true)
     } else {
-      dispatch(addAssist({ team: selectedTeam, playerId: selectedPlayer }));
-      setLastActions([...lastActions, { action: 'addAssist', playerId: selectedPlayer, team: selectedTeam }])
+      try {
+        const team = selectedTeam === 'teamA' ? teamA : teamB;
+        await addAssistApi({ team, playerId: selectedPlayer });
+        dispatch(addAssist({ team: selectedTeam, playerId: selectedPlayer }));
+        setLastActions([...lastActions, { action: 'addAssist', playerId: selectedPlayer, team: selectedTeam }])
+      } catch (err) {
+
+      }
     };
   }
-  const handleFoul = () => {
+  const handleFoul = async () => {
     if (!selectedPlayer) {
       setShowPlayerSelection(true)
     } else {
-      dispatch(addFoul({ team: selectedTeam, playerId: selectedPlayer }));
-      setLastActions([...lastActions, { action: 'addFoul', playerId: selectedPlayer, team: selectedTeam }])
+      try {
+        const team = selectedTeam === 'teamA' ? teamA : teamB;
+        await addFoulApi({ team, playerId: selectedPlayer });
+        dispatch(addFoul({ team: selectedTeam, playerId: selectedPlayer }));
+        setLastActions([...lastActions, { action: 'addFoul', playerId: selectedPlayer, team: selectedTeam }])
+      } catch (err) {
+
+      }
     };
   }
   const handleShowGameResult = () => {
@@ -89,11 +159,6 @@ const GameControls = () => {
   const handleBackClick = () => {
     setShowGameResult(false);
   };
-
-  useEffect(() => {
-    dispatch(updateLastActions(lastActions));
-  }, [lastActions, dispatch]);
-
 
   const handleDeleteLastAction = () => {
     // const lastAction = lastActions.pop()
@@ -119,7 +184,7 @@ const GameControls = () => {
             onClick={() => handleTeamChange('teamA')}
             animate={{ scale: selectedTeam === 'teamA' ? 1.5 : 1 }}
           >
-            TeamA
+            {teamA.name}
           </motion.button>
 
         </div>
@@ -129,7 +194,7 @@ const GameControls = () => {
             onClick={() => handleTeamChange('teamB')}
             animate={{ scale: selectedTeam === 'teamB' ? 1.5 : 1 }}
           >
-            TeamB
+            {teamB.name}
           </motion.button>
 
         </div>
@@ -139,7 +204,7 @@ const GameControls = () => {
       </div>
 
       {showPlayerSelection ? (
-        <PlayerSelection team={selectedTeam} players={playerOptions} onSelect={handlePlayerSelect} />
+        <PlayerSelection team={selectedTeam} players={playerOptions} onSelect={handlePlayerSelect} onClose={setShowPlayerSelection} />
       ) : (
         <div className='Selector'>
           <motion.button
@@ -156,7 +221,7 @@ const GameControls = () => {
           <select className='player' id="player" value={selectedPlayer} onChange={handlePlayerChange}>
             <option value=""></option>
             {playerOptions.map((player) => (
-              <option key={player.id} value={player.id}>
+              <option key={player.number} value={player.number}>
                 {player.name}
               </option>
             ))}
