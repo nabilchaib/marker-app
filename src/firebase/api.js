@@ -1,4 +1,5 @@
-import { FieldValue, getDoc, setDoc, addDoc, getDocs, query, collection, where, doc, updateDoc } from 'firebase/firestore';
+import { FieldValue, getDoc, setDoc, addDoc, getDocs, query, collection, where, doc, updateDoc, documentId,  } from 'firebase/firestore';
+import { firestore } from "../firebase";
 import { db } from '.';
 
 export const initializeDataApi = async (selectedTeam) => {
@@ -6,7 +7,7 @@ export const initializeDataApi = async (selectedTeam) => {
     try {
       console.log('hahaha', selectedTeam);
       const teamsData = {};
-      const teamsQuery = query(collection(db, 'teams'), where('id', 'in', selectedTeam));
+      const teamsQuery = query(collection(db, 'teams'), where(documentId(), 'in', selectedTeam));
       const teamsQuerySnapshot = await getDocs(teamsQuery);
       teamsQuerySnapshot.forEach(async doc => {
         console.log('doc', doc.data());
