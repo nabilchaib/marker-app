@@ -46,7 +46,7 @@ const handleTeamSelection = (teamId) => {
       const teams = await initializeDataApi( selectedTeams);
       console.log('teams', teams);
       dispatch(initializeData({ teams }));
-      navigate('/teamselection');
+      navigate('/');
     } catch (error) {
       console.error(error);
     }
