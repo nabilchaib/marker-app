@@ -1,16 +1,13 @@
-import { FieldValue, getDoc, setDoc, addDoc, getDocs, query, collection, where, doc, updateDoc, documentId,  } from 'firebase/firestore';
-import { firestore } from "../firebase";
+import { getDoc, setDoc, addDoc, getDocs, query, collection, where, doc, updateDoc, documentId } from 'firebase/firestore';
 import { db } from '.';
 
 export const initializeDataApi = async (selectedTeam) => {
   return new Promise(async (resolve, reject) => {
     try {
-      console.log('hahaha', selectedTeam);
       const teamsData = {};
       const teamsQuery = query(collection(db, 'teams'), where(documentId(), 'in', selectedTeam));
       const teamsQuerySnapshot = await getDocs(teamsQuery);
       teamsQuerySnapshot.forEach(async doc => {
-        console.log('doc', doc.data());
         const playersQuery = query(collection(db, 'players'), where('team', '==', doc.id));
         const playersQuerySnapshot = await getDocs(playersQuery);
         const teamId = doc.id;
@@ -22,7 +19,6 @@ export const initializeDataApi = async (selectedTeam) => {
           const playerData = {
             id: playerId,
             name: playerRawData.name,
-            number: playerRawData.number,
             number: playerRawData.number ? playerRawData.number : '',
             teamId,          
             stats: playerRawData.stats ? JSON.parse(playerRawData.stats) : {
