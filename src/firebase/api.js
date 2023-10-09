@@ -23,8 +23,20 @@ export const initializeDataApi = async (selectedTeam) => {
             id: playerId,
             name: playerRawData.name,
             number: playerRawData.number,
-            teamId,
-            stats: JSON.parse(playerRawData.stats)
+            number: playerRawData.number ? playerRawData.number : '',
+            teamId,          
+            stats: playerRawData.stats ? JSON.parse(playerRawData.stats) : {
+              points: {
+                attempted: [0, 0, 0, 0],
+                made: [0, 0, 0, 0]
+              },
+              rebounds: {
+                offensive: 0,
+                defensive: 0
+              },
+              assists: 0,
+              fouls: 0
+            }        
           };
           players.push(playerData);
         });
