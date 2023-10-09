@@ -11,6 +11,7 @@ import {
   createBrowserRouter,
   RouterProvider,
 } from "react-router-dom";
+import TeamSelectionPage from './components/TeamSelection';
 
 const Protected = ({ children }) => {
   const navigate = useNavigate();
@@ -36,6 +37,12 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <Login />
+  },
+  {
+    path: "/teamselection",
+    element: <Protected>
+      <TeamSelectionPage />
+    </Protected>
   }
 ]);
 

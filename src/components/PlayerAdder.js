@@ -69,7 +69,7 @@ const PlayerAdder = ({ team }) => {
           <input
             type='number'
             id='playerNumber'
-            placeholder='Enter player ID'
+            placeholder='Enter player Number'
             value={playerNumber}
             onChange={(e) => setPlayerNumber(e.target.value)}
             required

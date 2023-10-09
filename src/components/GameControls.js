@@ -25,6 +25,7 @@ import '../css/main.css'
 import PlayerSelection from './PlayerSelection';
 import { motion } from 'framer-motion';
 import GameResult from './GameResults';
+import { useNavigate } from 'react-router-dom';
 
 
 const GameControls = () => {
@@ -41,32 +42,26 @@ const GameControls = () => {
   const [reboundLoading, setReboundLoading] = useState(false);
   const [assistLoading, setAssistLoading] = useState(false);
   const [foulLoading, setFoulLoading] = useState(false);
+  const navigate = useNavigate();
 
   const teamA = useSelector((state) => state.game.teamA);
   const teamB = useSelector((state) => state.game.teamB);
 
   useEffect(() => {
-    const fetchData = async userEmail => {
-      try {
-        const teams = await initializeDataApi(userEmail);
-        const lastActions = await getLastActionsApi(userEmail);
-        dispatch(initializeData({ teams }));
-        setLastActions(lastActions);
-      } catch (err) {
-        console.log('FETCH ERR: ', err);
-      }
-    };
-
-    const userString = localStorage.getItem('auth');
-    if (userString) {
-      const user = JSON.parse(userString);
-      if (user) {
-        const userEmail = user.user.email;
-        setUserEmail(userEmail);
-        fetchData(userEmail);
-      }
+    if (!teamA || !teamB) {
+      navigate('/teamselection');
     }
-  }, []);
+    // const fetchData = async userEmail => {
+    //   try {
+    //     // const lastActions = await getLastActionsApi(userEmail);
+    //     // dispatch(initializeData({ teams }));
+    //     // setLastActions(lastActions);
+      // }
+      //  catch (err) {
+      //   console.log('FETCH ERR: ', err);
+      // }
+    // };
+  }, [navigate, teamA, teamB]);
 
   useEffect(() => {
     const updateActions = async () => {
@@ -291,7 +286,7 @@ const GameControls = () => {
                 number: player.number
               };
               return (
-                <option key={newPlayer.number} value={JSON.stringify(newPlayer)}>
+                <option key={player.id} value={JSON.stringify(newPlayer)}>
                   {player.name}
                 </option>
               );
@@ -348,7 +343,8 @@ const GameControls = () => {
           </thead>
           <tbody>
             {lastActions.slice(-10).map((action, index) => (
-              <tr key={index}>
+              // use a unique key for each action
+              <tr key={index.toString()}>
                 <td>{action.action}</td>
                 <td>{action.points}</td>
                 <td>#{action.playerNumber}</td>
