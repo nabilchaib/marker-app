@@ -1,4 +1,5 @@
-import {getDoc, setDoc, addDoc, getDocs, query, collection, where, doc, updateDoc, documentId,  } from 'firebase/firestore';
+import { FieldValue, getDoc, setDoc, addDoc, getDocs, query, collection, where, doc, updateDoc, documentId,  } from 'firebase/firestore';
+import { firestore } from "../firebase";
 import { db } from '.';
 
 export const initializeDataApi = async (selectedTeam) => {
@@ -21,20 +22,10 @@ export const initializeDataApi = async (selectedTeam) => {
           const playerData = {
             id: playerId,
             name: playerRawData.name,
-            number: playerRawData.number ? playerRawData.number : '',
+            number: playerRawData.number,
             teamId,
-            stats: playerRawData.stats ? JSON.parse(playerRawData.stats) : {
-              points: {
-                attempted: [0, 0, 0, 0],
-                made: [0, 0, 0, 0]
-              },
-              rebounds: {
-                offensive: 0,
-                defensive: 0
-              },
-              assists: 0,
-              fouls: 0}          };
-            console.log(playerData)
+            stats: JSON.parse(playerRawData.stats)
+          };
           players.push(playerData);
         });
 

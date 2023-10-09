@@ -39,14 +39,14 @@ const handleTeamSelection = (teamId) => {
 };
 
   const handleSubmit = async (event) => {
-    // console.log('selectedTeams', selectedTeams);
+    console.log('selectedTeams', selectedTeams);
     event.preventDefault();
     try {
       // send selected teams to the backend and UserEmail to InitializeDataApi
       const teams = await initializeDataApi( selectedTeams);
-      // console.log('teams', teams);
+      console.log('teams', teams);
       dispatch(initializeData({ teams }));
-      navigate('/');
+      navigate('/teamselection');
     } catch (error) {
       console.error(error);
     }
