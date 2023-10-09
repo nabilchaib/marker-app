@@ -19,7 +19,7 @@ const PlayerSelection = ({team, onSelect, onClose}) => {
       <div className='playerlist'>
         {players.map((player) => (
           <div
-            key={player.id}
+            key={player.number}
             className='player-btn'
             onClick={() => {
               onSelect(player)

@@ -61,7 +61,7 @@ const GameControls = () => {
       //   console.log('FETCH ERR: ', err);
       // }
     // };
-  }, [navigate, teamA, teamB]);
+  }, []);
 
   useEffect(() => {
     const updateActions = async () => {
@@ -286,7 +286,7 @@ const GameControls = () => {
                 number: player.number
               };
               return (
-                <option key={player.id} value={JSON.stringify(newPlayer)}>
+                <option key={newPlayer.number} value={JSON.stringify(newPlayer)}>
                   {player.name}
                 </option>
               );
@@ -343,8 +343,7 @@ const GameControls = () => {
           </thead>
           <tbody>
             {lastActions.slice(-10).map((action, index) => (
-              // use a unique key for each action
-              <tr key={index.toString()}>
+              <tr key={index}>
                 <td>{action.action}</td>
                 <td>{action.points}</td>
                 <td>#{action.playerNumber}</td>
