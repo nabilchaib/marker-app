@@ -13,8 +13,22 @@ export const initializeDataApi = async (selectedTeam) => {
         const teamId = doc.id;
         const team = { id: teamId, ...doc.data() };
         const players = [];
+        const playersMap = {};
+        const emptyStat = {
+          points: {
+            attempted: [0, 0, 0, 0],
+            made: [0, 0, 0, 0]
+          },
+          rebounds: {
+            offensive: 0,
+            defensive: 0
+          },
+          assists: 0,
+          fouls: 0
+        };
         playersQuerySnapshot.forEach((playerDoc) => {
           const playerId = playerDoc.id;
+          playersMap[playerId] = emptyStat;
           const playerRawData = playerDoc.data();
           const playerData = {
             id: playerId,
@@ -44,15 +58,28 @@ export const initializeDataApi = async (selectedTeam) => {
         }
 
         if (teamsData.teamA && teamsData.teamB) {
-          resolve(teamsData);
+          resolve({ teamsData, playersMap });
         }
       });
+      //addDoc(collection(db, 'games))
+
 
     } catch (err) {
       console.log('INITIALIZE DATA API ERR: ', err);
       reject(err);
     }
   });
+};
+export const addGameApi = async (game) => {
+  try {
+    const gameRef = collection(db, 'game');
+    // console.log(teamA.score);
+    // console.log('stats: ', stats);
+    await addDoc(gameRef, game)
+  } catch (err) {
+    console.log('ADD GAME API ERR: ', err);
+  }
+
 };
 
 export const addMadeShotApi = async ({ team, playerId, points }) => {
@@ -388,11 +415,6 @@ export const pushStatsToFirebase = async (teamA, teamB) => {
   });
 
   try {
-    const gameRef = collection(db, 'game');
-    console.log(teamA.score);
-
-    console.log('stats: ', stats);
-    await addDoc(gameRef, stats);
     await updateDoc(teamA, {
       score: 0
     });

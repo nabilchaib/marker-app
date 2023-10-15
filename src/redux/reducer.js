@@ -50,9 +50,7 @@ export const gameSlice = createSlice({
 
     undoLastAction: (state, action) => {
       state.lastActions = action.payload;
-      const lastAction = state.lastActions.lastActions[state.lastActions.lastActions.length - 1]
-
-
+      const lastAction = state.lastActions.lastActions[state.lastActions.lastActions.length - 1];
       if (lastAction) {
         switch (lastAction.action) {
           case 'addMadeShot': {
