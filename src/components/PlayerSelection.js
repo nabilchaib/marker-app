@@ -24,7 +24,8 @@ const PlayerSelection = ({team, onSelect, onClose}) => {
             onClick={() => {
               onSelect(player)
             }}>
-            {player.name} #{player.number}
+            {/* {player.name} */}
+             #{player.number}
           </div>
         ))}
       </div>

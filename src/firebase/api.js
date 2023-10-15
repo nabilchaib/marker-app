@@ -328,3 +328,78 @@ export const undoLastActionApi = async (lastActions, teamData) => {
     }
   });
 };
+
+export const pushStatsToFirebase = async (teamA, teamB) => {
+  const stats = {
+    date: new Date(),
+    teamA: {
+      name: teamA.name,
+      score: teamA.score
+    },
+    teamB: {
+      name: teamB.name,
+      score: teamB.score
+    },
+    players: []
+  };
+
+  teamA.players.forEach((player) => {
+    const pointsMade = player.stats.points.made;
+    const pointsMissed = player.stats.points.attempted;
+    const playerStats = {
+      name: player.name,
+      points: player.stats.points.made[1] + player.stats.points.made[2] * 2 + player.stats.points.made[3] * 3,
+      rebounds: player.stats.rebounds.offensive + player.stats.rebounds.defensive,
+      assists: player.stats.assists,
+      fouls: player.stats.fouls,
+      team: teamA.name,
+      pointsMade: pointsMade,
+      pointsMissed: pointsMissed,
+      percentages: {
+        'FT': (player.stats.points.made[1] / (player.stats.points.made[1] + player.stats.points.attempted[1])) * 100 + '%',
+        '2PT': (player.stats.points.made[2] / (player.stats.points.made[2] + player.stats.points.attempted[2])) * 100 + '%',
+        '3PT': (player.stats.points.made[3] / (player.stats.points.made[3] + player.stats.points.attempted[3])) * 100 + '%'
+      },
+      id: player.id
+    };
+    stats.players.push(playerStats);
+  });
+
+  teamB.players.forEach((player) => {
+    const pointsMade = player.stats.points.made;
+    const pointsMissed = player.stats.points.attempted;
+    const playerStats = {
+      name: player.name,
+      points: player.stats.points.made[1] + player.stats.points.made[2] * 2 + player.stats.points.made[3] * 3,
+      rebounds: player.stats.rebounds.offensive + player.stats.rebounds.defensive,
+      assists: player.stats.assists,
+      fouls: player.stats.fouls,
+      team: teamB.name,
+      pointsMade: pointsMade,
+      pointsMissed: pointsMissed,
+      percentages: {
+        'FT': (player.stats.points.made[1] / (player.stats.points.made[1] + player.stats.points.attempted[1])) * 100 + '%',
+        '2PT': (player.stats.points.made[2] / (player.stats.points.made[2] + player.stats.points.attempted[2])) * 100 + '%',
+        '3PT': (player.stats.points.made[3] / (player.stats.points.made[3] + player.stats.points.attempted[3])) * 100 + '%'
+      },
+      id: player.id
+    };
+    stats.players.push(playerStats);
+  });
+
+  try {
+    const gameRef = collection(db, 'game');
+    console.log(teamA.score);
+
+    console.log('stats: ', stats);
+    await addDoc(gameRef, stats);
+    await updateDoc(teamA, {
+      score: 0
+    });
+    await updateDoc(teamB, {
+      score: 0
+    });
+  } catch (err) {
+    console.log('PUSH STATS TO FIREBASE ERR: ', err);
+  }
+};

@@ -343,10 +343,10 @@ const GameControls = () => {
           </thead>
           <tbody>
             {lastActions.slice(-10).map((action, index) => (
-              <tr key={index}>
+              <tr key={action.playerNumber}>
                 <td>{action.action}</td>
                 <td>{action.points}</td>
-                <td>#{action.playerNumber}</td>
+                <td>#{`#${action.playerNumber}`}</td>
               </tr>
             ))}
           </tbody>
