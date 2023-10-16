@@ -38,6 +38,7 @@ export const initializeGameApi = async (selectedTeams) => {
         gameQuerySnapshot.forEach(game => {
           const newGameData = game.data();
           const newGame = { id: game.id, ...newGameData, date: newGameData.date.toDate().toISOString() };
+          console.log('EXISTING GAME: ', newGame)
           resolve({ game: newGame, startNew: false });
         });
       } else {
@@ -289,6 +290,7 @@ export const updateLastActionsApi = async (game, lastActions) => {
         actions: lastActions
       };
 
+      console.log('UPDATE LAST ACTION: ', game, newGame)
       const gameRef = doc(db, 'game', game.id);
       await updateDoc(gameRef, newGame);
 
