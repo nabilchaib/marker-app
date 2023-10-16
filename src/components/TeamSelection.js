@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getDocs, collection } from 'firebase/firestore';
 import { db } from './../firebase';
-import { initializeDataApi } from './../firebase/api';
+import { addGameApi, initializeDataApi } from './../firebase/api';
 import { useDispatch } from 'react-redux';
 import { initializeData } from './../redux/reducer';
 import { useNavigate } from 'react-router-dom';
@@ -43,9 +43,25 @@ const handleTeamSelection = (teamId) => {
     event.preventDefault();
     try {
       // send selected teams to the backend and UserEmail to InitializeDataApi
-      const teams = await initializeDataApi( selectedTeams);
+      const { teamsData: teams, playersMap } = await initializeDataApi( selectedTeams);
       console.log('teams', teams);
       dispatch(initializeData({ teams }));
+      const game = {
+        date: new Date(),
+        teamA: {
+          name: teams.teamA.name,
+          score: 0,
+          id: teams.teamA.id
+        },
+        teamB: {
+          name: teams.teamB.name,
+          score: 0,
+          id: teams.teamB.id
+        },
+        players: playersMap
+      };
+      console.log('game', game);
+      await addGameApi(game);
       navigate('/');
     } catch (error) {
       console.error(error);
