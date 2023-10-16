@@ -3,17 +3,20 @@ import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
 import { selectTeamScore } from './selectors/selectors';
 import { pushStatsToFirebase } from '../firebase/api';
+import { useNavigate } from 'react-router-dom';
 import '../css/gameresults.css';
 
 const GameResults = ({ onBackClick }) => {
+  const navigate = useNavigate();
   const teamA = useSelector((state) => state.game.teamA);
   const teamB = useSelector((state) => state.game.teamB);
+  const game = useSelector((state) => state.game);
 
   const teamAScore = useSelector((state) => selectTeamScore(state, 'teamA'));
   const teamBScore = useSelector((state) => selectTeamScore(state, 'teamB'));
 
   const playerStats = (team) => {
-    return team.players.map((player) => {
+    return Object.values(team.players).map((player) => {
       return (
         <tr key={player.id}>
           <td>{player.name}</td>
@@ -27,8 +30,9 @@ const GameResults = ({ onBackClick }) => {
   };
 
   const EndGameButton = ({ teamA, teamB }) => {
-    const handleClick = () => {
-      pushStatsToFirebase(teamA, teamB);
+    const handleClick = async () => {
+      await pushStatsToFirebase(game, teamA, teamB);
+      navigate('/teamselection');
     };
 
     return (

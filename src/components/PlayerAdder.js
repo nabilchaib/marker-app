@@ -18,20 +18,8 @@ const PlayerAdder = ({ team }) => {
     e.preventDefault();
     try {
       if (playerName && playerNumber) {
-        const stats = {
-          points: {
-            attempted: [0, 0, 0, 0],
-            made: [0, 0, 0, 0]
-          },
-          rebounds: {
-            offensive: 0,
-            defensive: 0
-          },
-          assists: 0,
-          fouls: 0
-        };
         const teamData = game[team];
-        const { player } = await addPlayerApi({ team: teamData, player: { name: playerName, number: playerNumber, stats: JSON.stringify(stats), team: teamData.id } });
+        const { player } = await addPlayerApi({ game, selectedTeam: team, team: teamData, player: { name: playerName, number: playerNumber, team: teamData.id } });
         dispatch(addPlayer({ team, player }));
         setError('');
         setPlayerName('');

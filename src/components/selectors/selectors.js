@@ -7,7 +7,7 @@ export const selectTeam = (state, team) => {
 };
 
 export const selectTeamPlayers = (state, team) => {
-  return selectTeam(state, team).players || [];
+  return Object.values(selectTeam(state, team).players) || [];
 };
 
 export const selectTeamScore = (state, team) => {

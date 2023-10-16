@@ -6,40 +6,38 @@ export const gameSlice = createSlice({
   name: 'game',
   initialState,
   reducers: {
-    initializeData: (state, action) => {
-      const { teams } = action.payload;
-      state.teamA = teams.teamA;
-      state.teamB = teams.teamB;
+    initializeGame: (_, action) => {
+      const { game } = action.payload;
+      return game;
     },
     addPlayer: (state, action) => {
       const { team, player } = action.payload;
-      state[team].players.push(player);
+      state[team].players[player.id] = player;
     },
     addAttemptedShot: (state, action) => {
       const { team, playerId, points } = action.payload;
-      const player = state[team].players.find((p) => p.id === playerId);
+      const player = state[team].players[playerId];
       player.stats.points.attempted[points]++;
-
     },
     addMadeShot: (state, action) => {
       const { team, playerId, points } = action.payload;
-      const player = state[team].players.find((p) => p.id === playerId);
+      const player = state[team].players[playerId];
       player.stats.points.made[points]++;
       state[team].score += parseInt(points);
     },
     addRebound: (state, action) => {
       const { team, playerId, type } = action.payload;
-      const player = state[team].players.find((p) => p.id === playerId);
+      const player = state[team].players[playerId];
       player.stats.rebounds[type]++;
     },
     addAssist: (state, action) => {
       const { team, playerId } = action.payload;
-      const player = state[team].players.find((p) => p.id === playerId);
+      const player = state[team].players[playerId];
       player.stats.assists++;
     },
     addFoul: (state, action) => {
       const { team, playerId } = action.payload;
-      const player = state[team].players.find((p) => p.id === playerId);
+      const player = state[team].players[playerId];
       player.stats.fouls++;
     },
 
@@ -92,6 +90,6 @@ export const gameSlice = createSlice({
   },
 });
 
-export const { addAttemptedShot, addMadeShot, addPlayer, addScore, addRebound, addAssist, addFoul, updateLastActions, undoLastAction, initializeData } = gameSlice.actions;
+export const { addAttemptedShot, addMadeShot, addPlayer, addScore, addRebound, addAssist, addFoul, updateLastActions, undoLastAction, initializeGame } = gameSlice.actions;
 
 export default gameSlice.reducer;
