@@ -42,44 +42,43 @@ export const gameSlice = createSlice({
     },
 
     updateLastActions: (state, action) => {
-      state.lastActions = action.payload;
-      // console.log(state.lastActions);
+      state.actions = action.payload;
     },
 
     undoLastAction: (state, action) => {
-      state.lastActions = action.payload;
-      const lastAction = state.lastActions.lastActions[state.lastActions.lastActions.length - 1];
+      state.actions = action.payload;
+      const lastAction = state.actions[state.actions.length - 1];
       if (lastAction) {
         switch (lastAction.action) {
           case 'addMadeShot': {
             const { team, playerId, points } = lastAction;
-            const player = state[team].players.find((p) => p.id === playerId);
+            const player = state[team].players[playerId];
             player.stats.points.made[points]--;
             state[team].score -= parseInt(points);
             break;
           }
           case 'addAttemptedShot': {
             const { team, playerId, points } = lastAction;
-            const player = state[team].players.find((p) => p.id === playerId);
+            const player = state[team].players[playerId];
             player.stats.points.attempted[points]--;
             break;
           }
           case 'addRebound': {
-            const { team: rTeam, playerId: rPlayerId, type: rType } = lastAction;
-            const rPlayer = state[rTeam].players.find((p) => p.id === rPlayerId);
-            rPlayer.stats.rebounds[rType]--;
+            const { team, playerId, type } = lastAction;
+            const player = state[team].players[playerId];
+            player.stats.rebounds[type]--;
             break;
           }
           case 'addAssist': {
-            const { team: aTeam, playerId: aPlayerId } = lastAction;
-            const aPlayer = state[aTeam].players.find((p) => p.id === aPlayerId);
-            aPlayer.stats.assists--;
+            const { team, playerId } = lastAction;
+            const player = state[team].players[playerId];
+            player.stats.assists--;
             break;
           }
           case 'addFoul': {
-            const { team: fTeam, playerId: fPlayerId } = lastAction;
-            const fPlayer = state[fTeam].players.find((p) => p.id === fPlayerId);
-            fPlayer.stats.fouls--;
+            const { team, playerId } = lastAction;
+            const player = state[team].players[playerId];
+            player.stats.fouls--;
             break;
           }
           default:

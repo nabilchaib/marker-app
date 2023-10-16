@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   addMadeShotApi,
@@ -24,15 +25,12 @@ import { motion } from 'framer-motion';
 import GameResult from './GameResults';
 import { useNavigate } from 'react-router-dom';
 
-
 const GameControls = () => {
   const dispatch = useDispatch();
   const [selectedTeam, setSelectedTeam] = useState('teamA');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [showPlayerSelection, setShowPlayerSelection] = useState(false);
   const [showGameResult, setShowGameResult] = useState(false);
-  const [lastActions, setLastActions] = useState([]);
-  const [userEmail, setUserEmail] = useState('');
   const [undoLoading, setUndoLoading] = useState(false);
   const [madeLoading, setMadeLoading] = useState(false);
   const [attemptLoading, setAttemptLoading] = useState(false);
@@ -48,6 +46,7 @@ const GameControls = () => {
   const teamA = useSelector((state) => state.game.teamA);
   const teamB = useSelector((state) => state.game.teamB);
   const game = useSelector((state) => state.game);
+  const [lastActions, setLastActions] = useState(game.actions || []);
 
   useEffect(() => {
     if (!teamA || !teamB) {
@@ -58,32 +57,22 @@ const GameControls = () => {
         teamB: Object.values(teamB.players)
       });
     }
-    // const fetchData = async userEmail => {
-    //   try {
-    //     // const lastActions = await getLastActionsApi(userEmail);
-    //     // dispatch(initializeData({ teams }));
-    //     // setLastActions(lastActions);
-      // }
-      //  catch (err) {
-      //   console.log('FETCH ERR: ', err);
-      // }
-    // };
   }, [teamA, teamB]);
 
-  // useEffect(() => {
-  //   const updateActions = async () => {
-  //     try {
-  //       await updateLastActionsApi(lastActions, userEmail);
-  //       dispatch(updateLastActions(lastActions));
-  //     } catch (err) {
+  useEffect(() => {
+    const updateActions = async () => {
+      try {
+        await updateLastActionsApi(game, lastActions);
+        dispatch(updateLastActions(lastActions));
+      } catch (err) {
 
-  //     }
-  //   };
+      }
+    };
 
-  //   if (teamA && teamB) {
-  //     updateActions();
-  //   }
-  // }, [lastActions, dispatch]);
+    if (teamA && teamB) {
+      updateActions();
+    }
+  }, [lastActions, dispatch]);
 
   if (!teamA || !teamB) {
     return <div className="loading">loading...</div>
@@ -119,7 +108,7 @@ const GameControls = () => {
         setAttemptLoading(points);
         await addAttemptedShotApi({ game, selectedTeam, playerId: selectedPlayer.id, points });
         dispatch(addAttemptedShot({ team: selectedTeam, playerId: selectedPlayer.id, points }))
-        // setLastActions(prev => [...prev, { action: 'addAttemptedShot', points, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addAttemptedShot', points, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
         setAttemptLoading(false);
       } catch (err) {
         setAttemptLoading(false);
@@ -139,7 +128,7 @@ const GameControls = () => {
         setMadeLoading(points);
         await addMadeShotApi({ game, selectedTeam, playerId: selectedPlayer.id, points });
         dispatch(addMadeShot({ team: selectedTeam, playerId: selectedPlayer.id, points }))
-        // setLastActions(prev => [...prev, { action: 'addMadeShot', points, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addMadeShot', points, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
         setMadeLoading(false);
       } catch (err) {
         setMadeLoading(false);
@@ -159,7 +148,7 @@ const GameControls = () => {
         setReboundLoading(type);
         await addReboundApi({ game, selectedTeam, playerId: selectedPlayer.id, type });
         dispatch(addRebound({ team: selectedTeam, playerId: selectedPlayer.id, type }));
-        // setLastActions(prev => [...prev, { action: 'addRebound', type, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addRebound', type, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
         setReboundLoading(false);
       } catch (err) {
         setReboundLoading(false);
@@ -178,7 +167,7 @@ const GameControls = () => {
         setAssistLoading(true);
         await addAssistApi({ game, selectedTeam, playerId: selectedPlayer.id });
         dispatch(addAssist({ team: selectedTeam, playerId: selectedPlayer.id }));
-        // setLastActions(prev => [...prev, { action: 'addAssist', playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addAssist', playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
         setAssistLoading(false);
       } catch (err) {
         setAssistLoading(false);
@@ -197,7 +186,7 @@ const GameControls = () => {
         setFoulLoading(true);
         await addFoulApi({ game, selectedTeam, playerId: selectedPlayer.id });
         dispatch(addFoul({ team: selectedTeam, playerId: selectedPlayer.id }));
-        // setLastActions(prev => [...prev, { action: 'addFoul', playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addFoul', playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
         setFoulLoading(false);
       } catch (err) {
         setFoulLoading(false);
@@ -213,19 +202,17 @@ const GameControls = () => {
   };
 
   const handleDeleteLastAction = async () => {
-    // const lastAction = lastActions.pop()
-    // console.log(lastAction)
     if (undoLoading) {
       return true;
     }
 
     try {
       setUndoLoading(true);
-      // await undoLastActionApi(lastActions, { teamA, teamB });
-      // dispatch(undoLastAction({ lastActions }));
-      // setLastActions(prevLastActions => {
-      //   return prevLastActions.slice(0, -1);
-      // })
+      await undoLastActionApi(lastActions, game);
+      dispatch(undoLastAction(lastActions));
+      setLastActions(prevLastActions => {
+        return prevLastActions.slice(0, -1);
+      })
       setUndoLoading(false);
     } catch (err) {
       setUndoLoading(false);
@@ -344,10 +331,10 @@ const GameControls = () => {
           </thead>
           <tbody>
             {lastActions.slice(-10).map((action, index) => (
-              <tr key={action.playerNumber}>
+              <tr key={action.id}>
                 <td>{action.action}</td>
                 <td>{action.points}</td>
-                <td>#{`#${action.playerNumber}`}</td>
+                <td>#{`${action.playerNumber}`}</td>
               </tr>
             ))}
           </tbody>

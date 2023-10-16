@@ -43,7 +43,8 @@ export const initializeGameApi = async (selectedTeams) => {
       } else {
         const game = {
           date: serverTimestamp(),
-          finished: false
+          finished: false,
+          actions: []
         };
         const teamsQuery = query(collection(db, 'teams'), where(documentId(), 'in', selectedTeams.map(t => t.id)));
         const teamsQuerySnapshot = await getDocs(teamsQuery);
@@ -281,11 +282,16 @@ export const addPlayerApi = async ({ game, selectedTeam, team, player }) => {
   });
 };
 
-export const updateLastActionsApi = async (lastActions, userEmail) => {
+export const updateLastActionsApi = async (game, lastActions) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const lastActionsRef = doc(db, 'last-actions', userEmail);
-      await setDoc(lastActionsRef, { actions: lastActions }, { merge: true });
+      const newGame = {
+        actions: lastActions
+      };
+
+      const gameRef = doc(db, 'game', game.id);
+      await updateDoc(gameRef, newGame);
+
       resolve();
     } catch (err) {
       console.log('UPDATE LAST ACTIONS API ERR: ', err);
@@ -294,32 +300,14 @@ export const updateLastActionsApi = async (lastActions, userEmail) => {
   });
 };
 
-export const getLastActionsApi = async (userEmail) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const docRef = doc(db, 'last-actions', userEmail);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const lastActions = docSnap.data();
-        resolve(lastActions.actions);
-      } else {
-        resolve([]);
-      }
-    } catch (err) {
-      console.log('GET LAST ACTIONS API ERR: ', err);
-      reject(err);
-    }
-  });
-};
-
-export const undoLastActionApi = async (lastActions, teamData) => {
+export const undoLastActionApi = async (lastActions, game) => {
   return new Promise(async (resolve, reject) => {
     try {
       const lastAction = lastActions[lastActions.length - 1];
       if (lastAction) {
         if (lastAction.action === 'addMadeShot' || lastAction.action === 'addAttemptedShot') {
           const { team, playerId, points } = lastAction;
-          const player = teamData[team].players.find((p) => p.id === playerId);
+          const player = game[team].players[playerId];
           const type = lastAction.action === 'addAttemptedShot' ? 'attempted' : 'made'
 
           const newStats = {
@@ -336,21 +324,17 @@ export const undoLastActionApi = async (lastActions, teamData) => {
             }
           };
 
-          const playerRef = doc(db, 'players', playerId);
-          await updateDoc(playerRef, {
-            stats: JSON.stringify(newStats)
-          });
-
+          let newGame = getNewGameStats({ game, selectedTeam: team, player, playerId, newStats });
           if (type === 'made') {
-            const newScore = teamData[team].score - parseInt(points);
-            const teamRef = doc(db, 'teams', teamData[team].id);
-            await updateDoc(teamRef, {
-              score: newScore
-            });
+            const newScore = game[team].score - parseInt(points);
+            newGame = getNewGameStats({ game, selectedTeam: team, player, playerId, newStats, newScore });
           }
+
+          const gameRef = doc(db, 'game', game.id);
+          await updateDoc(gameRef, newGame);
         } else if (lastAction.action === 'addRebound') {
           const { team, playerId, type } = lastAction;
-          const player = teamData[team].players.find((p) => p.id === playerId);
+          const player = game[team].players[playerId];
           const newStats = {
             ...player.stats,
             rebounds: {
@@ -359,34 +343,31 @@ export const undoLastActionApi = async (lastActions, teamData) => {
             }
           };
 
-          const playerRef = doc(db, 'players', playerId);
-          await updateDoc(playerRef, {
-            stats: JSON.stringify(newStats)
-          });
+          const newGame = getNewGameStats({ game, selectedTeam: team, player, playerId, newStats });
+          const gameRef = doc(db, 'game', game.id);
+          await updateDoc(gameRef, newGame);
         } else if (lastAction.action === 'addAssist') {
           const { team, playerId } = lastAction;
-          const player = teamData[team].players.find((p) => p.id === playerId);
+          const player = game[team].players[playerId];
           const newStats = {
             ...player.stats,
             assists: player.stats.assists - 1
           };
 
-          const playerRef = doc(db, 'players', playerId);
-          await updateDoc(playerRef, {
-            stats: JSON.stringify(newStats)
-          });
+          const newGame = getNewGameStats({ game, selectedTeam: team, player, playerId, newStats });
+          const gameRef = doc(db, 'game', game.id);
+          await updateDoc(gameRef, newGame);
         } else if (lastAction.action === 'addFoul') {
           const { team, playerId } = lastAction;
-          const player = teamData[team].players.find((p) => p.id === playerId);
+          const player = game[team].players[playerId];
           const newStats = {
             ...player.stats,
             fouls: player.stats.fouls - 1
           };
 
-          const playerRef = doc(db, 'players', playerId);
-          await updateDoc(playerRef, {
-            stats: JSON.stringify(newStats)
-          });
+          const newGame = getNewGameStats({ game, selectedTeam: team, player, playerId, newStats });
+          const gameRef = doc(db, 'game', game.id);
+          await updateDoc(gameRef, newGame);
         }
       }
 
