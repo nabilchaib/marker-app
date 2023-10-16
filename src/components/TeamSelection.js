@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getDocs, collection } from 'firebase/firestore';
 import { db } from './../firebase';
-import { initializeDataApi } from './../firebase/api';
+import { addGameApi, initializeGameApi } from './../firebase/api';
 import { useDispatch } from 'react-redux';
-import { initializeData } from './../redux/reducer';
+import { initializeGame } from './../redux/reducer';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -12,8 +12,6 @@ const TeamSelectionPage = () => {
   const [selectedTeams, setSelectedTeams] = useState([]);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
-
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -25,27 +23,26 @@ const TeamSelectionPage = () => {
     fetchTeams();
   }, []);
 
-const handleTeamSelection = (teamId) => {
-  if (selectedTeams.length < 2) {
-    const isSelected = selectedTeams.includes(teamId);
-    if (isSelected) {
-      setSelectedTeams(selectedTeams.filter(id => id !== teamId));
-    } else {
-      setSelectedTeams([...selectedTeams, teamId]);
+  const handleTeamSelection = (team) => {
+    const alreadySelectedTeams = selectedTeams.filter(t => t.id === team.id);
+    if (alreadySelectedTeams.length > 0) {
+      setSelectedTeams(prev => prev.filter(t => t.id !== team.id));
+    } else if (selectedTeams.length < 2) {
+      setSelectedTeams(prev => [...prev, team]);
     }
-  } else if (selectedTeams.includes(teamId)) {
-    setSelectedTeams(selectedTeams.filter(id => id !== teamId));
-  }
-};
+  };
 
   const handleSubmit = async (event) => {
-    console.log('selectedTeams', selectedTeams);
     event.preventDefault();
     try {
-      // send selected teams to the backend and UserEmail to InitializeDataApi
-      const teams = await initializeDataApi( selectedTeams);
-      console.log('teams', teams);
-      dispatch(initializeData({ teams }));
+      // send selected teams to the backend and UserEmail to InitializeGameApi
+      const { game, startNew } = await initializeGameApi(selectedTeams);
+      if (startNew) {
+        const newGame = await addGameApi(game);
+        dispatch(initializeGame({ game: newGame }));
+      } else {
+        dispatch(initializeGame({ game }));
+      }
       navigate('/');
     } catch (error) {
       console.error(error);
@@ -54,13 +51,13 @@ const handleTeamSelection = (teamId) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className='playerpage'> 
-        <div className='title'> 
+      <div className='playerpage'>
+        <div className='title'>
           <h2>Select your teams:</h2>
         </div>
         <div className='playerlist'>
           {teams.map(team => (
-            <div 
+            <div
               key={team.id}
               className='player-btn'>
               <label>
@@ -68,8 +65,8 @@ const handleTeamSelection = (teamId) => {
                   type="checkbox"
                   // make the checkbox bigger
                   style={{ width: '20px', height: '20px' }}
-                  checked={selectedTeams.includes(team.id)}
-                  onChange={() => handleTeamSelection(team.id)}
+                  checked={selectedTeams?.[0]?.id === team.id || selectedTeams?.[1]?.id === team.id}
+                  onChange={() => handleTeamSelection(team)}
                 />
                 {team.name}
               </label>

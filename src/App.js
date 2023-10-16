@@ -13,9 +13,7 @@ const App =() => {
   };
   return (
     <div>
-        <div>
-          <h2>Game is ready to start with teams:</h2>
-          
+        <div>          
            <div className='App'>
             <h1> Scorer Table</h1>
             <BgImg/>

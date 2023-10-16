@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { useSelector, useDispatch } from 'react-redux';
 import {
-  initializeDataApi,
   addMadeShotApi,
   addAttemptedShotApi,
   addReboundApi,
   addAssistApi,
   addFoulApi,
   updateLastActionsApi,
-  getLastActionsApi,
   undoLastActionApi,
 } from '../firebase/api';
 import {
@@ -19,7 +18,6 @@ import {
   addMadeShot,
   undoLastAction,
   updateLastActions,
-  initializeData
 } from '../redux/reducer';
 import '../css/main.css'
 import PlayerSelection from './PlayerSelection';
@@ -27,46 +25,44 @@ import { motion } from 'framer-motion';
 import GameResult from './GameResults';
 import { useNavigate } from 'react-router-dom';
 
-
 const GameControls = () => {
   const dispatch = useDispatch();
   const [selectedTeam, setSelectedTeam] = useState('teamA');
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [showPlayerSelection, setShowPlayerSelection] = useState(false);
   const [showGameResult, setShowGameResult] = useState(false);
-  const [lastActions, setLastActions] = useState([]);
-  const [userEmail, setUserEmail] = useState('');
   const [undoLoading, setUndoLoading] = useState(false);
   const [madeLoading, setMadeLoading] = useState(false);
   const [attemptLoading, setAttemptLoading] = useState(false);
   const [reboundLoading, setReboundLoading] = useState(false);
   const [assistLoading, setAssistLoading] = useState(false);
   const [foulLoading, setFoulLoading] = useState(false);
+  const [playerOptionsMap, setPlayerOptionsMap] = useState({
+    teamA: [],
+    teamB: []
+  });
   const navigate = useNavigate();
 
   const teamA = useSelector((state) => state.game.teamA);
   const teamB = useSelector((state) => state.game.teamB);
+  const game = useSelector((state) => state.game);
+  const [lastActions, setLastActions] = useState(game.actions || []);
 
   useEffect(() => {
     if (!teamA || !teamB) {
       navigate('/teamselection');
+    } else {
+      setPlayerOptionsMap({
+        teamA: Object.values(teamA.players),
+        teamB: Object.values(teamB.players)
+      });
     }
-    // const fetchData = async userEmail => {
-    //   try {
-    //     // const lastActions = await getLastActionsApi(userEmail);
-    //     // dispatch(initializeData({ teams }));
-    //     // setLastActions(lastActions);
-      // }
-      //  catch (err) {
-      //   console.log('FETCH ERR: ', err);
-      // }
-    // };
-  }, []);
+  }, [teamA, teamB]);
 
   useEffect(() => {
     const updateActions = async () => {
       try {
-        await updateLastActionsApi(lastActions, userEmail);
+        await updateLastActionsApi(game, lastActions);
         dispatch(updateLastActions(lastActions));
       } catch (err) {
 
@@ -110,10 +106,9 @@ const GameControls = () => {
     } else {
       try {
         setAttemptLoading(points);
-        const team = selectedTeam === 'teamA' ? teamA : teamB;
-        await addAttemptedShotApi({ team, playerId: selectedPlayer.id, points });
+        await addAttemptedShotApi({ game, selectedTeam, playerId: selectedPlayer.id, points });
         dispatch(addAttemptedShot({ team: selectedTeam, playerId: selectedPlayer.id, points }))
-        setLastActions(prev => [...prev, { action: 'addAttemptedShot', points, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addAttemptedShot', points, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
         setAttemptLoading(false);
       } catch (err) {
         setAttemptLoading(false);
@@ -131,10 +126,9 @@ const GameControls = () => {
     } else {
       try {
         setMadeLoading(points);
-        const team = selectedTeam === 'teamA' ? teamA : teamB;
-        await addMadeShotApi({ team, playerId: selectedPlayer.id, points });
+        await addMadeShotApi({ game, selectedTeam, playerId: selectedPlayer.id, points });
         dispatch(addMadeShot({ team: selectedTeam, playerId: selectedPlayer.id, points }))
-        setLastActions(prev => [...prev, { action: 'addMadeShot', points, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addMadeShot', points, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
         setMadeLoading(false);
       } catch (err) {
         setMadeLoading(false);
@@ -152,10 +146,9 @@ const GameControls = () => {
     } else {
       try {
         setReboundLoading(type);
-        const team = selectedTeam === 'teamA' ? teamA : teamB;
-        await addReboundApi({ team, playerId: selectedPlayer.id, type });
+        await addReboundApi({ game, selectedTeam, playerId: selectedPlayer.id, type });
         dispatch(addRebound({ team: selectedTeam, playerId: selectedPlayer.id, type }));
-        setLastActions(prev => [...prev, { action: 'addRebound', type, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addRebound', type, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
         setReboundLoading(false);
       } catch (err) {
         setReboundLoading(false);
@@ -172,10 +165,9 @@ const GameControls = () => {
     } else {
       try {
         setAssistLoading(true);
-        const team = selectedTeam === 'teamA' ? teamA : teamB;
-        await addAssistApi({ team, playerId: selectedPlayer.id });
+        await addAssistApi({ game, selectedTeam, playerId: selectedPlayer.id });
         dispatch(addAssist({ team: selectedTeam, playerId: selectedPlayer.id }));
-        setLastActions(prev => [...prev, { action: 'addAssist', playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addAssist', playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
         setAssistLoading(false);
       } catch (err) {
         setAssistLoading(false);
@@ -192,10 +184,9 @@ const GameControls = () => {
     } else {
       try {
         setFoulLoading(true);
-        const team = selectedTeam === 'teamA' ? teamA : teamB;
-        await addFoulApi({ team, playerId: selectedPlayer.id });
+        await addFoulApi({ game, selectedTeam, playerId: selectedPlayer.id });
         dispatch(addFoul({ team: selectedTeam, playerId: selectedPlayer.id }));
-        setLastActions(prev => [...prev, { action: 'addFoul', playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
+        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addFoul', playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
         setFoulLoading(false);
       } catch (err) {
         setFoulLoading(false);
@@ -211,16 +202,14 @@ const GameControls = () => {
   };
 
   const handleDeleteLastAction = async () => {
-    // const lastAction = lastActions.pop()
-    // console.log(lastAction)
     if (undoLoading) {
       return true;
     }
 
     try {
       setUndoLoading(true);
-      await undoLastActionApi(lastActions, { teamA, teamB });
-      dispatch(undoLastAction({ lastActions }));
+      await undoLastActionApi(lastActions, game);
+      dispatch(undoLastAction(lastActions));
       setLastActions(prevLastActions => {
         return prevLastActions.slice(0, -1);
       })
@@ -232,8 +221,7 @@ const GameControls = () => {
 
 
   const buttonText = selectedPlayer ? selectedPlayer?.number : 'Select Player';
-
-  const playerOptions = selectedTeam === 'teamA' ? teamA.players : teamB.players;
+  const playerOptions = selectedTeam === 'teamA' ? playerOptionsMap.teamA : playerOptionsMap.teamB;
 
   return (
     <div className='Controls'>
@@ -286,7 +274,7 @@ const GameControls = () => {
                 number: player.number
               };
               return (
-                <option key={newPlayer.number} value={JSON.stringify(newPlayer)}>
+                <option key={newPlayer.id} value={JSON.stringify(newPlayer)}>
                   {player.name}
                 </option>
               );
@@ -343,10 +331,10 @@ const GameControls = () => {
           </thead>
           <tbody>
             {lastActions.slice(-10).map((action, index) => (
-              <tr key={index}>
+              <tr key={action.id}>
                 <td>{action.action}</td>
                 <td>{action.points}</td>
-                <td>#{action.playerNumber}</td>
+                <td>#{`${action.playerNumber}`}</td>
               </tr>
             ))}
           </tbody>
