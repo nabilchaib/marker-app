@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
   addMadeShotApi,
   addAttemptedShotApi,
@@ -18,12 +19,11 @@ import {
   addMadeShot,
   undoLastAction,
   updateLastActions,
-} from '../redux/reducer';
+} from '../redux/game-reducer';
 import '../css/main.css'
 import PlayerSelection from './PlayerSelection';
 import { motion } from 'framer-motion';
 import GameResult from './GameResults';
-import { useNavigate } from 'react-router-dom';
 
 const GameControls = () => {
   const dispatch = useDispatch();

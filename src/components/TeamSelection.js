@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { getDocs, collection } from 'firebase/firestore';
 import { db } from './../firebase';
 import { addGameApi, initializeGameApi } from './../firebase/api';
-import { useDispatch } from 'react-redux';
-import { initializeGame } from './../redux/reducer';
+import { useDispatch, useSelector } from 'react-redux';
+import { initializeGame } from './../redux/game-reducer';
 import { useNavigate } from 'react-router-dom';
 
 
@@ -13,11 +13,15 @@ const TeamSelectionPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const state = useSelector(state => state);
+  console.log('MAP: ', state)
+
   useEffect(() => {
     const fetchTeams = async () => {
       const teamsCollection = collection(db, 'teams');
       const teamsSnapshot = await getDocs(teamsCollection);
       const teamsData = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log('T: ', teamsData)
       setTeams(teamsData);
     };
     fetchTeams();
@@ -50,7 +54,7 @@ const TeamSelectionPage = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="team-selection" onSubmit={handleSubmit}>
       <div className='playerpage'>
         <div className='title'>
           <h2>Select your teams:</h2>

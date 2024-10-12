@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import { useNavigate } from 'react-router-dom'
+import { ToastContainer } from 'react-toastify'
+import { Navigate } from 'react-router-dom'
 import { Provider } from 'react-redux';
+import { useAuthState } from "react-firebase-hooks/auth";
+import { auth, onAuthStateChanged, signOut } from './firebase';
+import { addOrGetUserApi } from './firebase/api';
 import store from './redux/store';
+import { addUser } from './redux/user-reducer';
 import './index.css';
 import App from './App';
 import Login from './pages/Login';
@@ -12,17 +17,22 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import TeamSelectionPage from './components/TeamSelection';
+import "react-toastify/dist/ReactToastify.css";
 
-const Protected = ({ children }) => {
-  const navigate = useNavigate();
+const Protected = ({ children, type }) => {
+  const [user, loading] = useAuthState(auth);
 
-  useEffect(() => {
-    const item = localStorage.getItem('auth');
-    if (!item) {
-      navigate('/login');
-    }
+  if (loading) {
+    return null;
+  }
 
-  }, []);
+  if (!user && type !== 'login') {
+    return <Navigate to="/login" />;
+  }
+
+  if (user && type === 'login') {
+    return <Navigate to="/" />;
+  }
 
   return children;
 };
@@ -36,7 +46,9 @@ const router = createBrowserRouter([
   },
   {
     path: "/login",
-    element: <Login />
+    element: <Protected type="login">
+      <Login />
+    </Protected>
   },
   {
     path: "/teamselection",
@@ -46,14 +58,41 @@ const router = createBrowserRouter([
   }
 ]);
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <Provider store={store}>
+const MainApp = () => {
+  useEffect(() => {
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userFromStore = store.getState()?.user?.email;
+        if (!userFromStore) {
+          const fetchedUser = await addOrGetUserApi({ email: user.email });
+          store.dispatch(addUser({ user: fetchedUser }));
+        }
+      } else {
+        store.dispatch({ type: 'resetStore' });
+      }
+    });
+  }, []);
 
-  <React.StrictMode>
-    <RouterProvider router={router} />
-  </React.StrictMode>
-  </Provider>
-);
+  const onSignOut = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.log('ERR SIGNING OUT: ', err)
+    }
+  };
+
+  return (
+    <Provider store={store}>
+      <React.StrictMode>
+        <RouterProvider router={router} />
+      </React.StrictMode>
+      <button className="absolute" onClick={onSignOut}> sign out</button>
+      <ToastContainer />
+    </Provider>
+  );
+};
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<MainApp />);
 
 reportWebVitals();

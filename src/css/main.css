@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter+Tight&family=PT+Sans&display=swap');
+/* @import url('https://fonts.googleapis.com/css2?family=Inter+Tight&family=PT+Sans&display=swap'); */
 
 
 :root {
@@ -56,14 +56,7 @@ body {
     padding: 1vh;
 }
 
-.Scoreboard h2 {
-    align-self: center;
-    text-align: center;
-    color: #fff8f2;
-    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c
-}
-
-h2 {
+.team-selection h2, .Controls h2, .Scoreboard h2 {
     align-self: center;
     text-align: center;
     color: #fff8f2;
@@ -334,17 +327,6 @@ h2 {
     cursor: pointer;
 }
 
-.bg-img {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-size: cover;
-    background-position: center;
-    z-index: -1;
-}
-
 table {
 
     width: 100%;
@@ -407,51 +389,51 @@ table th:nth-child(5) {
     color: #000000;
 }
 
-form {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-  }
+form.team-selection {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
 
-  form input[type="text"] {
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-  }
+form.team-selection input[type="text"] {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
 
 
-  form input[type="number"] {
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-  }
+form.team-selection input[type="number"] {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
 
-  form button[type="submit"] {
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-    border-radius: 15px;
-    background-color: #ffffffb6;
-    margin: 0.2rem 0 0 0;
-    width: 25vw;
-    font-size: 1.6rem;
-    font-weight: 600;
-    padding: 1rem;
-    background-color: #a0a0a0;
-    color: #fff8f2;
-    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c;
-    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
-    transition: transform 0.2s ease-in-out;
-    cursor: pointer;
-  }
+form.team-selection button[type="submit"] {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  border-radius: 15px;
+  background-color: #ffffffb6;
+  margin: 0.2rem 0 0 0;
+  width: 25vw;
+  font-size: 1.6rem;
+  font-weight: 600;
+  padding: 1rem;
+  background-color: #a0a0a0;
+  color: #fff8f2;
+  text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c;
+  box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
+  transition: transform 0.2s ease-in-out;
+  cursor: pointer;
+}
 
-  form button[type="submit"]:hover {
-    background-color: #45a049;
-  }
+form.team-selection button[type="submit"]:hover {
+  background-color: #45a049;
+}
 
 .App .loading {
   color: white;
