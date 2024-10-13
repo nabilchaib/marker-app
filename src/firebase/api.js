@@ -1,4 +1,4 @@
-import { getDoc, setDoc, addDoc, getDocs, query, collection, where, or, and, limit, doc, updateDoc, documentId, serverTimestamp } from 'firebase/firestore';
+import { getDoc, addDoc, getDocs, query, collection, where, or, and, limit, doc, updateDoc, documentId, serverTimestamp } from 'firebase/firestore';
 import { db } from '.';
 
 const emptyStats = {
@@ -453,5 +453,24 @@ export const pushStatsToFirebase = async (game, teamA, teamB) => {
     await updateDoc(gameRef, newGame);
   } catch (err) {
     console.log('PUSH STATS TO FIREBASE ERR: ', err);
+  }
+};
+
+export const addOrGetUserApi = async (user) => {
+  try {
+    const usersRef = collection(db, 'users');
+    const userQuery = query(usersRef, where('email', '==', user.email));
+    const userSnapshot = await getDocs(userQuery);
+    if (!userSnapshot.empty) {
+      const userData = userSnapshot.docs[0].data();
+      return userData;
+    } else {
+      const userDocRef = await addDoc(usersRef, user);
+      const newUserSnapshot = await getDoc(userDocRef);
+      const userData = newUserSnapshot.data();
+      return userData;
+    }
+  } catch (err) {
+    console.log('ADD USER API ERR: ', err);
   }
 };

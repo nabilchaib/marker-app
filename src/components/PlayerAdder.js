@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { addPlayer } from '../redux/reducer';
+import { addPlayer } from '../redux/game-reducer';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   addPlayerApi
