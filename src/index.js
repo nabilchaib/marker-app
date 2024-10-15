@@ -17,6 +17,7 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import TeamSelectionPage from './components/TeamSelection';
+import CreateTeamPage from './components/CreateTeam';
 import "react-toastify/dist/ReactToastify.css";
 
 const Protected = ({ children, type }) => {
@@ -55,7 +56,12 @@ const router = createBrowserRouter([
     element: <Protected>
       <TeamSelectionPage />
     </Protected>
+  },
+  {
+    path: "/createteam",
+    element: <Protected><CreateTeamPage /></Protected>
   }
+  
 ]);
 
 const MainApp = () => {
