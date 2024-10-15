@@ -13,6 +13,7 @@ import Sidebar from './pages/Sidebar';
 import Games from './pages/Games';
 import AddGame from './pages/AddGame';
 import AddPickUpGame from './pages/AddPickUpGame';
+import AddTeam from './pages/AddTeam';
 import Login from './pages/Login';
 import reportWebVitals from './reportWebVitals';
 import {
@@ -58,6 +59,10 @@ const router = createBrowserRouter([
       {
         path: 'games/create',
         element: <AddGame />
+      },
+      {
+        path: 'games/teams/create',
+        element: <AddTeam />
       },
       {
         path: 'pick-up-game/create',
