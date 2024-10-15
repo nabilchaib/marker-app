@@ -4,12 +4,15 @@ import { ToastContainer } from 'react-toastify'
 import { Navigate } from 'react-router-dom'
 import { Provider } from 'react-redux';
 import { useAuthState } from "react-firebase-hooks/auth";
-import { auth, onAuthStateChanged, signOut } from './firebase';
+import { auth, onAuthStateChanged } from './firebase';
 import { addOrGetUserApi } from './firebase/api';
 import store from './redux/store';
 import { addUser } from './redux/user-reducer';
 import './index.css';
-import App from './App';
+import Sidebar from './pages/Sidebar';
+import Games from './pages/Games';
+import AddGame from './pages/AddGame';
+import AddPickUpGame from './pages/AddPickUpGame';
 import Login from './pages/Login';
 import reportWebVitals from './reportWebVitals';
 import {
@@ -39,13 +42,35 @@ const Protected = ({ children, type }) => {
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: '/',
     element: <Protected>
-      <App />
+      <Sidebar />
     </Protected>,
+    children: [
+      {
+        index: true,
+        element: <Games />
+      },
+      {
+        path: 'games',
+        element: <Games />
+      },
+      {
+        path: 'games/create',
+        element: <AddGame />
+      },
+      {
+        path: 'pick-up-game/create',
+        element: <AddPickUpGame />
+      },
+      {
+        path: 'teams',
+        element: <div>teams</div>
+      }
+    ]
   },
   {
-    path: "/login",
+    path: '/login',
     element: <Protected type="login">
       <Login />
     </Protected>
@@ -73,20 +98,11 @@ const MainApp = () => {
     });
   }, []);
 
-  const onSignOut = async () => {
-    try {
-      await signOut(auth);
-    } catch (err) {
-      console.log('ERR SIGNING OUT: ', err)
-    }
-  };
-
   return (
     <Provider store={store}>
       <React.StrictMode>
         <RouterProvider router={router} />
       </React.StrictMode>
-      <button className="absolute" onClick={onSignOut}> sign out</button>
       <ToastContainer />
     </Provider>
   );

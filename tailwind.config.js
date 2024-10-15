@@ -11,7 +11,8 @@ module.exports = {
         'n1': -1,
         '0': 0,
         '1': 1,
-        '2': 2
+        '2': 2,
+        '100': 100
       },
       fontFamily: {
         audiowide: ["Audiowide", "sans-serif"],

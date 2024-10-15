@@ -1,9 +1,13 @@
-
 export const colors = {
   orange600: '#EA580C',
   grey300: '#D1D5DB',
   cyan600: '#0891B2',
 };
+
+
+export const classNames = (...classes) => {
+  return classes.filter(Boolean).join(' ');
+}
 
 export const createFirebaseConfig = () => {
   return Object.entries(process.env).reduce((config, envVar) => {
