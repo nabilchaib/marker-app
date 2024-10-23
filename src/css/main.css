@@ -38,7 +38,9 @@ body {
     display: flex;
     flex-direction: column;
     text-align: center;
-
+    align-items: center; 
+    justify-content: center; 
+    min-height: 100vh; 
 }
 
 .App h1 {
@@ -96,7 +98,6 @@ body {
 }
 
 .displayteams {
-    display: flex;
     justify-content:space-around;
     align-items: center;
     padding: 2vh 0 4vh 0;

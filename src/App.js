@@ -14,7 +14,7 @@ const App =() => {
     <div>
         <div>
            <div className='App'>
-            <h1> Scorer Table</h1>
+            {/* <h1> Scorer Table</h1> */}
             <BgImg/>
             <Scoreboard />
             <GameControls/>
