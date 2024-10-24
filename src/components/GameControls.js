@@ -22,7 +22,7 @@ import {
 } from '../redux/game-reducer';
 import '../css/main.css'
 import PlayerSelection from './PlayerSelection';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion';
 import GameResult from './GameResults';
 
 const GameControls = () => {
@@ -220,7 +220,7 @@ const GameControls = () => {
   };
 
 
-  const buttonText = selectedPlayer ? selectedPlayer?.number : 'Select Player';
+  // const buttonText = selectedPlayer ? selectedPlayer?.number : 'Select Player';
   const playerOptions = selectedTeam === 'teamA' ? playerOptionsMap.teamA : playerOptionsMap.teamB;
 
   return (
@@ -304,7 +304,9 @@ const GameControls = () => {
                     shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
                   onClick={() => handleMade(1)}
                 >
+                  <span className="inline-block w-8 text-center">
                   {madeLoading === 1 ? 'Loading...' : '+1'}
+                  </span>
                 </button>
                 <button
                   disabled={attemptLoading === 1}
@@ -313,7 +315,9 @@ const GameControls = () => {
                     shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
                   onClick={() => handleAttempt(1)}
                 >
+                  <span className="inline-block w-8 text-center">
                   {attemptLoading === 1 ? 'Loading...' : 'Miss'}
+                  </span>
                 </button>
               </div>
   
@@ -327,7 +331,9 @@ const GameControls = () => {
                     shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
                   onClick={() => handleMade(2)}
                 >
+                  <span className="inline-block w-8 text-center">
                   {madeLoading === 2 ? 'Loading...' : '+2'}
+                  </span>
                 </button>
                 <button
                   disabled={attemptLoading === 2}
@@ -336,7 +342,9 @@ const GameControls = () => {
                     shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
                   onClick={() => handleAttempt(2)}
                 >
+                  <span className="inline-block w-8 text-center">
                   {attemptLoading === 2 ? 'Loading...' : 'Miss'}
+                  </span>
                 </button>
               </div>
   
@@ -350,7 +358,9 @@ const GameControls = () => {
                     shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
                   onClick={() => handleMade(3)}
                 >
+                  <span className="inline-block w-8 text-center">
                   {madeLoading === 3 ? 'Loading...' : '+3'}
+                  </span>
                 </button>
                 <button
                   disabled={attemptLoading === 3}
@@ -359,65 +369,83 @@ const GameControls = () => {
                     shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
                   onClick={() => handleAttempt(3)}
                 >
+                  <span className="inline-block w-8 text-center">
                   {attemptLoading === 3 ? 'Loading...' : 'Miss'}
+                  </span>
                 </button>
               </div>
             </div>
           </div>
-  
-          {/* Rebound, Foul, and Assist */}
-          <div className="addpoints">
-            <div className="stat">
+          <div className="addpoints flex flex-wrap justify-between items-center space-y-4 md:space-y-2 md:space-x-4">
+            {/* Rebound */}
+            <div className="stat flex flex-col items-center w-full md:w-1/3 space-y-2">
               <h3 className="font-semibold text-white mb-2">Rebound</h3>
-              <button
-                disabled={reboundLoading === 'offensive'}
-                className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white 
-                  ${reboundLoading === 'offensive' ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'}
-                  shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105 mb-2`}
-                onClick={() => handleRebound('offensive')}
-              >
-                {reboundLoading === 'offensive' ? 'Loading...' : 'Offense'}
-              </button>
-  
-              <button
-                disabled={reboundLoading === 'defensive'}
-                className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white 
-                  ${reboundLoading === 'defensive' ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'}
-                  shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                onClick={() => handleRebound('defensive')}
-              >
-                {reboundLoading === 'defensive' ? 'Loading...' : 'Defense'}
-              </button>
+              <div className="flex space-x-2">
+                <button
+                  disabled={reboundLoading === 'offensive'}
+                  className={`py-2 px-4 text-sm md:text-base rounded-lg font-bold text-white
+                    ${reboundLoading === 'offensive' ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'}
+                    shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                  onClick={() => handleRebound('offensive')}
+                >
+                  <span className="inline-block w-12 text-center">
+                  {reboundLoading === 'offensive' ? 'Loading...' : 'Offense'}
+                  </span>
+                </button>
+
+                <button
+                  disabled={reboundLoading === 'defensive'}
+                  className={`py-2 px-4 text-sm md:text-base rounded-lg font-bold text-white
+                    ${reboundLoading === 'defensive' ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'}
+                    shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                  onClick={() => handleRebound('defensive')}
+                >
+                  <span className="inline-block w-12 text-center">
+                  {reboundLoading === 'defensive' ? 'Loading...' : 'Defense'}
+                  </span>
+                </button>
+              </div>
             </div>
-  
-            {/* Foul */}
-            <div className="stat mt-4">
-              <button
-                disabled={foulLoading}
-                className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white 
-                  ${foulLoading ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'}
-                  shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                onClick={handleFoul}
-              >
-                {foulLoading ? 'Loading...' : 'Foul'}
-              </button>
-            </div>
-  
-            {/* Assist */}
-            <div className="stat mt-4">
+
+            {/* Assist and Foul in the Right Column */}
+            <div className="stat flex flex-col items-center w-full md:w-1/3 space-y-4">
+              {/* Assist */}
               <button
                 disabled={assistLoading}
-                className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white 
+                className={`py-2 px-6 md:py-3 md:px-8 lg:py-4 lg:px-10 w-full rounded-lg font-bold text-white
                   ${assistLoading ? 'bg-gray-400' : 'bg-[#0aa6d6] hover:bg-blue-600'}
                   shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
                 onClick={handleAssist}
               >
+                <span className="inline-block w-12 text-center">
                 {assistLoading ? 'Loading...' : 'Assist'}
+                </span>
+              </button>
+
+              {/* Foul */}
+              <button
+                disabled={foulLoading}
+                className={`py-2 px-6 md:py-3 md:px-8 lg:py-4 lg:px-10 w-full rounded-lg font-bold text-white
+                  ${foulLoading ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'}
+                  shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                onClick={handleFoul}
+              >
+                <span className="inline-block w-12 text-center">
+                {foulLoading ? 'Loading...' : 'Foul'}
+                </span>
               </button>
             </div>
           </div>
         </div>
       )}
+      <div className="addpoints py-8 px-6 flex justify-center">
+        <button
+          className="py-4 px-6 w-full md:w-auto rounded-lg font-bold text-white bg-[#0aa6d6] hover:bg-blue-600 shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105"
+          onClick={handleShowGameResult}
+        >
+          Game Stats
+        </button>
+      </div>
   
       {/* Last Actions Table */}
       <div className="py-4">
@@ -441,14 +469,39 @@ const GameControls = () => {
           </tbody>
         </table>
       </div>
-  
-      {/* Undo Last Action */}
-      <button disabled={undoLoading} className="button" onClick={handleDeleteLastAction}>
-        {undoLoading ? 'Loading...' : 'Undo last action'}
-      </button>
-  
-      {/* Show Game Result */}
-      {showGameResult && <GameResult onBackClick={handleBackClick} />}
+      
+      {/* Main Game Controls UI */}
+      <div className="controls flex flex-col items-center space-y-6">
+        {/* Undo Last Action */}
+        <button
+          disabled={undoLoading}
+          className={`py-2 px-6 w-full md:w-auto rounded-lg font-bold text-white ${
+            undoLoading ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'
+          } shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+          onClick={handleDeleteLastAction}
+        >
+          {undoLoading ? 'Loading...' : 'Undo Last Action'}
+        </button>
+
+        {/* Show Game Result */}
+        {showGameResult && (
+          <div className="game-result-overlay fixed inset-0 flex justify-center items-center bg-black bg-opacity-80 z-50">
+            <div className="game-result-container w-full max-w-4xl p-8 rounded-lg shadow-2xl bg-white text-center relative">
+              
+              {/* GameResult component */}
+              <GameResult onBackClick={handleBackClick} />
+              
+              {/* Back Button */}
+              <button
+                className="mt-6 py-2 px-6 rounded-lg bg-[#0aa6d6] text-white hover:bg-blue-600 shadow-md hover:shadow-xl transition-transform transform hover:scale-105"
+                onClick={handleBackClick}
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
   
