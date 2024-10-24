@@ -34,11 +34,13 @@ body {
 
 .App {
     position: relative;
-    padding-top: 1rem;
+    /* padding-top: 1rem; */
     display: flex;
     flex-direction: column;
     text-align: center;
-
+    align-items: center; 
+    justify-content: center; 
+    min-height: 100vh; 
 }
 
 .App h1 {
@@ -96,7 +98,6 @@ body {
 }
 
 .displayteams {
-    display: flex;
     justify-content:space-around;
     align-items: center;
     padding: 2vh 0 4vh 0;
@@ -220,16 +221,16 @@ body {
 }
 
 .addpoints {
-    display: flex;
+    /* display: flex;
     align-items: center;
     justify-content: space-around;
-    text-align: center;
+    text-align: center; */
 
 }
 
 .stat {
     /* display: inline; */
-    align-items: center;
+    /* align-items: center;
     justify-content: space-between;
     padding: 2vw;
     background-color: #0000002d;
@@ -237,7 +238,7 @@ body {
     font-size: 1.6rem;
     color: #fff8f2;
     text-align: center;
-    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c
+    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c */
 }
 
 .otherstat {
@@ -247,7 +248,7 @@ body {
 }
 
 .card {
-    display: flex;
+    /* display: flex;
     align-items: center;
     flex-direction: column;
     border-radius: 15px;
@@ -263,28 +264,27 @@ body {
     text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c;
     box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
     transition: transform 0.2s ease-in-out;
-    cursor: pointer;
+    cursor: pointer; */
 }
 
 .card-in {
-    /* display: flex; */
+    /* display: flex;
     align-items: center;
     /* flex-direction: column; */
-    border-radius: 15px;
+    /* border-radius: 15px; */
     /* margin: 0.2rem 0 0 0; */
-    height: 8vh;
-    width: 25vw;
-    font-size: 2.2rem;
+    /* height: 8vh; */
+    /* width: 25vw; */
+    /* font-size: 2.2rem; */
     /* padding: 1rem; */
-    background-color: #bdbdbd;
-    border-color: #000000;
-    -webkit-text-stroke: 0.4px black;
-
-    color: #fff;
-    text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c;
-    box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
-    transition: transform 0.2s ease-in-out;
-    cursor: pointer;
+    /* background-color: #bdbdbd; */
+    /* border-color: #000000; */
+    /* -webkit-text-stroke: 0.4px black; */
+    /* color: #fff; */
+    /* text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c; */
+    /* box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5); */
+    /* transition: transform 0.2s ease-in-out; */
+    /* cursor: pointer; */
 }
 
 .card-miss {
@@ -310,8 +310,8 @@ body {
 }
 
 .button {
-    display: inline-block;
-    /* align-items: center; */
+    /* display: inline-block;
+    align-items: center;
     border-radius: 15px;
     background-color: #ffffffb6;
     margin: 0.2rem 0 0 0;
@@ -324,7 +324,7 @@ body {
     text-shadow: 0 0 5px #1e3f5a, 3px -1px 5px #271c6c;
     box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
     transition: transform 0.2s ease-in-out;
-    cursor: pointer;
+    cursor: pointer; */
 }
 
 table {
