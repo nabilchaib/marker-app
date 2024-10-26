@@ -22,7 +22,7 @@ import {
 } from '../redux/game-reducer';
 import '../css/main.css'
 import PlayerSelection from './PlayerSelection';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion';
 import GameResult from './GameResults';
 
 const GameControls = () => {
@@ -220,132 +220,292 @@ const GameControls = () => {
   };
 
 
-  const buttonText = selectedPlayer ? selectedPlayer?.number : 'Select Player';
+  // const buttonText = selectedPlayer ? selectedPlayer?.number : 'Select Player';
   const playerOptions = selectedTeam === 'teamA' ? playerOptionsMap.teamA : playerOptionsMap.teamB;
 
   return (
-    <div className='Controls'>
-      <div className='displayteams'>
-        <div className='TeamSelector'>
-          <motion.button
-            whileHover={{ scale: 1.5 }}
-            onClick={() => handleTeamChange('teamA')}
-            animate={{ scale: selectedTeam === 'teamA' ? 1.5 : 1 }}
-          >
-            {teamA.name}
-          </motion.button>
+    <div className="Controls">
+      {/* Team Selection */}
+      <div className="flex justify-around py-4">
+        {/* Team A Button */}
+        <button
+          className={`py-4 px-8 md:py-5 md:px-10 text-lg md:text-xl font-bold rounded-lg transition-transform duration-200 transform ${
+            selectedTeam === 'teamA' ? 'bg-[#f64e07] text-white scale-110' : 'bg-gray-300 text-gray-700'
+          }`}
+          onClick={() => handleTeamChange('teamA')}
+        >
+          {teamA.name}
+        </button>
 
-        </div>
-        <div className='TeamSelector'>
-          <motion.button
-            whileHover={{ scale: 1.5 }}
-            onClick={() => handleTeamChange('teamB')}
-            animate={{ scale: selectedTeam === 'teamB' ? 1.5 : 1 }}
-          >
-            {teamB.name}
-          </motion.button>
-
-        </div>
+        {/* Team B Button */}
+        <button
+          className={`py-4 px-8 md:py-5 md:px-10 text-lg md:text-xl font-bold rounded-lg transition-transform duration-200 transform ${
+            selectedTeam === 'teamB' ? 'bg-[#f64e07] text-white scale-110' : 'bg-gray-300 text-gray-700'
+          }`}
+          onClick={() => handleTeamChange('teamB')}
+        >
+          {teamB.name}
+        </button>
       </div>
 
-      <div>
-      </div>
-
+  
+      {/* Player Selection */}
       {showPlayerSelection ? (
-        <PlayerSelection team={selectedTeam} players={playerOptions} onSelect={handlePlayerSelect} onClose={setShowPlayerSelection} />
+        <PlayerSelection
+          team={selectedTeam}
+          players={playerOptions}
+          onSelect={handlePlayerSelect}
+          onClose={setShowPlayerSelection}
+        />
       ) : (
-        <div className='Selector'>
-          <motion.button
-            className='SelectPlayer'
-            whileHover={{ scale: 1.1 }}
-
-            onClick={() => setShowPlayerSelection(true)}
-          >
-            <h2>
-              {buttonText}
-            </h2>
-          </motion.button>
-          <h2>Player:</h2>
-          <select className='player' id="player" value={JSON.stringify(selectedPlayer)} onChange={handlePlayerChange}>
-            <option value=""></option>
-            {playerOptions.map((player) => {
-              const newPlayer = {
-                id: player.id,
-                number: player.number
-              };
-              return (
-                <option key={newPlayer.id} value={JSON.stringify(newPlayer)}>
+        <div className="flex flex-col items-center space-y-4">
+          <div className="flex flex-row items-center justify-around space-x-4 w-full">
+            {/* Select Player Button */}
+            <button
+              className="relative w-full sm:w-auto py-2 px-4 md:py-4 md:px-8 text-base md:text-xl font-bold text-white bg-[#0aa6d6] 
+                        rounded-lg shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105 hover:rotate-2 duration-200 
+                        focus:outline-none focus:ring-4 focus:ring-[#0aa6d6]"
+              onClick={() => setShowPlayerSelection(true)}
+            >
+              <span className="absolute inset-0 bg-[#0a355e] opacity-75 blur-lg rounded-lg animate-pulse"></span>
+              <span className="relative z-10">
+                {selectedPlayer ? `Player #${selectedPlayer.number}` : 'Select Player'}
+              </span>
+            </button>
+    
+            {/* Player Selection Dropdown */}
+            <select
+              className="w-full sm:w-1/2 md:w-1/3 lg:w-1/4 py-2 px-4 text-lg font-bold text-white bg-[#0aa6d6] border border-transparent 
+                        rounded-lg shadow-lg focus:outline-none focus:border-[#0aa6d6] focus:ring-4 focus:ring-[#0aa6d6]"
+              id="player"
+              value={selectedPlayer ? JSON.stringify(selectedPlayer) : ''}
+              onChange={handlePlayerChange}
+            >
+              <option className="text-gray-400" value="">Choose Player</option>
+              {playerOptions.map((player) => (
+                <option className="text-white" key={player.id} value={JSON.stringify(player)}>
                   {player.name}
                 </option>
-              );
-            })}
-          </select>
+              ))}
+            </select>
+
+          </div>
+  
+          {/* Free Throw, Two Points, Three Points */}
+          <div className="Remote">
+            <div className="grid grid-cols-3 gap-4 text-center py-4">
+              {/* Free Throw */}
+              <div>
+                <h3 className="font-semibold text-white">Free Throw</h3>
+                <button
+                  disabled={madeLoading === 1}
+                  className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white 
+                    ${madeLoading === 1 ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'}
+                    shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                  onClick={() => handleMade(1)}
+                >
+                  <span className="inline-block w-8 text-center">
+                  {madeLoading === 1 ? 'Loading...' : '+1'}
+                  </span>
+                </button>
+                <button
+                  disabled={attemptLoading === 1}
+                  className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white mt-2 
+                    ${attemptLoading === 1 ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'}
+                    shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                  onClick={() => handleAttempt(1)}
+                >
+                  <span className="inline-block w-8 text-center">
+                  {attemptLoading === 1 ? 'Loading...' : 'Miss'}
+                  </span>
+                </button>
+              </div>
+  
+              {/* Two Points */}
+              <div>
+                <h3 className="font-semibold text-white">2 Points</h3>
+                <button
+                  disabled={madeLoading === 2}
+                  className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white 
+                    ${madeLoading === 2 ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'}
+                    shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                  onClick={() => handleMade(2)}
+                >
+                  <span className="inline-block w-8 text-center">
+                  {madeLoading === 2 ? 'Loading...' : '+2'}
+                  </span>
+                </button>
+                <button
+                  disabled={attemptLoading === 2}
+                  className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white mt-2 
+                    ${attemptLoading === 2 ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'}
+                    shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                  onClick={() => handleAttempt(2)}
+                >
+                  <span className="inline-block w-8 text-center">
+                  {attemptLoading === 2 ? 'Loading...' : 'Miss'}
+                  </span>
+                </button>
+              </div>
+  
+              {/* Three Points */}
+              <div>
+                <h3 className="font-semibold text-white">3 Points</h3>
+                <button
+                  disabled={madeLoading === 3}
+                  className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white 
+                    ${madeLoading === 3 ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'}
+                    shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                  onClick={() => handleMade(3)}
+                >
+                  <span className="inline-block w-8 text-center">
+                  {madeLoading === 3 ? 'Loading...' : '+3'}
+                  </span>
+                </button>
+                <button
+                  disabled={attemptLoading === 3}
+                  className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white mt-2 
+                    ${attemptLoading === 3 ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'}
+                    shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                  onClick={() => handleAttempt(3)}
+                >
+                  <span className="inline-block w-8 text-center">
+                  {attemptLoading === 3 ? 'Loading...' : 'Miss'}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="addpoints flex flex-wrap justify-between items-center space-y-4 md:space-y-2 md:space-x-4">
+            {/* Rebound */}
+            <div className="stat flex flex-col items-center w-full md:w-1/3 space-y-2">
+              <h3 className="font-semibold text-white mb-2">Rebound</h3>
+              <div className="flex space-x-2">
+                <button
+                  disabled={reboundLoading === 'offensive'}
+                  className={`py-2 px-4 text-sm md:text-base rounded-lg font-bold text-white
+                    ${reboundLoading === 'offensive' ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'}
+                    shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                  onClick={() => handleRebound('offensive')}
+                >
+                  <span className="inline-block w-12 text-center">
+                  {reboundLoading === 'offensive' ? 'Loading...' : 'Offense'}
+                  </span>
+                </button>
+
+                <button
+                  disabled={reboundLoading === 'defensive'}
+                  className={`py-2 px-4 text-sm md:text-base rounded-lg font-bold text-white
+                    ${reboundLoading === 'defensive' ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'}
+                    shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                  onClick={() => handleRebound('defensive')}
+                >
+                  <span className="inline-block w-12 text-center">
+                  {reboundLoading === 'defensive' ? 'Loading...' : 'Defense'}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Assist and Foul in the Right Column */}
+            <div className="stat flex flex-col items-center w-full md:w-1/3 space-y-4">
+              {/* Assist */}
+              <button
+                disabled={assistLoading}
+                className={`py-2 px-6 md:py-3 md:px-8 lg:py-4 lg:px-10 w-full rounded-lg font-bold text-white
+                  ${assistLoading ? 'bg-gray-400' : 'bg-[#0aa6d6] hover:bg-blue-600'}
+                  shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                onClick={handleAssist}
+              >
+                <span className="inline-block w-12 text-center">
+                {assistLoading ? 'Loading...' : 'Assist'}
+                </span>
+              </button>
+
+              {/* Foul */}
+              <button
+                disabled={foulLoading}
+                className={`py-2 px-6 md:py-3 md:px-8 lg:py-4 lg:px-10 w-full rounded-lg font-bold text-white
+                  ${foulLoading ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'}
+                  shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                onClick={handleFoul}
+              >
+                <span className="inline-block w-12 text-center">
+                {foulLoading ? 'Loading...' : 'Foul'}
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
-
-      <div className='Remote'>
-        <div className='addpoints'>
-
-          <div className='stat'> FT
-            <button disabled={madeLoading} className='card-in' onClick={() => handleMade(1)}>{madeLoading === 1 ? 'Loading...' : '+ 1'}</button>
-            <button disabled={attemptLoading} className='card-miss' onClick={() => handleAttempt(1)}>{attemptLoading === 1 ? 'Loading...' : 'Miss'}</button>
-          </div>
-          <div className='stat'> 2 pts
-            <button disabled={madeLoading} className='card-in' onClick={() => handleMade(2)}>{madeLoading === 2 ? 'Loading...' : '+ 2'}</button>
-            <button disabled={attemptLoading} className='card-miss' onClick={() => handleAttempt(2)}>{attemptLoading === 2 ? 'Loading...' : 'Miss'}</button>
-          </div>
-          <div className='stat'> 3 pts
-            <button className='card-in' onClick={() => handleMade(3)}>{madeLoading === 3 ? 'Loading...' : '+ 3'}</button>
-            <button className='card-miss' onClick={() => handleAttempt(3)}>{attemptLoading === 3 ? 'Loading...' : 'Miss'}</button>
-          </div>
-        </div>
-
-        <div className='addpoints'>
-
-          <div className='stat'> Rebound
-            <button disabled={reboundLoading} className='card' onClick={() => handleRebound('offensive')}>{reboundLoading === 'offensive' ? 'Loading...' : 'Offense'}</button>
-            <button disabled={reboundLoading} className='card' onClick={() => handleRebound('defensive')}>{reboundLoading === 'defensive' ? 'Loading...' : 'Defense'}</button>
-          </div>
-          <div className='stat'>
-            <button disabled={foulLoading} className='card' onClick={handleFoul}>{foulLoading ? 'Loading...' : 'Foul'}</button>
-          </div>
-          <div className='stat'>
-            <button disabled={assistLoading} className='card' onClick={handleAssist}>{assistLoading ? 'Loading...' : 'Assist'}</button>
-
-          </div>
-        </div>
+      <div className="addpoints py-8 px-6 flex justify-center">
+        <button
+          className="py-4 px-6 w-full md:w-auto rounded-lg font-bold text-white bg-[#0aa6d6] hover:bg-blue-600 shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105"
+          onClick={handleShowGameResult}
+        >
+          Game Stats
+        </button>
       </div>
-      <div className='addpoints'>
-        <button className='card' onClick={handleShowGameResult}>Game Stats</button>
-      </div>
-
-      <div>
-        <h1>Last Actions</h1>
-        <table>
+  
+      {/* Last Actions Table */}
+      <div className="py-4">
+        <h2 className="text-lg font-bold text-[#f64e07] mb-2">Last Actions</h2>
+        <table className="min-w-full table-auto bg-[#0a355e] border border-[#0aa6d6] rounded-lg">
           <thead>
-            <tr>
-              <th>Action</th>
-              <th>Points</th>
-              <th>Player ID</th>
+            <tr className="bg-[#0aa6d6] text-white">
+              <th className="py-2 px-4 border border-[#0f1e25]">Action</th>
+              <th className="py-2 px-4 border border-[#0f1e25]">Points</th>
+              <th className="py-2 px-4 border border-[#0f1e25]">Player #</th>
             </tr>
           </thead>
           <tbody>
-            {lastActions.slice(-10).map((action, index) => (
-              <tr key={action.id}>
-                <td>{action.action}</td>
-                <td>{action.points}</td>
-                <td>#{`${action.playerNumber}`}</td>
+            {lastActions.slice(-10).map((action) => (
+              <tr key={action.id} className="bg-white text-black">
+                <td className="py-2 px-4 border border-[#0aa6d6]">{action.action}</td>
+                <td className="py-2 px-4 border border-[#0aa6d6]">{action.points}</td>
+                <td className="py-2 px-4 border border-[#0aa6d6]">#{action.playerNumber}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <button disabled={undoLoading} className='button' onClick={handleDeleteLastAction}>{undoLoading ? 'Loading...' : 'Undo last action'}</button>
+      
+      {/* Main Game Controls UI */}
+      <div className="controls flex flex-col items-center space-y-6">
+        {/* Undo Last Action */}
+        <button
+          disabled={undoLoading}
+          className={`py-2 px-6 w-full md:w-auto rounded-lg font-bold text-white ${
+            undoLoading ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'
+          } shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+          onClick={handleDeleteLastAction}
+        >
+          {undoLoading ? 'Loading...' : 'Undo Last Action'}
+        </button>
 
-      {showGameResult && <GameResult onBackClick={handleBackClick} />}
-
+        {/* Show Game Result */}
+        {showGameResult && (
+          <div className="game-result-overlay fixed inset-0 flex justify-center items-center bg-black bg-opacity-80 z-50">
+            <div className="game-result-container w-full max-w-4xl p-8 rounded-lg shadow-2xl bg-white text-center relative">
+              
+              {/* GameResult component */}
+              <GameResult onBackClick={handleBackClick} />
+              
+              {/* Back Button */}
+              <button
+                className="mt-6 py-2 px-6 rounded-lg bg-[#0aa6d6] text-white hover:bg-blue-600 shadow-md hover:shadow-xl transition-transform transform hover:scale-105"
+                onClick={handleBackClick}
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
+  
+  
 };
 
 export default GameControls;
