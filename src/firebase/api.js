@@ -1,5 +1,20 @@
-import { getDoc, addDoc, getDocs, query, collection, where, or, and, limit, doc, updateDoc, documentId, serverTimestamp } from 'firebase/firestore';
-import { db } from '.';
+import {
+  getDoc,
+  addDoc,
+  getDocs,
+  query,
+  collection,
+  where,
+  or,
+  and,
+  limit,
+  doc,
+  updateDoc,
+  documentId,
+  serverTimestamp,
+  runTransaction,
+} from 'firebase/firestore';
+import { db, storage, ref, uploadBytes, getDownloadURL } from '.';
 
 const emptyStats = {
   points: {
@@ -246,42 +261,6 @@ export const addFoulApi = async ({ game, selectedTeam, playerId }) => {
   });
 };
 
-export const addPlayerApi = async ({ game, selectedTeam, team, player }) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const playerQuery = query(collection(db, 'players'), where('number', '==', player.number), where('team', '==', team.id));
-      const playerSnapshot = await getDocs(playerQuery);
-      if (playerSnapshot.docs.length <= 0) {
-        const docRef = await addDoc(collection(db, 'players'), player);
-        const newPlayer = { ...player, id: docRef.id, stats: emptyStats };
-
-        const newGame = {
-          [selectedTeam]: {
-            ...game[selectedTeam],
-            players: {
-              ...game[selectedTeam].players,
-              [docRef.id]: {
-                ...newPlayer,
-              }
-            }
-          }
-        };
-
-        const gameRef = doc(db, 'game', game.id);
-        await updateDoc(gameRef, newGame);
-
-        resolve({ player: newPlayer });
-
-      } else {
-        reject('number exists already');
-      }
-    } catch (err) {
-      console.log('ADD PLAYER API ERR: ', err);
-      reject(err);
-    }
-  });
-};
-
 export const updateLastActionsApi = async (game, lastActions) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -473,4 +452,122 @@ export const addOrGetUserApi = async (user) => {
   } catch (err) {
     console.log('ADD USER API ERR: ', err);
   }
+};
+
+export const getPlayersApi = async ({ user }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const playersRef = collection(db, 'players');
+      const playersQuery = query(playersRef, where('createdBy', '==', user.email));
+      const playersSnapshot = await getDocs(playersQuery);
+      const playersList = playersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      resolve(playersList);
+    } catch (err) {
+      console.log('GET PLAYERS API ERR: ', err);
+      reject(err);
+    }
+  });
+};
+
+export const addPlayerApi = async ({ player, image }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await runTransaction(db, async (transaction) => {
+        try {
+          const playersCollection = collection(db, 'players');
+          const newPlayerRef = await addDoc(playersCollection, {
+            ...player,
+            avatarUrl: '' // Placeholder
+          });
+
+          if (image) {
+            // Define metadata for the upload
+            const metadata = {
+              contentType: 'image/png', // Set the MIME type of the image
+            };
+            // 3. Upload the avatar
+            const storageRef = ref(storage, `avatars/players/${newPlayerRef.id}.png`);
+            const uploadTaskSnapshot = await uploadBytes(storageRef, image, metadata);
+            const downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
+            transaction.update(newPlayerRef, { avatarUrl: downloadURL });
+          }
+
+          const newPlayer = { ...player, id: newPlayerRef.id };
+          resolve({ player: newPlayer });
+        } catch (err) {
+          throw err;
+        }
+      });
+
+    } catch (err) {
+      console.log('ADD PLAYER API ERR: ', err);
+      reject(err);
+    }
+  });
+};
+
+export const addTeamApi = async ({ team, image }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await runTransaction(db, async (transaction) => {
+        try {
+          const teamsCollection = collection(db, 'teams');
+          const teamsQuery = query(
+            teamsCollection,
+            and(
+              where('createdBy', '==', team.createdBy),
+              where('name', '==', team.name)
+            )
+          );
+          const teamSnapshot = await getDocs(teamsQuery);
+
+          if (!teamSnapshot.empty) {
+            resolve({ isDuplicate: true });
+            return false;
+          }
+
+          const newTeamRef = await addDoc(teamsCollection, {
+            ...team,
+            avatarUrl: '' // Placeholder
+          });
+
+          if (image) {
+            // Define metadata for the upload
+            const metadata = {
+              contentType: 'image/png', // Set the MIME type of the image
+            };
+            // 3. Upload the avatar
+            const storageRef = ref(storage, `avatars/teams/${newTeamRef.id}.png`);
+            const uploadTaskSnapshot = await uploadBytes(storageRef, image, metadata);
+            const downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
+            transaction.update(newTeamRef, { avatarUrl: downloadURL });
+          }
+
+          const newTeam = { ...team, id: newTeamRef.id };
+          resolve({ team: newTeam });
+        } catch (err) {
+          throw err;
+        }
+      });
+
+    } catch (err) {
+      console.log('ADD TEAM API ERR: ', err);
+      reject(err);
+    }
+  });
+};
+
+export const getTeamsApi = async ({ user }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const teamsRef = collection(db, 'teams');
+      const teamsQuery = query(teamsRef, where('createdBy', '==', user.email));
+      const teamsSnapshot = await getDocs(teamsQuery);
+      const teamsList = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      resolve(teamsList);
+    } catch (err) {
+      console.log('GET TEAMS API ERR: ', err);
+      reject(err);
+    }
+  });
 };

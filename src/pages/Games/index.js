@@ -1,6 +1,6 @@
 import { Fragment } from 'react'
 import { useNavigate } from 'react-router-dom';
-import { ChevronRightIcon, LockClosedIcon, EllipsisHorizontalIcon, TrashIcon, PlusIcon } from '@heroicons/react/20/solid'
+import { ChevronRightIcon, LockClosedIcon, EllipsisHorizontalIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/solid'
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react'
 import Icon from '../../components/Icon';
 import { classNames } from '../../utils';
@@ -63,7 +63,7 @@ export default function AddGame() {
   };
 
   return (
-    <div>
+    <div className="p-4 sm:p-6 lg:p-8">
       <div className="mb-6 flex justify-between items-start">
         <h2 className="text-base font-semibold leading-6 text-gray-900">Active games</h2>
         <button

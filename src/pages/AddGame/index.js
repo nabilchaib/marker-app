@@ -1,8 +1,9 @@
-import { Fragment } from 'react'
 import { useNavigate } from 'react-router-dom';
-import { ChevronRightIcon, LockClosedIcon, EllipsisHorizontalIcon, TrashIcon, PlusIcon } from '@heroicons/react/20/solid'
-import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react'
+import { useDispatch, useSelector } from 'react-redux';
+import { ChevronRightIcon, LockClosedIcon } from '@heroicons/react/24/solid'
+
 import Icon from '../../components/Icon';
+import { resetGameCache } from '../../redux/games-reducer';
 import { classNames } from '../../utils';
 
 const gameTypes = [
@@ -41,16 +42,17 @@ const gameTypes = [
 
 export default function AddGame() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const onGameTypeClick = (gameType) => {
     if (gameType === 'Pick-up game') {
-      console.log('NAVIGATE PICK')
+      dispatch(resetGameCache());
       navigate('/pick-up-game/create');
     }
   };
 
   return (
-    <div>
+    <div className="p-4 sm:p-6 lg:p-8">
       <h2 className="text-base font-semibold leading-6 text-gray-900">Create a new game</h2>
       <p className="mt-1 text-sm text-gray-500">Get started by selecting the type of game you'd like to set up.</p>
       <ul role="list" className="mt-6 divide-y divide-gray-200 border-b border-t border-gray-200">
