@@ -45,7 +45,7 @@ const TeamSelectionPage = () => {
       } else {
         dispatch(initializeGame({ game }));
       }
-      navigate('/');
+      navigate('/start-game');
     } catch (error) {
       console.error(error);
     }
@@ -59,7 +59,7 @@ const TeamSelectionPage = () => {
           <div
             key={team.id}
             onClick={() => handleTeamSelection(team)}
-            className={`p-4 rounded-lg cursor-pointer border-2 
+            className={`p-4 rounded-lg cursor-pointer border-2
               ${selectedTeams.find(t => t.id === team.id) ? 'bg-blue-500 border-blue-700' : 'bg-gray-800 border-gray-700'} transition transform hover:scale-105`}>
             <h2 className="text-lg font-bold">{team.name}</h2>
             <p className="text-sm">{team.players.length} players</p>

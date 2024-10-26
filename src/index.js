@@ -9,6 +9,7 @@ import { addOrGetUserApi } from './firebase/api';
 import store from './redux/store';
 import { addUser } from './redux/user-reducer';
 import './index.css';
+import App from './App';
 import Sidebar from './pages/Sidebar';
 import Games from './pages/Games';
 import AddGame from './pages/AddGame';
@@ -95,8 +96,12 @@ const router = createBrowserRouter([
   {
     path: "/createteam",
     element: <Protected><CreateTeamPage /></Protected>
+  },
+  {
+    path: "/start-game",
+    element: <Protected><App /></Protected>
   }
-  
+
 ]);
 
 const MainApp = () => {
