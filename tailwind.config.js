@@ -1,4 +1,6 @@
 /** @type {import('tailwindcss').Config} */
+const plugin = require('tailwindcss/plugin');
+
 module.exports = {
   content: [
     "./src/**/*.{js,jsx,ts,tsx}"
@@ -11,7 +13,8 @@ module.exports = {
         'n1': -1,
         '0': 0,
         '1': 1,
-        '2': 2
+        '2': 2,
+        '100': 100
       },
       fontFamily: {
         audiowide: ["Audiowide", "sans-serif"],
@@ -20,6 +23,20 @@ module.exports = {
   },
   plugins: [
     require('@tailwindcss/forms'),
+    plugin(function ({ addUtilities }) {
+      addUtilities({
+        '.arrow-hide':{
+          '&::-webkit-inner-spin-button':{
+            '-webkit-appearance': 'none',
+            'margin': 0
+          },
+          '&::-webkit-outer-spin-button':{
+            '-webkit-appearance': 'none',
+            'margin': 0
+          },
+        }
+      })
+    })
   ],
 }
 

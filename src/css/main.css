@@ -1,36 +1,36 @@
 /* @import url('https://fonts.googleapis.com/css2?family=Inter+Tight&family=PT+Sans&display=swap'); */
 
 
-:root {
-    --color-primary: #c0c0c0e5;
-    --color-secondary: #fff8f2;
-    --color-text: #000000;
-    --font-primary: 'PT Sans', sans-serif;
-}
+/* :root { */
+/*     --color-primary: #c0c0c0e5; */
+/*     --color-secondary: #fff8f2; */
+/*     --color-text: #000000; */
+/*     --font-primary: 'PT Sans', sans-serif; */
+/* } */
 
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+/* * { */
+/*     box-sizing: border-box; */
+/*     margin: 0; */
+/*     padding: 0; */
+/* } */
 
-html {
-    font-size: 16px;
-    line-height: 1;
-}
+/* html { */
+/*     font-size: 16px; */
+/*     line-height: 1; */
+/* } */
 
-body {
-    background: linear-gradient(190deg,
-            #edd7bf 100%,
-            var(--color-secondary) 0%);
-    color: var(--color-text);
-    font-family: var(--font-primary);
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-attachment: fixed;
-    color: #222;
-    overflow: auto;
-}
+/* body { */
+/*     background: linear-gradient(190deg, */
+/*             #edd7bf 100%, */
+/*             var(--color-secondary) 0%); */
+/*     color: var(--color-text); */
+/*     font-family: var(--font-primary); */
+/*     background-repeat: no-repeat; */
+/*     background-size: cover; */
+/*     background-attachment: fixed; */
+/*     color: #222; */
+/*     overflow: auto; */
+/* } */
 
 .App {
     position: relative;
