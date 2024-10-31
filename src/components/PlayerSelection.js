@@ -1,10 +1,12 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import PlayerAdder from './PlayerAdder';
 import { selectTeamPlayers } from './selectors/selectors';
+import PlayerAdder from './PlayerAdder';
 
-const PlayerSelection = ({ team, onSelect, onClose }) => {
-  const players = useSelector((state) => selectTeamPlayers(state, team));
+const PlayerSelection = ({ mode, team, onSelect, onClose }) => {
+  // Get players based on the mode
+  const players = useSelector((state) => selectTeamPlayers(state, team, mode));
+
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -21,7 +23,9 @@ const PlayerSelection = ({ team, onSelect, onClose }) => {
 
         {/* Title */}
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-[#f64e07]">Select a Player</h2>
+          <h2 className="text-2xl font-bold text-[#f64e07]">
+            {mode === 'drill' ? 'Select a Player for Drill' : 'Select a Player'}
+          </h2>
         </div>
 
         {/* Player List */}
@@ -33,15 +37,17 @@ const PlayerSelection = ({ team, onSelect, onClose }) => {
                          hover:bg-[#0a87b1] transition-all focus:outline-none focus:ring-4 focus:ring-[#0aa6d6]"
               onClick={() => onSelect(player)}
             >
-              #{player.number}
+              #{player.number} - {player.name}
             </button>
           ))}
         </div>
 
-        {/* Add New Player */}
-        <div className="mt-6">
-          <PlayerAdder team={team} />
-        </div>
+        {/* Add New Player (Only show in game mode) */}
+        {mode === 'game' && (
+          <div className="mt-6">
+            <PlayerAdder team={team} />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -15,15 +15,26 @@ export const gameSlice = createSlice({
       state[team].players[player.id] = player;
     },
     addAttemptedShot: (state, action) => {
-      const { team, playerId, points } = action.payload;
+      const { team, playerId, points, type_of_game } = action.payload;
       const player = state[team].players[playerId];
-      player.stats.points.attempted[points]++;
+
+      if (type_of_game === "drill") {
+        player.stats.drill_attempts = (player.stats.drill_attempts || 0) + 1;
+      } else {
+        player.stats.points.attempted[points]++;
+      }
     },
     addMadeShot: (state, action) => {
-      const { team, playerId, points } = action.payload;
+      const { team, playerId, points, type_of_game } = action.payload;
       const player = state[team].players[playerId];
-      player.stats.points.made[points]++;
-      state[team].score += parseInt(points);
+
+      if (type_of_game === "drill") {
+        player.stats.drill_attempts = (player.stats.drill_attempts || 0) + 1;
+        player.stats.drill_made = (player.stats.drill_made || 0) + 1;
+      } else {
+        player.stats.points.made[points]++;
+        state[team].score += parseInt(points);
+      }
     },
     addRebound: (state, action) => {
       const { team, playerId, type } = action.payload;
@@ -51,16 +62,25 @@ export const gameSlice = createSlice({
       if (lastAction) {
         switch (lastAction.action) {
           case 'addMadeShot': {
-            const { team, playerId, points } = lastAction;
+            const { team, playerId, points, type_of_game } = lastAction;
             const player = state[team].players[playerId];
-            player.stats.points.made[points]--;
-            state[team].score -= parseInt(points);
+            if (type_of_game === "drill") {
+              player.stats.drill_made--;
+              player.stats.drill_attempts--;
+            } else {
+              player.stats.points.made[points]--;
+              state[team].score -= parseInt(points);
+            }
             break;
           }
           case 'addAttemptedShot': {
-            const { team, playerId, points } = lastAction;
+            const { team, playerId, points, type_of_game } = lastAction;
             const player = state[team].players[playerId];
-            player.stats.points.attempted[points]--;
+            if (type_of_game === "drill") {
+              player.stats.drill_attempts--;
+            } else {
+              player.stats.points.attempted[points]--;
+            }
             break;
           }
           case 'addRebound': {
@@ -92,6 +112,6 @@ export const gameSlice = createSlice({
   }
 });
 
-export const { addAttemptedShot, addMadeShot, addPlayer, addScore, addRebound, addAssist, addFoul, updateLastActions, undoLastAction, initializeGame } = gameSlice.actions;
+export const { addAttemptedShot, addMadeShot, addPlayer, addRebound, addAssist, addFoul, updateLastActions, undoLastAction, initializeGame } = gameSlice.actions;
 
 export default gameSlice.reducer;
