@@ -14,7 +14,7 @@ import List from '../../components/List';
 import { colors, getCroppedImg, validator, classNames } from '../../utils';
 
 
-export default function AddTeam() {
+export default function EditTeam() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [teamNameState, setTeamState] = useState({});
@@ -22,32 +22,45 @@ export default function AddTeam() {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
-  const [getPlayersLoading, setGetPlayersLoading] = useState(false);
-  const [createTeamLoading, setCreateTeamLoading] = useState(false);
+  const [getPlayersLoading, setGetPlayersLoading] = useState(true);
+  const [updateTeamLoading, setUpdateTeamLoading] = useState(false);
   const [playersInTeam, setPlayersInTeam] = useState({ byId: {}, allIds: [] });
   const fileInputRef = useRef(null);
 
+  const state = useSelector(state => state);
   const user = useSelector(state => state.user);
   const players = useSelector(state => state.players);
   const teams = useSelector(state => state.teams);
   const teamName = teams.editing.name;
   const croppedImage = teams.editing.avatar;
   const croppedImageUrl = teams.editing.avatarUrl;
+  console.log('MAP: ', state)
 
   useEffect(() => {
-    const inTeam = {
-      byId: {},
-      allIds: []
-    };
-    for (const player of Object.values(teams.editing.players)) {
-      if (player.toAdd) {
-        inTeam.allIds.push(player.id);
-        inTeam.byId[player.id] = player;
-      }
-    }
+    if (!getPlayersLoading) {
+      const inTeam = {
+        byId: {},
+        allIds: []
+      };
 
-    setPlayersInTeam(inTeam);
-  }, [players, teams]);
+      for (const playerId of teams.editing.playersFromServer) {
+        if (!teams.editing.players[playerId]?.toRemove) {
+          const player = players.byId[playerId];
+          inTeam.allIds.push(player.id);
+          inTeam.byId[player.id] = player;
+        }
+      }
+
+      for (const player of Object.values(teams.editing.players)) {
+        if (player?.toAdd) {
+          inTeam.allIds.push(player.id);
+          inTeam.byId[player.id] = player;
+        }
+      }
+
+      setPlayersInTeam(inTeam);
+    }
+  }, [players, teams, getPlayersLoading]);
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -131,7 +144,7 @@ export default function AddTeam() {
     navigate('/games/teams/players/create')
   };
 
-  const onCreateNewTeam = async () => {
+  const onUpdateTeam = async () => {
     const fieldState = validator('teamName', teamName, 'blur', {}, true);
     setTeamState(fieldState);
 
@@ -140,7 +153,7 @@ export default function AddTeam() {
     }
 
     try {
-      setCreateTeamLoading(true);
+      setUpdateTeamLoading(true);
       const team = {
         name: teamName,
         players: Object.values(teams.editing.players)
@@ -154,21 +167,21 @@ export default function AddTeam() {
         payload.image = croppedImage;
       }
 
-      const newTeam = await addTeamApi(payload);
-      if (newTeam?.isDuplicate) {
-        toast.error('This team name is already in use', {
-          position: 'top-center'
-        })
-        setCreateTeamLoading(false);
-        return false;
-      }
+      // const newTeam = await addTeamApi(payload);
+      // if (newTeam?.isDuplicate) {
+      //   toast.error('This team name is already in use', {
+      //     position: 'top-center'
+      //   })
+        // setUpdateTeamLoading(false);
+        // return false;
+      // }
 
-      dispatch(addTeam({ team: newTeam }));
-      setCreateTeamLoading(false);
-      navigate(-1);
+      // dispatch(addTeam({ team: newTeam }));
+      // setUpdateTeamLoading(false);
+      // navigate(-1);
     } catch (err) {
       console.log('ON CREATE TEAM API ERR: ', err);
-      setCreateTeamLoading(false);
+      setUpdateTeamLoading(false);
     }
   };
 
@@ -179,6 +192,7 @@ export default function AddTeam() {
   };
 
   const onRemovePlayerFromTeam = (player) => {
+    console.log('PLAYER: ', player)
     dispatch(removePlayerFromTeamCache({ player }));
   };
 
@@ -253,7 +267,7 @@ export default function AddTeam() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <h2 className="text-base font-semibold leading-6 text-gray-900">Create a new team</h2>
+      <h2 className="text-base font-semibold leading-6 text-gray-900">Edit team {teamName}</h2>
 
       <div className="mt-8">
 
@@ -272,7 +286,7 @@ export default function AddTeam() {
               </button>
             )}
           </div>
-          <h2 className="mt-2 text-sm font-semibold text-gray-800">Upload new team avatar</h2>
+          <h2 className="mt-2 text-sm font-semibold text-gray-800">Edit team avatar</h2>
         </div>
         <div className="flex justify-between items-end">
           <div className="w-full sm:w-2/5">
@@ -418,12 +432,12 @@ export default function AddTeam() {
           <button
             type="button"
             className="w-full sm:w-auto inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
-            onClick={onCreateNewTeam}
+            onClick={onUpdateTeam}
           >
-            {createTeamLoading && (
+            {updateTeamLoading && (
               <Icon type="loader" className="h-5 w-5 mr-2" spinnerColor={colors.orange600} spinnerBackgroundColor={colors.grey300} />
             )}
-            Create new team
+            Update team
           </button>
         </div>
       </div>

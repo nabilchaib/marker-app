@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { EllipsisHorizontalIcon, PlusIcon } from '@heroicons/react/24/solid'
+import { TrashIcon, PencilIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { toast } from 'react-toastify'
 
 import Icon from '../../components/Icon';
+import List from '../../components/List';
 import { getTeamsApi } from '../../firebase/api';
-import { addTeams, resetTeamCache } from '../../redux/teams-reducer';
+import { addTeams, resetTeamCache, addTeamCache } from '../../redux/teams-reducer';
 import { addGameToCache, removeGameFromCache } from '../../redux/games-reducer';
 import { colors } from '../../utils';
 
@@ -46,23 +47,23 @@ export default function AddPickUpGame() {
     navigate('/games/teams/create')
   };
 
-  const onSelectTeam = teamId => {
-    if (games.editing.teamA === teamId) {
+  const onSelectTeam = team => {
+    if (games.editing.teamA === team.id) {
       dispatch(removeGameFromCache({ type: 'teamA' }));
       return false;
     }
 
-    if (games.editing.teamB === teamId) {
+    if (games.editing.teamB === team.id) {
       dispatch(removeGameFromCache({ type: 'teamB' }));
       return false;
     }
 
     if (games.editing.teamA) {
-      dispatch(addGameToCache({ teamB: teamId }))
+      dispatch(addGameToCache({ teamB: team.id }))
       return false;
     }
 
-    dispatch(addGameToCache({ teamA: teamId }))
+    dispatch(addGameToCache({ teamA: team.id }))
   };
 
   const onCreateNewPickUpGame = () => {
@@ -87,8 +88,22 @@ export default function AddPickUpGame() {
     }
   };
 
+  const onDeleteTeam = () => {
+    console.log('DELETE')
+  };
+
+  const onEditTeam = (team) => {
+    console.log('TEAM: ', team)
+    dispatch(addTeamCache(team));
+    navigate('/games/teams/edit')
+  };
+
   const teamA = teams.byId[games.editing.teamA];
   const teamB = teams.byId[games.editing.teamB];
+  const dropdownItems = [
+    { text: 'Delete', icon: TrashIcon, onClick: onDeleteTeam },
+    { text: 'Edit', icon: PencilIcon, onClick: onEditTeam },
+  ];
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -143,39 +158,33 @@ export default function AddPickUpGame() {
               New team
             </button>
           </div>
-          <ul role="list" className="mt-6 divide-y divide-gray-200 border-b border-t border-gray-200">
-            {teams.allIds.map((teamId) => {
-              const team = teams.byId[teamId];
+          <List items={teams} onSelectItem={onSelectTeam} dropdownItems={dropdownItems}>
+            {({ item, onSelectItem }) => {
               return (
-                <li onClick={() => onSelectTeam(teamId)} key={team.id} className="hover:bg-orange-100 cursor-pointer">
-                  <div className="group flex items-center p-4">
-                    <div className="mr-3">
-                      {team.avatarUrl && (
-                        <img className="rounded-full h-10 w-10" src={team.avatarUrl} />
-                      )}
-                      {!team.avatarUrl && (
-                        <span className="border border-gray-300 relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-full">
-                          <Icon type="jersey" className="mx-auto h-6 w-6 text-gray-400" />
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1 flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="text-sm font-medium text-gray-900">
-                          <a>
-                            {team.name}
-                          </a>
-                        </div>
+                <button onClick={() => onSelectItem(item)} className="w-full group flex items-center p-4 pr-10 focus-visible:outline-orange-600">
+                  <div className="mr-3">
+                    {item.avatarUrl && (
+                      <img className="rounded-full h-10 w-10" src={item.avatarUrl} />
+                    )}
+                    {!item.avatarUrl && (
+                      <span className="border border-gray-300 relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-full">
+                        <Icon type="jersey" className="mx-auto h-6 w-6 text-gray-400" />
+                      </span>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1 flex justify-between items-center">
+                    <div className="flex items-center">
+                      <div className="text-sm font-medium text-gray-900">
+                        <a>
+                          {item.name}
+                        </a>
                       </div>
                     </div>
-                    <div className="flex-shrink-0 self-center">
-                      <EllipsisHorizontalIcon aria-hidden="true" className="h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-                    </div>
                   </div>
-                </li>
+                </button>
               );
-            })}
-          </ul>
+            }}
+          </List>
         </div>
       )}
 

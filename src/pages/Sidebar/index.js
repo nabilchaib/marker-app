@@ -1,7 +1,7 @@
 import { useMemo, useState, Fragment } from 'react'
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { Dialog, DialogBackdrop, DialogPanel, TransitionChild, Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react'
+import { Dialog, DialogBackdrop, DialogPanel, TransitionChild } from '@headlessui/react'
 import {
   Bars3Icon,
   XMarkIcon,
@@ -10,6 +10,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { auth, signOut } from '../../firebase';
 import Icon from '../../components/Icon';
+import Dropdown from '../../components/Dropdown';
 import { classNames } from '../../utils';
 
 const teams = [
@@ -33,9 +34,35 @@ const isCurrentMenu = (menu, path) => {
 
 export default function Sidebar() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [topDropdownEl, setTopDropdownEl] = useState(null);
+  const [sideDropdownEl, setSideDropdownEl] = useState(null);
+  const topDropdownOpen = Boolean(topDropdownEl);
+  const sideDropdownOpen = Boolean(sideDropdownEl);
+
   const user = useSelector(state => state.user);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const onOpenTopDropdown = (e) => {
+    setTopDropdownEl(e.currentTarget);
+  };
+
+  const onCloseTopDropdown = () => {
+    setTopDropdownEl(null);
+  };
+
+  const onOpenSideDropdown = (e) => {
+    setSideDropdownEl(e.currentTarget);
+  };
+
+  const onCloseSideDropdown = () => {
+    setSideDropdownEl(null);
+  };
+
+  const onProfileClick = () => {
+    onCloseSideDropdown();
+    onCloseTopDropdown();
+  };
 
   const navigation = useMemo(() => [
     { name: 'Games', href: '/games', icon: (props) => <Icon type="hoop" {...props} />, current: isCurrentMenu('games', location.pathname) },
@@ -43,6 +70,9 @@ export default function Sidebar() {
   ], [location.pathname]);
 
   const onLogout = async () => {
+    onCloseSideDropdown();
+    onCloseTopDropdown();
+
     try {
       await signOut(auth);
     } catch (err) {
@@ -54,6 +84,11 @@ export default function Sidebar() {
     setSidebarOpen(false);
     navigate(item.href);
   };
+
+  const dropdownItems = [
+    { text: 'Your profile', icon: UserCircleIcon, onClick: onProfileClick },
+    { text: 'Log out', icon: MoonIcon, onClick: onLogout },
+  ];
 
   return (
     <div>
@@ -70,7 +105,7 @@ export default function Sidebar() {
           >
             <TransitionChild>
               <div className="absolute left-full top-0 flex w-16 justify-center pt-5 duration-300 ease-in-out data-[closed]:opacity-0">
-                <button type="button" onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5">
+                <button type="button" onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2 outline-none focus-visible:outline-orange-600 focus-visible:rounded-md">
                   <span className="sr-only">Close sidebar</span>
                   <XMarkIcon aria-hidden="true" className="h-6 w-6 text-white" />
                 </button>
@@ -78,17 +113,17 @@ export default function Sidebar() {
             </TransitionChild>
             {/* Sidebar component, swap this element with another sidebar if you like */}
             <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-orange-600 px-6 pb-2">
-              <div className="flex h-16 shrink-0 items-center">
-                <button className="flex items-center">
+              <div className="flex h-16 items-center">
+                <button className="flex items-center outline-none focus-visible:outline-orange-700 focus-visible:rounded-md">
                   <img
                     alt="Your Company"
                     src="/hoop-trackr-logo-ball.svg"
-                    className="h-8 w-auto"
+                    className="h-8 w-8"
                   />
                   <img
                     alt="Your Company"
                     src="/hoop-trackr-logo-text.svg"
-                    className="mt-2 ml-1 h-8 w-auto"
+                    className="mt-2 ml-1 h-8 w-16"
                   />
                 </button>
               </div>
@@ -97,13 +132,13 @@ export default function Sidebar() {
                   <li>
                     <ul role="list" className="-mx-2 space-y-1">
                       {navigation.map((item) => (
-                        <li key={item.name}>
-                          <a
+                        <li key={item.name} className="mb-2">
+                          <button
                             className={classNames(
                               item.current
                                 ? 'bg-orange-700 text-white'
                                 : 'text-orange-200 hover:bg-orange-700 hover:text-white',
-                              'cursor-pointer group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6',
+                              'w-full cursor-pointer group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 outline-none focus-visible:outline-orange-700 focus-visible:rounded-md',
                             )}
                             onClick={() => onNavigation(item)}
                           >
@@ -115,7 +150,7 @@ export default function Sidebar() {
                               )}
                             />
                             {item.name}
-                          </a>
+                          </button>
                         </li>
                       ))}
                     </ul>
@@ -132,7 +167,7 @@ export default function Sidebar() {
         {/* Sidebar component, swap this element with another sidebar if you like */}
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-orange-600 px-6">
           <div className="flex items-center h-16 shrink-0 items-center">
-            <button className="flex items-center">
+            <button className="flex items-center outline-none focus-visible:outline-orange-700 focus-visible:rounded-md">
               <img
                 alt="Your Company"
                 src="/hoop-trackr-logo-ball.svg"
@@ -150,13 +185,13 @@ export default function Sidebar() {
               <li>
                 <ul role="list" className="-mx-2 space-y-1">
                   {navigation.map((item) => (
-                    <li key={item.name}>
-                      <a
+                    <li key={item.name} className="mb-2">
+                      <button
                         className={classNames(
                           item.current
                             ? 'bg-orange-700 text-white'
                             : 'text-orange-200 hover:bg-orange-700 hover:text-white',
-                          'cursor-pointer group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6',
+                          'w-full cursor-pointer group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 outline-none focus-visible:outline-orange-700 focus-visible:rounded-md',
                         )}
                         onClick={() => onNavigation(item)}
                       >
@@ -168,41 +203,33 @@ export default function Sidebar() {
                           )}
                         />
                         {item.name}
-                      </a>
+                      </button>
                     </li>
                   ))}
                 </ul>
               </li>
               <li className="-mx-6 mt-auto">
-                <Menu>
-                  <MenuButton as={Fragment}>
-                    <a
-                      href="#"
-                      className="flex items-center gap-x-3 px-6 py-3 text-sm font-semibold leading-6 text-white hover:bg-orange-700"
-                    >
-                      <Icon className="h-8 w-8" type="avatar" />
-                      <span className="sr-only">Your profile</span>
-                      <span aria-hidden="true">{user.firstName} {user.lastName}</span>
-                    </a>
-                  </MenuButton>
-                  <MenuItems
-                    anchor={{ to: "top end", offset: '1rem' }}
-                    className="z-100 w-52 bg-white rounded-xl border border-gray/5 p-1 text-sm/6 transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
-                  >
-                    <MenuItem>
-                      <button className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-gray-200">
-                        <UserCircleIcon className="size-4 fill-white/30" />
-                        Your profile
-                      </button>
-                    </MenuItem>
-                    <MenuItem>
-                      <button onClick={onLogout} className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-gray-200">
-                        <MoonIcon className="size-4 fill-white/30" />
-                        Log out
-                      </button>
-                    </MenuItem>
-                  </MenuItems>
-                </Menu>
+                <button onClick={onOpenSideDropdown} className="text-sm font-semibold leading-6 text-white hover:bg-orange-700 w-full px-6 py-3 flex items-center gap-x-3 outline-none outline-offset-[-3px] focus-visible:outline-orange-700">
+                  <Icon className="h-8 w-8" type="avatar" />
+                  <span className="sr-only">Your profile</span>
+                  <span aria-hidden="true">{user.firstName} {user.lastName}</span>
+                </button>
+
+                <Dropdown
+                  anchorEl={sideDropdownEl}
+                  open={sideDropdownOpen}
+                  items={dropdownItems}
+                  onOpen={onOpenSideDropdown}
+                  onClose={onCloseSideDropdown}
+                  anchorOrigin={{
+                    vertical: 'top',
+                    horizontal: 'center',
+                  }}
+                  transformOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                  }}
+                />
               </li>
             </ul>
           </nav>
@@ -210,12 +237,12 @@ export default function Sidebar() {
       </div>
 
       <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-orange-600 px-4 py-4 shadow-sm sm:px-6 lg:hidden">
-        <button type="button" onClick={() => setSidebarOpen(true)} className="-m-2.5 p-2.5 text-orange-200 lg:hidden">
+        <button type="button" onClick={() => setSidebarOpen(true)} className="-m-2.5 p-2 text-orange-200 lg:hidden outline-none focus-visible:outline-orange-700 focus-visible:rounded-md">
           <span className="sr-only">Open sidebar</span>
           <Bars3Icon aria-hidden="true" className="h-6 w-6" />
         </button>
         <div className="flex-1 text-sm font-semibold leading-6 text-white">
-          <button className="flex items-center">
+          <button className="flex items-center outline-none focus-visible:outline-orange-700 focus-visible:rounded-md">
             <img
               alt="Your Company"
               src="/hoop-trackr-logo-ball.svg"
@@ -228,31 +255,25 @@ export default function Sidebar() {
             />
           </button>
         </div>
-        <Menu>
-          <MenuButton as={Fragment}>
-            <a href="#">
-              <span className="sr-only">Your profile</span>
-              <Icon className="h-8 w-8" type="avatar" />
-            </a>
-          </MenuButton>
-          <MenuItems
-            anchor={{ to: "bottom", offset: '-4.5rem' }}
-            className="z-100 w-52 bg-white rounded-xl border border-gray/5 p-1 text-sm/6 transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
-          >
-            <MenuItem>
-              <button className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-gray-200">
-                <UserCircleIcon className="size-4 fill-white/30" />
-                Your profile
-              </button>
-            </MenuItem>
-            <MenuItem>
-              <button onClick={onLogout} className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-gray-200">
-                <MoonIcon className="size-4 fill-white/30" />
-                Log out
-              </button>
-            </MenuItem>
-          </MenuItems>
-        </Menu>
+        <button onClick={onOpenTopDropdown} className="flex outline-none focus-visible:outline-orange-700 focus-visible:rounded-md">
+          <span className="sr-only">Your profile</span>
+          <Icon className="h-8 w-8" type="avatar" />
+        </button>
+        <Dropdown
+          anchorEl={topDropdownEl}
+          open={topDropdownOpen}
+          items={dropdownItems}
+          onOpen={onOpenTopDropdown}
+          onClose={onCloseTopDropdown}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'left',
+          }}
+        />
       </div>
 
       <main className="lg:pl-72">

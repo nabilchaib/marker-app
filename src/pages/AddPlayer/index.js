@@ -29,9 +29,7 @@ export default function AddPlayer() {
   const [createPlayerLoading, setCreatePlayerLoading] = useState(false);
   const fileInputRef = useRef(null);
 
-  const state = useSelector(state => state);
   const user = useSelector(state => state.user);
-  console.log('MAP: ', state)
 
   const onCropComplete = (croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels)
@@ -221,15 +219,15 @@ export default function AddPlayer() {
         <div className="flex flex-col items-center">
           <div className="group flex">
             {croppedImageUrl && (
-              <button onClick={onSelectPlayerAvatar} className="rounded-full active:scale-95">
+              <button onClick={onSelectPlayerAvatar} className="rounded-full active:scale-95 focus-visible:outline-orange-600">
                 <input ref={fileInputRef} type="file" onChange={onUploadPlayerAvatar} accept="image/*" style={{ display: "none" }} />
                 <img className="rounded-full h-24 w-24" src={croppedImageUrl} />
               </button>
             )}
             {!croppedImageUrl && (
-              <button onClick={onSelectPlayerAvatar} className="flex items-center justify-center h-24 w-24 border rounded-full border-gray-300 group-hover:border-orange-600 group-active:scale-95">
+              <button onClick={onSelectPlayerAvatar} className="group flex items-center justify-center h-24 w-24 border rounded-full border-gray-300 group-hover:border-orange-600 active:scale-95 group-active:border-orange-600 focus-visible:outline-orange-600 focus-within:border-orange-600">
                 <input ref={fileInputRef} type="file" onChange={onUploadPlayerAvatar} accept="image/*" style={{ display: "none" }} />
-                <Icon type="jersey" className="mx-auto h-16 w-16 text-gray-300 group-hover:text-orange-600" />
+                <Icon type="jersey" className="mx-auto h-16 w-16 text-gray-300 group-hover:text-orange-600 group-focus:text-orange-600" />
               </button>
             )}
           </div>
@@ -297,7 +295,7 @@ export default function AddPlayer() {
 
               <button
                 type="button"
-                className="h-12 inline-flex items-center rounded-r-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
+                className="h-12 inline-flex items-center rounded-r-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-orange-700"
                 onClick={onRandomNumber}
               >
                 Random number

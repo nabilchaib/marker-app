@@ -1,6 +1,10 @@
 export const colors = {
   orange600: '#EA580C',
+  grey500: '#6b7280',
+  grey400: '#9ca3af',
   grey300: '#D1D5DB',
+  grey200: '#E5E7EB',
+  grey100: '#f3f4f6',
   cyan600: '#0891B2',
 };
 
