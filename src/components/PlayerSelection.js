@@ -1,13 +1,7 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
-import { selectTeamPlayers } from './selectors/selectors';
 import PlayerAdder from './PlayerAdder';
 
-const PlayerSelection = ({ mode, team, onSelect, onClose }) => {
-  // Get players based on the mode
-  const players = useSelector((state) => selectTeamPlayers(state, team, mode));
-
-
+const PlayerSelection = ({ mode, team, players, onSelect, onClose, }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       {/* Modal Container */}

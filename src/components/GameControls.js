@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useSelector, useDispatch } from 'react-redux';
+import { selectAllPlayers } from './selectors/selectors';
 import { useNavigate } from 'react-router-dom';
 import {
   addMadeShotApi,
@@ -42,25 +43,30 @@ const GameControls = ({mode}) => {
     teamB: []
   });
   const navigate = useNavigate();
-
+  
   const teamA = useSelector((state) => state.game.teamA);
   const teamB = useSelector((state) => state.game.teamB);
   const game = useSelector((state) => state.game);
-  const allPlayers = useSelector((state) =>
-    state.players.allIds.map((id) => state.players.byId[id])
-  );
+  const allPlayers = useSelector(selectAllPlayers); 
   const [lastActions, setLastActions] = useState(game.actions || []);
 
   useEffect(() => {
-    if (mode === "game" && (!teamA || !teamB)) {
-      navigate('/teamselection');
-    } else {
+    if (mode === "drill") {
       setPlayerOptionsMap({
-        teamA: Object.values(teamA?.players || {}),
-        teamB: Object.values(teamB?.players || {})
+        teamA: allPlayers,
+        teamB: allPlayers
       });
+    } else if (mode === "game") {
+      if (!teamA || !teamB) {
+        navigate('/teamselection');
+      } else {
+        setPlayerOptionsMap({
+          teamA: Object.values(teamA.players || {}),
+          teamB: Object.values(teamB.players || {}),
+        });
+      }
     }
-  }, [teamA, teamB]);
+  }, [mode, teamA, teamB, navigate]);
 
   useEffect(() => {
     const updateActions = async () => {
@@ -101,23 +107,35 @@ const GameControls = ({mode}) => {
     }
 
     if (!selectedPlayer) {
-      setShowPlayerSelection(true)
+      setShowPlayerSelection(true);
     } else {
       try {
         setAttemptLoading(points);
         const type_of_game = mode === "drill" ? "drill" : "game";
-        const effectivePoints = mode === "drill" ? 0 : points; // 0 points for drills
-  
+        const effectivePoints = mode === "drill" ? 0 : points;
         await addAttemptedShotApi({ game, selectedTeam, playerId: selectedPlayer.id, points: effectivePoints, type_of_game });
         dispatch(addAttemptedShot({ team: selectedTeam, playerId: selectedPlayer.id, points: effectivePoints, type_of_game }));
 
-        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addAttemptedShot', points:effectivePoints, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam, type_of_game }])
+        setLastActions(prev => [
+          ...prev,
+          {
+            id: uuidv4(),
+            action: 'addAttemptedShot',
+            points: effectivePoints,
+            playerId: selectedPlayer.id,
+            playerNumber: selectedPlayer.number,
+            team: selectedTeam,
+            type_of_game
+          }
+        ]);
         setAttemptLoading(false);
       } catch (err) {
+        console.error('Error in handleAttempt:', err);
         setAttemptLoading(false);
       }
     }
   };
+
 
   const handleMade = async (points) => {
     if (madeLoading) {
@@ -131,7 +149,6 @@ const GameControls = ({mode}) => {
         setMadeLoading(points);
         const type_of_game = mode === "drill" ? "drill" : "game";
         const effectivePoints = mode === "drill" ? 0 : points;
-
         await addMadeShotApi({ game, selectedTeam, playerId: selectedPlayer.id, points: effectivePoints, type_of_game });
         dispatch(addMadeShot({ team: selectedTeam, playerId: selectedPlayer.id, points: effectivePoints, type_of_game }));
         setLastActions(prev => [...prev, { id: uuidv4(), action: 'addMadeShot', points:effectivePoints, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam, type_of_game }])
@@ -259,11 +276,11 @@ const GameControls = ({mode}) => {
       {/* Player Selection */}
       {showPlayerSelection ? (
         <PlayerSelection
-          team={selectedTeam}
-          players={playerOptionsMap[selectedTeam]}
-          onSelect={handlePlayerSelect}
-          onClose={setShowPlayerSelection}
-        />
+        team={mode === 'game' ? selectedTeam : null} // Pass `null` or handle differently for drills
+        players={mode === 'drill' ? allPlayers : playerOptionsMap[selectedTeam]} // Show all players in drill mode
+        onSelect={handlePlayerSelect}
+        onClose={setShowPlayerSelection}
+      />
       ) : (
         <div className="flex flex-col items-center space-y-4">
           <button

@@ -105,12 +105,19 @@ export const initializeGameApi = async (selectedTeams, mode = "game") => {
   });
 };
 export const addGameApi = async (game) => {
+  console.log('addGameApi called with:', game);
   try {
+    const gameToAdd = game.date ? game : {...game, date:serverTimestamp()}
     const gameRef = collection(db, 'game');
-    const newGameRef = await addDoc(gameRef, game)
+    const newGameRef = await addDoc(gameRef, gameToAdd)
     const newGameSnapshot = await getDoc(newGameRef);
     const newGameData = newGameSnapshot.data();
-    const newGame = { id: newGameRef.id, ...newGameData, date: newGameData.date.toDate().toISOString() };
+    const newGame = {
+      id: newGameRef.id,
+      ...newGameData,
+      date: newGameData.date?.toDate().toISOString(),
+      players: game.players  // Ensure players structure is included in the return object
+    };
     return newGame;
   } catch (err) {
     console.log('ADD GAME API ERR: ', err);
@@ -141,30 +148,47 @@ const getNewGameStats = ({ game, selectedTeam, player, playerId, newStats, newSc
 export const addMadeShotApi = async ({ game, selectedTeam, playerId, points, type_of_game = "game" }) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const player = game[selectedTeam].players[playerId];
-      const newStats = {
-        ...player.stats,
-        points: {
-          ...player.stats.points,
-          made: player.stats.points.made.map((val, index) => {
-            if (index === points) {
-              return val + 1;
-            }
-
-            return val;
-          })
-        }
-      };
-
+      let newStats;
       let newGame;
+      
       if (type_of_game === "drill") {
-        // In drill, track individual stats only, no team score
-        newGame = { ...game, [selectedTeam]: { ...game[selectedTeam], players: { [playerId]: newStats } } };
+        // Directly access the player for drill mode without a team context
+        if (!game.playerId || game.playerId !== playerId) {
+          throw new Error(`Player with ID ${playerId} not found in the game`);
+        }
+        
+        // Define new stats for drill mode
+        newStats = {
+          drill_attempts: (game.drill_attempts || 0) + 1,
+          drill_made: (game.drill_made || 0) + 1,
+        };
+        
+        // Update game directly without player/team structure
+        newGame = {
+          ...game,
+          stats: { ...game.stats, [playerId]: newStats },
+        };
+        console.log('addMadeShotApi',newGame)
       } else {
+        // Logic for game mode
+        const player = game[selectedTeam]?.players?.[playerId];
+        if (!player) {
+          throw new Error(`Player with ID ${playerId} not found in ${selectedTeam}`);
+        }
+
+        newStats = {
+          ...player.stats,
+          points: {
+            ...player.stats.points,
+            made: player.stats.points.made.map((val, index) => (index === points ? val + 1 : val)),
+          },
+        };
+
         const newScore = game[selectedTeam].score + parseInt(points);
         newGame = getNewGameStats({ game, selectedTeam, player, playerId, newStats, newScore });
       }
 
+      // Update Firestore with the new game state
       const gameRef = doc(db, 'game', game.id);
       await updateDoc(gameRef, newGame);
 
@@ -176,35 +200,80 @@ export const addMadeShotApi = async ({ game, selectedTeam, playerId, points, typ
   });
 };
 
-export const addAttemptedShotApi = async ({ game, selectedTeam, playerId, points }) => {
+
+export const addAttemptedShotApi = async ({ game, selectedTeam, playerId, points, type_of_game = "game" }) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const player = game[selectedTeam].players[playerId];
-      const newStats = {
-        ...player.stats,
-        points: {
-          ...player.stats.points,
-          attempted: player.stats.points.attempted.map((val, index) => {
-            if (index === points) {
-              return val + 1;
-            }
+      let newStats;
+      let newGame;
 
-            return val;
-          })
+      if (type_of_game === "drill") {
+        // For drill mode, directly access and update player stats
+        if (!game.playerId || game.playerId !== playerId) {
+          throw new Error(`Player with ID ${playerId} not found in the game`);
         }
-      };
+        
+        newStats = {
+          drill_attempts: (game.players[playerId].stats.drill_attempts || 0) + 1,
+        };
 
-      const newGame = getNewGameStats({ game, selectedTeam, player, playerId, newStats });
+        newGame = {
+          ...game,
+          players: {
+            ...game.players,
+            [playerId]: {
+              ...game.players[playerId],
+              stats: {
+                ...game.players[playerId].stats,
+                ...newStats
+              }
+            }
+          }
+        };
+
+      } else {
+        // For game mode, find the player in the selected team and update points attempted
+        const player = game[selectedTeam]?.players?.[playerId];
+        if (!player) {
+          throw new Error(`Player with ID ${playerId} not found in team ${selectedTeam}`);
+        }
+
+        newStats = {
+          ...player.stats,
+          points: {
+            ...player.stats.points,
+            attempted: player.stats.points.attempted.map((val, index) => (index === points ? val + 1 : val)),
+          }
+        };
+
+        newGame = {
+          ...game,
+          [selectedTeam]: {
+            ...game[selectedTeam],
+            players: {
+              ...game[selectedTeam].players,
+              [playerId]: {
+                ...player,
+                stats: newStats
+              }
+            }
+          }
+        };
+      }
+
+      // Update Firestore with the new game state
       const gameRef = doc(db, 'game', game.id);
       await updateDoc(gameRef, newGame);
 
+      console.log('addAttemptedShotApi:', newGame);
       resolve();
     } catch (err) {
-      console.log('ADD ATTEMPTED SHOT API ERR: ', err);
+      console.log('ADD ATTEMPTED SHOT API ERR:', err);
       reject(err);
     }
   });
 };
+
 
 export const addReboundApi = async ({ game, selectedTeam, playerId, type }) => {
   return new Promise(async (resolve, reject) => {
@@ -611,7 +680,6 @@ export const addPlayerStatsApi = async (playerId, gameId, date, type_of_game) =>
       // playerName,
       gameId,
       date,
-      type_of_game,
       points_scored: 0,
       shots_attempted: [0, 0, 0],
       shots_made: [0, 0, 0],

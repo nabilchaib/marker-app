@@ -16,26 +16,50 @@ export const gameSlice = createSlice({
     },
     addAttemptedShot: (state, action) => {
       const { team, playerId, points, type_of_game } = action.payload;
-      const player = state[team].players[playerId];
-
+    
+      // If drill mode, access player directly without team structure
       if (type_of_game === "drill") {
-        player.stats.drill_attempts = (player.stats.drill_attempts || 0) + 1;
+        const player = state.players?.[playerId];
+        if (player) {
+          player.stats.drill_attempts = (player.stats.drill_attempts || 0) + 1;
+        }
       } else {
-        player.stats.points.attempted[points]++;
+        // Game mode: access player through team structure
+        const player = state[team]?.players?.[playerId];
+        if (player) {
+          player.stats.points.attempted[points]++;
+        }
       }
     },
+    
     addMadeShot: (state, action) => {
       const { team, playerId, points, type_of_game } = action.payload;
-      const player = state[team].players[playerId];
-
+    
+      let player;
+    
       if (type_of_game === "drill") {
+        // Access player stats directly for drill mode
+        player = state.players[playerId];
+        if (!player) {
+          console.error(`Player with ID ${playerId} not found in drill mode.`);
+          return;
+        }
         player.stats.drill_attempts = (player.stats.drill_attempts || 0) + 1;
         player.stats.drill_made = (player.stats.drill_made || 0) + 1;
-      } else {
+      } else if (team) {
+        // Access player within the team for game mode
+        player = state[team]?.players?.[playerId];
+        if (!player) {
+          console.error(`Player with ID ${playerId} not found in team ${team} for game mode.`);
+          return;
+        }
         player.stats.points.made[points]++;
         state[team].score += parseInt(points);
+        console.log('Game mode stats updated:', player.stats);
+      } else {
+        console.error("Unexpected state: team is null in game mode.");
       }
-    },
+    },    
     addRebound: (state, action) => {
       const { team, playerId, type } = action.payload;
       const player = state[team].players[playerId];

@@ -1,7 +1,8 @@
 export const selectGame = state => state.game;
 
-export const selectAllPlayers = (state) => state.players.allPlayers || [];
-
+export const selectAllPlayers = (state) => {
+  return state.players.allIds.map((id) => state.players.byId[id]) || [];
+};
 export const selectTeamPlayers = (state, team, mode = 'game') => {
   if (mode === 'drill') {
     return selectAllPlayers(state);

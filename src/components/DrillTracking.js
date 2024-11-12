@@ -1,104 +1,130 @@
 import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import GameControls from './GameControls'; 
+import GameControls from './GameControls';
+import { selectAllPlayers } from './selectors/selectors';
+import { addMadeShot, addAttemptedShot, initializeGame } from '../redux/game-reducer';
+import { addGameApi, updatePlayerStatsApi } from '../firebase/api';
 import BgImg from './BackgroundImage';
-import { useDispatch } from 'react-redux';
-import { addMadeShot, addAttemptedShot } from '../redux/game-reducer';
-import { addPlayerStatsApi, updatePlayerStatsApi } from '../firebase/api';
 
 const DrillTracking = () => {
+  const dispatch = useDispatch();
   const location = useLocation();
   const playerId = location.state?.playerId;
-  const playerName = location.state?.playerName || "Unknown Player";
-  const dispatch = useDispatch();
-  const [attempts, setAttempts] = useState(0);
-  const [completions, setCompletions] = useState(0);
-  const [playerStatsId, setPlayerStatsId] = useState(null); // Store the player_stats document ID
+
+  // Select the currently selected player from the Redux store
+  const allPlayers = useSelector(selectAllPlayers);
+  const selectedPlayer = allPlayers.find(player => player.id === playerId);
+  const game = useSelector(state => state.game);
+
+  const [playerStatsId, setPlayerStatsId] = useState(null);
 
   useEffect(() => {
-    if (!playerId) return;
+    if (!selectedPlayer?.id) return;
 
-    // Initialize a new player_stats document for this drill session
-    const initializeStats = async () => {
-      const statsId = await addPlayerStatsApi(playerId, new Date().toISOString(), "drill");
-      setPlayerStatsId(statsId);
+    // Initialize a new drill session game
+    const initializeDrill = async () => {
+      try {
+        const newGame = {
+          playerId: selectedPlayer.id,
+          type_of_game: 'drill',
+          actions: [],
+          players: {
+            [selectedPlayer.id]: {
+              id: selectedPlayer.id,
+              stats: {
+                drill_attempts: 0,
+                drill_made: 0,
+              }
+            }
+          }
+        };
+        const createdGame = await addGameApi(newGame);
+
+        if (!createdGame || !createdGame.id) {
+          throw new Error('Game initialization failed: missing game ID');
+        }
+        dispatch(initializeGame({ game: createdGame }));
+        setPlayerStatsId(createdGame.id);
+      } catch (err) {
+        console.error('Failed to initialize drill:', err);
+      }
     };
-    initializeStats();
-  }, [playerId]);
 
-  const handleMade = () => {
-    setAttempts(attempts + 1);
-    setCompletions(completions + 1);
-    dispatch(addMadeShot({ playerId, type_of_game: "drill" }));
+    initializeDrill();
+  }, [selectedPlayer, dispatch]);
+
+  const handleMade = async () => {
+    dispatch(addMadeShot({ playerId: selectedPlayer.id, type_of_game: 'drill' }));
 
     if (playerStatsId) {
-      updatePlayerStatsApi(playerStatsId, { shots_made: completions + 1 });
+      try {
+        await updatePlayerStatsApi(playerStatsId, { shots_made: game.players[selectedPlayer.id].stats.drill_made });
+      } catch (err) {
+        console.error('Failed to update stats for made shot:', err);
+      }
     }
   };
 
-  const handleMissed = () => {
-    setAttempts(attempts + 1);
-    dispatch(addAttemptedShot({ playerId, type_of_game: "drill" }));
+  const handleMissed = async () => {
+    dispatch(addAttemptedShot({ playerId: selectedPlayer.id, type_of_game: 'drill' }));
 
     if (playerStatsId) {
-      updatePlayerStatsApi(playerStatsId, { shots_attempted: attempts + 1 });
+      try {
+        await updatePlayerStatsApi(playerStatsId, { shots_attempted: game.players[selectedPlayer.id].stats.drill_attempts });
+      } catch (err) {
+        console.error('Failed to update stats for missed shot:', err);
+      }
     }
   };
 
   return (
-    <div className="drill-tracking p-4 opacity-95 sm:p-6 lg:p-8 bg-gray-50 rounded-lg shadow-md">
+    <div className="DrillTracking flex flex-col items-center w-4/5 justify-center space-y-6 p-6 bg-black bg-opacity-50 rounded-lg shadow-xl text-white">
       <BgImg />
-      <h2 className="text-2xl font-bold text-gray-900 mb-4">Drill Tracking for {playerName}</h2>
+      <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#f64e07] to-[#0aa6d6] tracking-wider relative">
+        Drill Tracking for {selectedPlayer ? selectedPlayer.name : 'Unknown Player'}
+      </h2>
 
-      <div className="flex flex-col md:flex-row md:space-x-8 mb-4">
-        {/* Display Attempts, Completions, and Success Rate */}
-        <div className="bg-white p-6 rounded-lg shadow-md w-full md:w-1/3 text-center">
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Attempts</h3>
-          <p className="text-3xl font-bold text-orange-600">{attempts}</p>
+      <div className="flex flex-row justify-around w-full max-w-lg items-center space-x-4">
+        <div className="flex flex-col items-center space-y-2 bg-gray-800 bg-opacity-90 py-4 px-6 rounded-lg shadow-md w-full sm:w-1/3">
+          <h3 className="text-lg font-semibold tracking-widest text-center">Attempts</h3>
+          <div className="text-5xl font-extrabold text-orange-600">
+            {game.players[selectedPlayer?.id]?.stats.drill_attempts || 0}
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md w-full md:w-1/3 text-center">
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Completions</h3>
-          <p className="text-3xl font-bold text-green-500">{completions}</p>
+        <div className="w-px h-16 mx-4 bg-gradient-to-b from-[#f64e07] to-[#0aa6d6] opacity-80"></div>
+        <div className="flex flex-col items-center space-y-2 bg-gray-800 bg-opacity-90 py-4 px-6 rounded-lg shadow-md w-full sm:w-1/3">
+          <h3 className="text-lg font-semibold tracking-widest text-center">Completions</h3>
+          <div className="text-5xl font-extrabold text-green-500">
+            {game.players[selectedPlayer?.id]?.stats.drill_made || 0}
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-md w-full md:w-1/3 text-center">
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Success Rate</h3>
-          <p className="text-3xl font-bold text-blue-600">
-            {attempts > 0 ? `${((completions / attempts) * 100).toFixed(2)}%` : '0%'}
-          </p>
+        <div className="w-px h-16 mx-4 bg-gradient-to-b from-[#f64e07] to-[#0aa6d6] opacity-80"></div>
+        <div className="flex flex-col items-center space-y-2 bg-gray-800 bg-opacity-90 py-4 px-6 rounded-lg shadow-md w-full sm:w-1/3">
+          <h3 className="text-lg font-semibold tracking-widest text-center">Success Rate</h3>
+          <div className="text-5xl font-extrabold text-blue-600">
+            {game.players[selectedPlayer?.id]?.stats.drill_attempts > 0
+              ? `${((game.players[selectedPlayer.id].stats.drill_made / game.players[selectedPlayer.id].stats.drill_attempts) * 100).toFixed(2)}%`
+              : '0%'}
+          </div>
         </div>
       </div>
 
-      {/* Game Controls with drill-specific mode */}
-      <GameControls 
-        mode="drill" 
-        onMade={handleMade} 
-        onMissed={handleMissed} 
-      />
+      <GameControls mode="drill" onMade={handleMade} onMissed={handleMissed} />
 
-      {/* Action Log */}
-      <div className="mt-6">
+      <div className="mt-6 bg-white rounded-lg shadow-md p-4 w-full max-w-lg">
         <h3 className="text-xl font-bold text-gray-900 mb-4">Action Log</h3>
-        <div className="bg-white rounded-lg shadow-md p-4">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="py-3 px-6 text-left text-sm font-semibold text-gray-700">Action</th>
-                <th className="py-3 px-6 text-left text-sm font-semibold text-gray-700">Points</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* This example row can be dynamically rendered from a real action log */}
-              <tr className="bg-white border-b">
-                <td className="py-3 px-6 text-sm text-gray-900">Attempted Shot</td>
-                <td className="py-3 px-6 text-sm text-gray-900">0</td>
-              </tr>
-              <tr className="bg-gray-50 border-b">
-                <td className="py-3 px-6 text-sm text-gray-900">Made Shot</td>
-                <td className="py-3 px-6 text-sm text-gray-900">2</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="py-3 px-6 text-left text-sm font-semibold text-gray-700">Action</th>
+              <th className="py-3 px-6 text-left text-sm font-semibold text-gray-700">Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* Render action log rows dynamically if needed */}
+          </tbody>
+        </table>
       </div>
     </div>
   );
