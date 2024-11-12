@@ -1,15 +1,34 @@
 {
   "short_name": "HoopTrackr",
   "name": "HoopTrackr App",
+  "description": "Track basketball games, drills, and stats with HoopTrackr.",
   "icons": [
     {
-      "src": "public/hoop-trackr-logo-ball.svg",
-      "type": "image/svg",
+      "src": "public/hoop-trackr-logo-ball-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "public/hoop-trackr-logo-ball-256x256.png",
+      "type": "image/png",
+      "sizes": "256x256"
+    },
+    {
+      "src": "public/hoop-trackr-logo-ball-384x384.png",
+      "type": "image/png",
+      "sizes": "384x384"
+    },
+    {
+      "src": "public/hoop-trackr-logo-ball-512x512.png",
+      "type": "image/png",
       "sizes": "512x512"
     }
   ],
   "start_url": ".",
+  "scope": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "theme_color": "#f64e07",
+  "background_color": "#0a355e"
 }
