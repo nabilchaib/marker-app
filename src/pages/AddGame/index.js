@@ -45,9 +45,12 @@ export default function AddGame() {
   const dispatch = useDispatch();
 
   const onGameTypeClick = (gameType) => {
+    dispatch(resetGameCache()); // Reset cache on all game types
+
     if (gameType === 'Pick-up game') {
-      dispatch(resetGameCache());
       navigate('/pick-up-game/create');
+    } else if (gameType === 'Drill') {
+      navigate('/drill/create');  // Navigate to drill setup or tracking page
     }
   };
 
@@ -57,11 +60,20 @@ export default function AddGame() {
       <p className="mt-1 text-sm text-gray-500">Get started by selecting the type of game you'd like to set up.</p>
       <ul role="list" className="mt-6 divide-y divide-gray-200 border-b border-t border-gray-200">
         {gameTypes.map((game, index) => (
-          <li onClick={() => onGameTypeClick(game.type)} key={index} className={classNames(game.disabled ? 'bg-gray-100' : '', game.disabled ? 'hover:bg-gray-200' : 'hover:bg-orange-100', 'cursor-pointer')}>
+          <li 
+            onClick={() => onGameTypeClick(game.type)} 
+            key={index} 
+            className={classNames(
+              game.disabled ? 'bg-gray-100' : '',
+              game.disabled ? 'hover:bg-gray-200' : 'hover:bg-orange-100', 
+              'cursor-pointer'
+            )}
+          >
             <div className="group relative flex items-start space-x-3 p-4">
               <div className="flex-shrink-0">
                 <span
-                  className={classNames(game.disabled ? 'bg-gray-300' : game.iconColor, ' relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-lg')}
+                  className={classNames(game.disabled ? 'bg-gray-300' : game.iconColor, 
+                    'relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-lg')}
                 >
                   <game.icon aria-hidden="true" className="h-6 w-6" />
                   {game.disabled && <LockClosedIcon className="absolute size-4 -right-1 -bottom-1" />}
@@ -70,9 +82,7 @@ export default function AddGame() {
               <div className="min-w-0 flex-1 flex justify-between items-center">
                 <div>
                   <div className="text-sm font-medium text-gray-900">
-                    <a>
-                      {game.type}
-                    </a>
+                    <a>{game.type}</a>
                   </div>
                   <p className="text-sm text-gray-500">{game.description}</p>
                 </div>

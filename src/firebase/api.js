@@ -29,9 +29,14 @@ const emptyStats = {
   fouls: 0
 };
 
-export const initializeGameApi = async (selectedTeams) => {
+export const initializeGameApi = async (selectedTeams, mode = "game") => {
   return new Promise(async (resolve, reject) => {
     try {
+      if (mode === "drill") {
+        // Drill-specific initialization code if needed, skipping team queries
+        resolve({ game: { type_of_game: "drill" }, startNew: true });
+        return;
+      }
       const gameQuery = query(
         collection(db, 'game'),
         and(
@@ -100,12 +105,19 @@ export const initializeGameApi = async (selectedTeams) => {
   });
 };
 export const addGameApi = async (game) => {
+  console.log('addGameApi called with:', game);
   try {
+    const gameToAdd = game.date ? game : {...game, date:serverTimestamp()}
     const gameRef = collection(db, 'game');
-    const newGameRef = await addDoc(gameRef, game)
+    const newGameRef = await addDoc(gameRef, gameToAdd)
     const newGameSnapshot = await getDoc(newGameRef);
     const newGameData = newGameSnapshot.data();
-    const newGame = { id: newGameRef.id, ...newGameData, date: newGameData.date.toDate().toISOString() };
+    const newGame = {
+      id: newGameRef.id,
+      ...newGameData,
+      date: newGameData.date?.toDate().toISOString(),
+      players: game.players  // Ensure players structure is included in the return object
+    };
     return newGame;
   } catch (err) {
     console.log('ADD GAME API ERR: ', err);
@@ -133,27 +145,50 @@ const getNewGameStats = ({ game, selectedTeam, player, playerId, newStats, newSc
   return newGame;
 };
 
-export const addMadeShotApi = async ({ game, selectedTeam, playerId, points }) => {
+export const addMadeShotApi = async ({ game, selectedTeam, playerId, points, type_of_game = "game" }) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const player = game[selectedTeam].players[playerId];
-      const newStats = {
-        ...player.stats,
-        points: {
-          ...player.stats.points,
-          made: player.stats.points.made.map((val, index) => {
-            if (index === points) {
-              return val + 1;
-            }
-
-            return val;
-          })
+      let newStats;
+      let newGame;
+      
+      if (type_of_game === "drill") {
+        // Directly access the player for drill mode without a team context
+        if (!game.playerId || game.playerId !== playerId) {
+          throw new Error(`Player with ID ${playerId} not found in the game`);
         }
-      };
+        
+        // Define new stats for drill mode
+        newStats = {
+          drill_attempts: (game.drill_attempts || 0) + 1,
+          drill_made: (game.drill_made || 0) + 1,
+        };
+        
+        // Update game directly without player/team structure
+        newGame = {
+          ...game,
+          stats: { ...game.stats, [playerId]: newStats },
+        };
+        console.log('addMadeShotApi',newGame)
+      } else {
+        // Logic for game mode
+        const player = game[selectedTeam]?.players?.[playerId];
+        if (!player) {
+          throw new Error(`Player with ID ${playerId} not found in ${selectedTeam}`);
+        }
 
-      const newScore = game[selectedTeam].score + parseInt(points);
-      const newGame = getNewGameStats({ game, selectedTeam, player, playerId, newStats, newScore });
+        newStats = {
+          ...player.stats,
+          points: {
+            ...player.stats.points,
+            made: player.stats.points.made.map((val, index) => (index === points ? val + 1 : val)),
+          },
+        };
 
+        const newScore = game[selectedTeam].score + parseInt(points);
+        newGame = getNewGameStats({ game, selectedTeam, player, playerId, newStats, newScore });
+      }
+
+      // Update Firestore with the new game state
       const gameRef = doc(db, 'game', game.id);
       await updateDoc(gameRef, newGame);
 
@@ -165,35 +200,80 @@ export const addMadeShotApi = async ({ game, selectedTeam, playerId, points }) =
   });
 };
 
-export const addAttemptedShotApi = async ({ game, selectedTeam, playerId, points }) => {
+
+export const addAttemptedShotApi = async ({ game, selectedTeam, playerId, points, type_of_game = "game" }) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const player = game[selectedTeam].players[playerId];
-      const newStats = {
-        ...player.stats,
-        points: {
-          ...player.stats.points,
-          attempted: player.stats.points.attempted.map((val, index) => {
-            if (index === points) {
-              return val + 1;
-            }
+      let newStats;
+      let newGame;
 
-            return val;
-          })
+      if (type_of_game === "drill") {
+        // For drill mode, directly access and update player stats
+        if (!game.playerId || game.playerId !== playerId) {
+          throw new Error(`Player with ID ${playerId} not found in the game`);
         }
-      };
+        
+        newStats = {
+          drill_attempts: (game.players[playerId].stats.drill_attempts || 0) + 1,
+        };
 
-      const newGame = getNewGameStats({ game, selectedTeam, player, playerId, newStats });
+        newGame = {
+          ...game,
+          players: {
+            ...game.players,
+            [playerId]: {
+              ...game.players[playerId],
+              stats: {
+                ...game.players[playerId].stats,
+                ...newStats
+              }
+            }
+          }
+        };
+
+      } else {
+        // For game mode, find the player in the selected team and update points attempted
+        const player = game[selectedTeam]?.players?.[playerId];
+        if (!player) {
+          throw new Error(`Player with ID ${playerId} not found in team ${selectedTeam}`);
+        }
+
+        newStats = {
+          ...player.stats,
+          points: {
+            ...player.stats.points,
+            attempted: player.stats.points.attempted.map((val, index) => (index === points ? val + 1 : val)),
+          }
+        };
+
+        newGame = {
+          ...game,
+          [selectedTeam]: {
+            ...game[selectedTeam],
+            players: {
+              ...game[selectedTeam].players,
+              [playerId]: {
+                ...player,
+                stats: newStats
+              }
+            }
+          }
+        };
+      }
+
+      // Update Firestore with the new game state
       const gameRef = doc(db, 'game', game.id);
       await updateDoc(gameRef, newGame);
 
+      console.log('addAttemptedShotApi:', newGame);
       resolve();
     } catch (err) {
-      console.log('ADD ATTEMPTED SHOT API ERR: ', err);
+      console.log('ADD ATTEMPTED SHOT API ERR:', err);
       reject(err);
     }
   });
 };
+
 
 export const addReboundApi = async ({ game, selectedTeam, playerId, type }) => {
   return new Promise(async (resolve, reject) => {
@@ -472,13 +552,14 @@ export const getPlayersApi = async ({ user }) => {
 export const addPlayerApi = async ({ player, image }) => {
   return new Promise(async (resolve, reject) => {
     try {
-      await runTransaction(db, async (transaction) => {
-        try {
           const playersCollection = collection(db, 'players');
-          const newPlayerRef = await addDoc(playersCollection, {
-            ...player,
-            avatarUrl: '' // Placeholder
-          });
+          const playerStatsCollection = collection(db, 'player_stats');
+
+          const newPlayerRef = await runTransaction(db, async (transaction) => {
+            const playerRef = await addDoc(playersCollection, {
+              ...player,
+              avatarUrl: '', // Placeholder for avatar URL
+            });
 
           if (image) {
             // Define metadata for the upload
@@ -489,22 +570,41 @@ export const addPlayerApi = async ({ player, image }) => {
             const storageRef = ref(storage, `avatars/players/${newPlayerRef.id}.png`);
             const uploadTaskSnapshot = await uploadBytes(storageRef, image, metadata);
             const downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
-            transaction.update(newPlayerRef, { avatarUrl: downloadURL });
+            transaction.update(playerRef, { avatarUrl: downloadURL });
           }
 
-          const newPlayer = { ...player, id: newPlayerRef.id };
-          resolve({ player: newPlayer });
-        } catch (err) {
-          throw err;
-        }
-      });
+          const initialStats = {
+            playerId: playerRef.id,
+            playerName: player.name, // Added player name for easier identification
+            gameId: null,  // Placeholder; this could be updated once associated with a game
+            date: new Date().toISOString(),
+            points_scored: 0,
+            shots_attempted: [0, 0, 0],
+            shots_made: [0, 0, 0],
+            rebounds_offensive: 0,
+            rebounds_defensive: 0,
+            assists: 0,
+            fouls: 0,
+            type_of_game: "game", // default or set based on your requirements
+          };
+          await addDoc(playerStatsCollection, initialStats);
+    
+          return playerRef;
+        });
+    
 
-    } catch (err) {
-      console.log('ADD PLAYER API ERR: ', err);
-      reject(err);
-    }
-  });
-};
+          const newPlayerData = { 
+            ...player, 
+            id: newPlayerRef.id, 
+            avatarUrl: image ? await getDownloadURL(ref(storage, `avatars/players/${newPlayerRef.id}.png`)) : '' 
+          };
+          return { player: newPlayerData };
+        } catch (err) {
+          console.error('ADD PLAYER API AND STATS INIT ERR:', err);
+          throw new Error('Error adding player with stats. Please try again.');
+        }
+      }
+  )};
 
 export const addTeamApi = async ({ team, image }) => {
   return new Promise(async (resolve, reject) => {
@@ -570,4 +670,37 @@ export const getTeamsApi = async ({ user }) => {
       reject(err);
     }
   });
+};
+
+export const addPlayerStatsApi = async (playerId, gameId, date, type_of_game) => {
+  try {
+    const playerStatsCollection = collection(db, 'player_stats');
+    const newPlayerStats = {
+      playerId,
+      // playerName,
+      gameId,
+      date,
+      points_scored: 0,
+      shots_attempted: [0, 0, 0],
+      shots_made: [0, 0, 0],
+      rebounds_offensive: 0,
+      rebounds_defensive: 0,
+      assists: 0,
+      fouls: 0,
+      type_of_game,
+    };
+    const docRef = await addDoc(playerStatsCollection, newPlayerStats);
+    return docRef.id;
+  } catch (err) {
+    console.error('Error adding player stats:', err);
+  }
+};
+
+export const updatePlayerStatsApi = async (playerStatsId, updatedFields) => {
+  try {
+    const playerStatsRef = doc(db, 'player_stats', playerStatsId);
+    await updateDoc(playerStatsRef, updatedFields);
+  } catch (err) {
+    console.error('Error updating player stats:', err);
+  }
 };
