@@ -53,9 +53,12 @@ export default function AddGame() {
   const dispatch = useDispatch();
 
   const onGameTypeClick = (gameType) => {
+    dispatch(resetGameCache()); // Reset cache on all game types
+
     if (gameType === 'Pick-up game') {
-      dispatch(resetGameCache());
       navigate('/pick-up-game/create');
+    } else if (gameType === 'Drill') {
+      navigate('/drill/create');  // Navigate to drill setup or tracking page
     }
   };
 

@@ -17,6 +17,7 @@ import AddPickUpGame from './pages/AddPickUpGame';
 import AddTeam from './pages/AddTeam';
 import EditTeam from './pages/EditTeam';
 import AddPlayer from './pages/AddPlayer';
+import AddDrill from './pages/AddDrill';
 import Login from './pages/Login';
 import reportWebVitals from './reportWebVitals';
 import {
@@ -26,6 +27,7 @@ import {
 import TeamSelectionPage from './components/TeamSelection';
 import CreateTeamPage from './components/CreateTeam';
 import "react-toastify/dist/ReactToastify.css";
+import DrillTracking from './components/DrillTracking';
 
 const Protected = ({ children, type }) => {
   const [user, loading] = useAuthState(auth);
@@ -79,6 +81,14 @@ const router = createBrowserRouter([
       {
         path: 'pick-up-game/create',
         element: <AddPickUpGame />
+      },
+      {
+        path: 'drill/create',
+        element: <AddDrill />
+      },
+      {
+        path: 'drill/tracking',
+        element: <DrillTracking />
       },
       {
         path: 'teams',

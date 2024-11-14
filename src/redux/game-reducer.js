@@ -15,16 +15,51 @@ export const gameSlice = createSlice({
       state[team].players[player.id] = player;
     },
     addAttemptedShot: (state, action) => {
-      const { team, playerId, points } = action.payload;
-      const player = state[team].players[playerId];
-      player.stats.points.attempted[points]++;
+      const { team, playerId, points, type_of_game } = action.payload;
+    
+      // If drill mode, access player directly without team structure
+      if (type_of_game === "drill") {
+        const player = state.players?.[playerId];
+        if (player) {
+          player.stats.drill_attempts = (player.stats.drill_attempts || 0) + 1;
+        }
+      } else {
+        // Game mode: access player through team structure
+        const player = state[team]?.players?.[playerId];
+        if (player) {
+          player.stats.points.attempted[points]++;
+        }
+      }
     },
+    
     addMadeShot: (state, action) => {
-      const { team, playerId, points } = action.payload;
-      const player = state[team].players[playerId];
-      player.stats.points.made[points]++;
-      state[team].score += parseInt(points);
-    },
+      const { team, playerId, points, type_of_game } = action.payload;
+    
+      let player;
+    
+      if (type_of_game === "drill") {
+        // Access player stats directly for drill mode
+        player = state.players[playerId];
+        if (!player) {
+          console.error(`Player with ID ${playerId} not found in drill mode.`);
+          return;
+        }
+        player.stats.drill_attempts = (player.stats.drill_attempts || 0) + 1;
+        player.stats.drill_made = (player.stats.drill_made || 0) + 1;
+      } else if (team) {
+        // Access player within the team for game mode
+        player = state[team]?.players?.[playerId];
+        if (!player) {
+          console.error(`Player with ID ${playerId} not found in team ${team} for game mode.`);
+          return;
+        }
+        player.stats.points.made[points]++;
+        state[team].score += parseInt(points);
+        console.log('Game mode stats updated:', player.stats);
+      } else {
+        console.error("Unexpected state: team is null in game mode.");
+      }
+    },    
     addRebound: (state, action) => {
       const { team, playerId, type } = action.payload;
       const player = state[team].players[playerId];
@@ -51,16 +86,25 @@ export const gameSlice = createSlice({
       if (lastAction) {
         switch (lastAction.action) {
           case 'addMadeShot': {
-            const { team, playerId, points } = lastAction;
+            const { team, playerId, points, type_of_game } = lastAction;
             const player = state[team].players[playerId];
-            player.stats.points.made[points]--;
-            state[team].score -= parseInt(points);
+            if (type_of_game === "drill") {
+              player.stats.drill_made--;
+              player.stats.drill_attempts--;
+            } else {
+              player.stats.points.made[points]--;
+              state[team].score -= parseInt(points);
+            }
             break;
           }
           case 'addAttemptedShot': {
-            const { team, playerId, points } = lastAction;
+            const { team, playerId, points, type_of_game } = lastAction;
             const player = state[team].players[playerId];
-            player.stats.points.attempted[points]--;
+            if (type_of_game === "drill") {
+              player.stats.drill_attempts--;
+            } else {
+              player.stats.points.attempted[points]--;
+            }
             break;
           }
           case 'addRebound': {
@@ -92,6 +136,6 @@ export const gameSlice = createSlice({
   }
 });
 
-export const { addAttemptedShot, addMadeShot, addPlayer, addScore, addRebound, addAssist, addFoul, updateLastActions, undoLastAction, initializeGame } = gameSlice.actions;
+export const { addAttemptedShot, addMadeShot, addPlayer, addRebound, addAssist, addFoul, updateLastActions, undoLastAction, initializeGame } = gameSlice.actions;
 
 export default gameSlice.reducer;
