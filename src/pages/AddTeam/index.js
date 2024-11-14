@@ -166,6 +166,9 @@ export default function AddTeam() {
       dispatch(addTeam({ team: newTeam }));
       setCreateTeamLoading(false);
       navigate(-1);
+      toast.success(`Team ${newTeam.name} was successfully created`, {
+        position: 'top-center'
+      })
     } catch (err) {
       console.log('ON CREATE TEAM API ERR: ', err);
       setCreateTeamLoading(false);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { ChevronRightIcon, EllipsisHorizontalIcon } from '@heroicons/react/24/solid'
 import { classNames } from '../../utils';
 import Dropdown from '../Dropdown';
@@ -60,4 +60,4 @@ const List = ({ items, onSelectItem, dropdownItems, hasChevron = false, children
   );
 };
 
-export default List;
+export default memo(List, (prevProps, nextProps) => prevProps.items === nextProps.items);

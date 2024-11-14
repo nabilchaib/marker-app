@@ -508,6 +508,7 @@ export const addPlayerApi = async ({ player, image }) => {
 
 export const addTeamApi = async ({ team, image }) => {
   return new Promise(async (resolve, reject) => {
+    let newTeamRef;
     try {
       await runTransaction(db, async (transaction) => {
         try {
@@ -526,7 +527,7 @@ export const addTeamApi = async ({ team, image }) => {
             return false;
           }
 
-          const newTeamRef = await addDoc(teamsCollection, {
+          newTeamRef = await addDoc(teamsCollection, {
             ...team,
             avatarUrl: '' // Placeholder
           });
@@ -540,18 +541,68 @@ export const addTeamApi = async ({ team, image }) => {
             const storageRef = ref(storage, `avatars/teams/${newTeamRef.id}.png`);
             const uploadTaskSnapshot = await uploadBytes(storageRef, image, metadata);
             const downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
+
+            if (!downloadURL) {
+              throw new Error('Image upload failed');
+            }
+
             transaction.update(newTeamRef, { avatarUrl: downloadURL });
           }
 
           const newTeam = { ...team, id: newTeamRef.id };
-          resolve({ team: newTeam });
+          resolve(newTeam);
         } catch (err) {
+          // Delete the document if the image upload fails
+          transaction.delete(newTeamRef);
           throw err;
         }
       });
 
     } catch (err) {
       console.log('ADD TEAM API ERR: ', err);
+      reject(err);
+    }
+  });
+};
+
+export const editTeamApi = async ({ team, image }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await runTransaction(db, async (transaction) => {
+        try {
+          let downloadURL = null;
+          if (image) {
+            // Define metadata for the upload
+            const metadata = {
+              contentType: 'image/png', // Set the MIME type of the image
+            };
+            // 3. Upload the avatar
+            const storageRef = ref(storage, `avatars/teams/${team.id}.png`);
+            const uploadTaskSnapshot = await uploadBytes(storageRef, image, metadata);
+            downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
+
+            // Check if the image upload was successful
+            if (!downloadURL) {
+              throw new Error('Image upload failed');
+            }
+          }
+
+          const docRef = doc(db, 'teams', team.id);
+          const newTeam = {
+            ...team,
+            ...(downloadURL ? { avatarUrl: downloadURL } : {})
+          };
+          const { id, ...teamForUpdate } = newTeam;
+          transaction.update(docRef, teamForUpdate);
+
+          resolve(newTeam);
+        } catch (err) {
+          throw err;
+        }
+      });
+
+    } catch (err) {
+      console.log('EDIT TEAM API ERR: ', err);
       reject(err);
     }
   });

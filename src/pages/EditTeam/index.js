@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import Cropper from 'react-easy-crop'
@@ -6,9 +6,9 @@ import Slider from '@mui/material/Slider';
 import { TrashIcon, PencilIcon, PlusIcon, MinusIcon } from '@heroicons/react/24/outline'
 import { toast } from 'react-toastify'
 
-import { getPlayersApi, addTeamApi } from '../../firebase/api';
+import { getPlayersApi, editTeamApi } from '../../firebase/api';
 import { addPlayers } from '../../redux/players-reducer';
-import { addTeam, addTeamCache, addPlayerToTeamCache, removePlayerFromTeamCache } from '../../redux/teams-reducer';
+import { editTeam, addTeamCache, addPlayerToTeamCache, removePlayerFromTeamCache } from '../../redux/teams-reducer';
 import Icon from '../../components/Icon';
 import List from '../../components/List';
 import { colors, getCroppedImg, validator, classNames } from '../../utils';
@@ -32,6 +32,7 @@ export default function EditTeam() {
   const players = useSelector(state => state.players);
   const teams = useSelector(state => state.teams);
   const teamName = teams.editing.name;
+  const teamId = teams.editing.id;
   const croppedImage = teams.editing.avatar;
   const croppedImageUrl = teams.editing.avatarUrl;
   console.log('MAP: ', state)
@@ -155,10 +156,9 @@ export default function EditTeam() {
     try {
       setUpdateTeamLoading(true);
       const team = {
+        id: teamId,
         name: teamName,
-        players: Object.values(teams.editing.players)
-          .filter(player => player.toAdd)
-          .map(player => player.id),
+        players: playersInTeam.allIds,
         createdBy: user.email
       };
 
@@ -167,34 +167,29 @@ export default function EditTeam() {
         payload.image = croppedImage;
       }
 
-      // const newTeam = await addTeamApi(payload);
-      // if (newTeam?.isDuplicate) {
-      //   toast.error('This team name is already in use', {
-      //     position: 'top-center'
-      //   })
-        // setUpdateTeamLoading(false);
-        // return false;
-      // }
-
-      // dispatch(addTeam({ team: newTeam }));
-      // setUpdateTeamLoading(false);
-      // navigate(-1);
+      const newTeam = await editTeamApi(payload);
+      dispatch(editTeam({ team: newTeam }));
+      setUpdateTeamLoading(false);
+      navigate(-1);
+      toast.success(`Team ${newTeam.name} was successfully updated`, {
+        position: 'top-center'
+      })
     } catch (err) {
-      console.log('ON CREATE TEAM API ERR: ', err);
+      console.log('ON UPDATE TEAM API ERR: ', err);
       setUpdateTeamLoading(false);
     }
   };
 
-  const onAddPlayerToTeam = (player) => {
+  const onAddPlayerToTeam = useCallback((player) => {
     if (!playersInTeam.byId[player.id]) {
       dispatch(addPlayerToTeamCache({ player }));
     }
-  };
+  }, [playersInTeam.byId]);
 
-  const onRemovePlayerFromTeam = (player) => {
+  const onRemovePlayerFromTeam = useCallback((player) => {
     console.log('PLAYER: ', player)
     dispatch(removePlayerFromTeamCache({ player }));
-  };
+  }, []);
 
   const onDeletePlayer = () => {
     console.log('DELETE')
@@ -208,6 +203,36 @@ export default function EditTeam() {
     { text: 'Delete', icon: TrashIcon, onClick: onDeletePlayer },
     { text: 'Edit', icon: PencilIcon, onClick: onEditPlayer },
   ];
+
+  const renderPlayerItem = useCallback(
+    ({ item, onSelectItem }) => {
+      return (
+        <button onClick={() => onSelectItem(item)} className="w-full group flex items-center p-4 pr-10 focus-visible:outline-orange-600">
+          <div className="mr-3">
+            {item.avatarUrl && (
+              <img className="rounded-full h-10 w-10" src={item.avatarUrl} />
+            )}
+            {!item.avatarUrl && (
+              <span className="border border-gray-300 relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-full">
+                <Icon type="jersey" className="mx-auto h-6 w-6 text-gray-400" />
+              </span>
+            )}
+          </div>
+          <div className="min-w-0 flex-1 flex justify-between items-center">
+            <div className="flex items-center">
+              <p className="mr-3 text-sm text-gray-500">#{item.number}</p>
+              <div className="text-sm font-medium text-gray-900">
+                <a>
+                  {item.name}
+                </a>
+              </div>
+            </div>
+          </div>
+        </button>
+      );
+    },
+    []
+  );
 
   const renderCropper = () => {
     return (
@@ -333,32 +358,7 @@ export default function EditTeam() {
 
           {playersInTeam.allIds.length > 0 && (
             <List items={playersInTeam} onSelectItem={onRemovePlayerFromTeam} dropdownItems={dropdownItems}>
-              {({ item, onSelectItem }) => {
-                return (
-                  <button onClick={() => onSelectItem(item)} className="w-full group flex items-center p-4 pr-10 focus-visible:outline-orange-600">
-                    <div className="mr-3">
-                      {item.avatarUrl && (
-                        <img className="rounded-full h-10 w-10" src={item.avatarUrl} />
-                      )}
-                      {!item.avatarUrl && (
-                        <span className="border border-gray-300 relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-full">
-                          <Icon type="jersey" className="mx-auto h-6 w-6 text-gray-400" />
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1 flex justify-between items-center">
-                      <div className="flex items-center">
-                        <p className="mr-3 text-sm text-gray-500">#{item.number}</p>
-                        <div className="text-sm font-medium text-gray-900">
-                          <a>
-                            {item.name}
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              }}
+              {renderPlayerItem}
             </List>
           )}
 
@@ -379,32 +379,7 @@ export default function EditTeam() {
 
             {players.allIds.length > 0 && (
               <List items={players} onSelectItem={onAddPlayerToTeam} dropdownItems={dropdownItems}>
-                {({ item, onSelectItem }) => {
-                  return (
-                    <button onClick={() => onSelectItem(item)} className="w-full group flex items-center p-4 pr-10 focus-visible:outline-orange-600">
-                      <div className="mr-3">
-                        {item.avatarUrl && (
-                          <img className="rounded-full h-10 w-10" src={item.avatarUrl} />
-                        )}
-                        {!item.avatarUrl && (
-                          <span className="border border-gray-300 relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-full">
-                            <Icon type="jersey" className="mx-auto h-6 w-6 text-gray-400" />
-                          </span>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1 flex justify-between items-center">
-                        <div className="flex items-center">
-                          <p className="mr-3 text-sm text-gray-500">#{item.number}</p>
-                          <div className="text-sm font-medium text-gray-900">
-                            <a>
-                              {item.name}
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                }}
+                {renderPlayerItem}
               </List>
             )}
 

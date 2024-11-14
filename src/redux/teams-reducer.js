@@ -23,6 +23,11 @@ export const teamsSlice = createSlice({
       state.byId[team.id] = team;
       state.allIds.push(team.id);
     },
+    editTeam: (state, action) => {
+      const { team } = action.payload;
+      console.log('TEAM: ', team)
+      state.byId[team.id] = team;
+    },
     addTeams: (state, action) => {
       const { teams } = action.payload;
       return teams.reduce((teamsState, team) => {
@@ -93,6 +98,7 @@ export const teamsSlice = createSlice({
 
 export const {
   addTeam,
+  editTeam,
   addTeams,
   addTeamCache,
   addPlayerToTeamCache,
