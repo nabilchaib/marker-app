@@ -6,11 +6,12 @@ import Slider from '@mui/material/Slider';
 import { TrashIcon, PencilIcon, PlusIcon, MinusIcon } from '@heroicons/react/24/outline'
 import { toast } from 'react-toastify'
 
-import { getPlayersApi, editTeamApi } from '../../firebase/api';
-import { addPlayers } from '../../redux/players-reducer';
+import { getPlayersApi, editTeamApi, deletePlayerApi } from '../../firebase/api';
+import { addPlayers, addPlayerCache, deletePlayer } from '../../redux/players-reducer';
 import { editTeam, addTeamCache, addPlayerToTeamCache, removePlayerFromTeamCache } from '../../redux/teams-reducer';
 import Icon from '../../components/Icon';
 import List from '../../components/List';
+import Dialog from '../../components/Dialog';
 import { colors, getCroppedImg, validator, classNames } from '../../utils';
 
 
@@ -25,6 +26,9 @@ export default function EditTeam() {
   const [getPlayersLoading, setGetPlayersLoading] = useState(true);
   const [updateTeamLoading, setUpdateTeamLoading] = useState(false);
   const [playersInTeam, setPlayersInTeam] = useState({ byId: {}, allIds: [] });
+  const [playerToDelete, setPlayerToDelete] = useState(null);
+  const [deletePlayerLoading, setDeletePlayerLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   const state = useSelector(state => state);
@@ -33,9 +37,7 @@ export default function EditTeam() {
   const teams = useSelector(state => state.teams);
   const teamName = teams.editing.name;
   const teamId = teams.editing.id;
-  const croppedImage = teams.editing.avatar;
   const croppedImageUrl = teams.editing.avatarUrl;
-  console.log('MAP: ', state)
 
   useEffect(() => {
     if (!getPlayersLoading) {
@@ -47,8 +49,10 @@ export default function EditTeam() {
       for (const playerId of teams.editing.playersFromServer) {
         if (!teams.editing.players[playerId]?.toRemove) {
           const player = players.byId[playerId];
-          inTeam.allIds.push(player.id);
-          inTeam.byId[player.id] = player;
+          if (player) {
+            inTeam.allIds.push(player.id);
+            inTeam.byId[player.id] = player;
+          }
         }
       }
 
@@ -82,12 +86,10 @@ export default function EditTeam() {
   }, [user?.email]);
 
   const onCropComplete = (croppedArea, croppedAreaPixels) => {
-    console.log('COMPLETE')
     setCroppedAreaPixels(croppedAreaPixels)
   }
 
   const onCancelCropping = () => {
-    console.log('CANCEL CROPPING')
     setAvatarToUpload(null);
   };
 
@@ -98,7 +100,11 @@ export default function EditTeam() {
         croppedAreaPixels,
       )
 
-      dispatch(addTeamCache({ avatarUrl: URL.createObjectURL(croppedImage), avatar: croppedImage }));
+      dispatch(addTeamCache({
+        team: {
+          avatarUrl: URL.createObjectURL(croppedImage)
+        }
+      }));
       setAvatarToUpload(null);
     } catch (e) {
       console.error(e)
@@ -128,7 +134,9 @@ export default function EditTeam() {
   const onTeamNameChange = (e) => {
     const value = e.target.value;
     const name = e.target.name;
-    dispatch(addTeamCache({ name: value }));
+    dispatch(addTeamCache({
+      team: { name: value }
+    }));
     const state = validator(name, value, 'change', {}, true);
     setTeamState(state);
   };
@@ -163,8 +171,8 @@ export default function EditTeam() {
       };
 
       const payload = { team };
-      if (croppedImage) {
-        payload.image = croppedImage;
+      if (croppedImageUrl) {
+        payload.image = croppedImageUrl;
       }
 
       const newTeam = await editTeamApi(payload);
@@ -187,16 +195,37 @@ export default function EditTeam() {
   }, [playersInTeam.byId]);
 
   const onRemovePlayerFromTeam = useCallback((player) => {
-    console.log('PLAYER: ', player)
     dispatch(removePlayerFromTeamCache({ player }));
   }, []);
 
-  const onDeletePlayer = () => {
-    console.log('DELETE')
+  const onDeletePlayer = (player) => {
+    setPlayerToDelete(player);
+    setModalOpen(true);
   };
 
-  const onEditPlayer = () => {
-    console.log('EDIT')
+  const onDeletePlayerConfirm = async () => {
+    try {
+      setDeletePlayerLoading(true);
+      await deletePlayerApi({ player: playerToDelete });
+      dispatch(deletePlayer({ player: playerToDelete }));
+      setDeletePlayerLoading(false);
+      onCloseModal();
+      console.log('TEAMS MAP: ', teams)
+    } catch (err) {
+      setDeletePlayerLoading(false);
+      console.log('DELETE PLAYER ERR: ', err)
+    }
+  };
+
+  const onCloseModal = () => {
+    setPlayerToDelete(null);
+    setModalOpen(false);
+  };
+
+  const onEditPlayer = (player) => {
+    console.log('PPP: ', player)
+    dispatch(addPlayerCache({ player }));
+    navigate('/games/teams/players/edit')
   };
 
   const dropdownItems = [
@@ -416,6 +445,14 @@ export default function EditTeam() {
           </button>
         </div>
       </div>
+      <Dialog
+        open={modalOpen}
+        handleClose={onCloseModal}
+        onConfirm={onDeletePlayerConfirm}
+        confirmButtonTitle="Delete"
+        loading={deletePlayerLoading}
+        title="Are you sure you want to delete this player?"
+      />
     </div>
   )
 }

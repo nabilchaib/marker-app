@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import Cropper from 'react-easy-crop'
@@ -6,11 +6,12 @@ import Slider from '@mui/material/Slider';
 import { TrashIcon, PencilIcon, PlusIcon, MinusIcon } from '@heroicons/react/24/outline'
 import { toast } from 'react-toastify'
 
-import { getPlayersApi, addTeamApi } from '../../firebase/api';
-import { addPlayers } from '../../redux/players-reducer';
+import { getPlayersApi, addTeamApi, deletePlayerApi } from '../../firebase/api';
+import { addPlayers, addPlayerCache, deletePlayer } from '../../redux/players-reducer';
 import { addTeam, addTeamCache, addPlayerToTeamCache, removePlayerFromTeamCache } from '../../redux/teams-reducer';
 import Icon from '../../components/Icon';
 import List from '../../components/List';
+import Dialog from '../../components/Dialog';
 import { colors, getCroppedImg, validator, classNames } from '../../utils';
 
 
@@ -25,13 +26,15 @@ export default function AddTeam() {
   const [getPlayersLoading, setGetPlayersLoading] = useState(false);
   const [createTeamLoading, setCreateTeamLoading] = useState(false);
   const [playersInTeam, setPlayersInTeam] = useState({ byId: {}, allIds: [] });
+  const [playerToDelete, setPlayerToDelete] = useState(null);
+  const [deletePlayerLoading, setDeletePlayerLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   const user = useSelector(state => state.user);
   const players = useSelector(state => state.players);
   const teams = useSelector(state => state.teams);
   const teamName = teams.editing.name;
-  const croppedImage = teams.editing.avatar;
   const croppedImageUrl = teams.editing.avatarUrl;
 
   useEffect(() => {
@@ -39,8 +42,9 @@ export default function AddTeam() {
       byId: {},
       allIds: []
     };
+
     for (const player of Object.values(teams.editing.players)) {
-      if (player.toAdd) {
+      if (player?.toAdd) {
         inTeam.allIds.push(player.id);
         inTeam.byId[player.id] = player;
       }
@@ -68,12 +72,10 @@ export default function AddTeam() {
   }, [user?.email]);
 
   const onCropComplete = (croppedArea, croppedAreaPixels) => {
-    console.log('COMPLETE')
     setCroppedAreaPixels(croppedAreaPixels)
   }
 
   const onCancelCropping = () => {
-    console.log('CANCEL CROPPING')
     setAvatarToUpload(null);
   };
 
@@ -84,7 +86,11 @@ export default function AddTeam() {
         croppedAreaPixels,
       )
 
-      dispatch(addTeamCache({ avatarUrl: URL.createObjectURL(croppedImage), avatar: croppedImage }));
+      dispatch(addTeamCache({
+        team: {
+          avatarUrl: URL.createObjectURL(croppedImage)
+        }
+      }));
       setAvatarToUpload(null);
     } catch (e) {
       console.error(e)
@@ -114,7 +120,9 @@ export default function AddTeam() {
   const onTeamNameChange = (e) => {
     const value = e.target.value;
     const name = e.target.name;
-    dispatch(addTeamCache({ name: value }));
+    dispatch(addTeamCache({
+      team: { name: value }
+    }));
     const state = validator(name, value, 'change', {}, true);
     setTeamState(state);
   };
@@ -150,8 +158,8 @@ export default function AddTeam() {
       };
 
       const payload = { team };
-      if (croppedImage) {
-        payload.image = croppedImage;
+      if (croppedImageUrl) {
+        payload.image = croppedImageUrl;
       }
 
       const newTeam = await addTeamApi(payload);
@@ -185,18 +193,65 @@ export default function AddTeam() {
     dispatch(removePlayerFromTeamCache({ player }));
   };
 
-  const onDeletePlayer = () => {
-    console.log('DELETE')
+  const onDeletePlayer = (player) => {
+    setPlayerToDelete(player);
+    setModalOpen(true);
   };
 
-  const onEditPlayer = () => {
-    console.log('EDIT')
+  const onDeletePlayerConfirm = async () => {
+    try {
+      setDeletePlayerLoading(true);
+      await deletePlayerApi({ player: playerToDelete });
+      dispatch(deletePlayer({ player: playerToDelete }));
+      setDeletePlayerLoading(false);
+      onCloseModal();
+    } catch (err) {
+      setDeletePlayerLoading(false);
+      console.log('DELETE PLAYER ERR: ', err)
+    }
+  };
+
+  const onCloseModal = () => {
+    setPlayerToDelete(null);
+    setModalOpen(false);
+  };
+
+  const onEditPlayer = (player) => {
+    dispatch(addPlayerCache({ player }));
+    navigate('/games/teams/players/edit')
   };
 
   const dropdownItems = [
     { text: 'Delete', icon: TrashIcon, onClick: onDeletePlayer },
     { text: 'Edit', icon: PencilIcon, onClick: onEditPlayer },
   ];
+
+  const renderListItem = useCallback(({ item, onSelectItem }) => {
+    return (
+      <button onClick={() => onSelectItem(item)} className="w-full group flex items-center p-4 pr-10 focus-visible:outline-orange-600">
+        <div className="mr-3">
+          {item.avatarUrl && (
+            <img className="rounded-full h-10 w-10" src={item.avatarUrl} />
+          )}
+          {!item.avatarUrl && (
+            <span className="border border-gray-300 relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-full">
+              <Icon type="jersey" className="mx-auto h-6 w-6 text-gray-400" />
+            </span>
+          )}
+        </div>
+        <div className="min-w-0 flex-1 flex justify-between items-center">
+          <div className="flex items-center">
+            <p className="mr-3 text-sm text-gray-500">#{item.number}</p>
+            <div className="text-sm font-medium text-gray-900">
+              <a>
+                {item.name}
+              </a>
+            </div>
+          </div>
+        </div>
+      </button>
+    );
+  }, [playersInTeam]);
 
   const renderCropper = () => {
     return (
@@ -322,32 +377,7 @@ export default function AddTeam() {
 
           {playersInTeam.allIds.length > 0 && (
             <List items={playersInTeam} onSelectItem={onRemovePlayerFromTeam} dropdownItems={dropdownItems}>
-              {({ item, onSelectItem }) => {
-                return (
-                  <button onClick={() => onSelectItem(item)} className="w-full group flex items-center p-4 pr-10 focus-visible:outline-orange-600">
-                    <div className="mr-3">
-                      {item.avatarUrl && (
-                        <img className="rounded-full h-10 w-10" src={item.avatarUrl} />
-                      )}
-                      {!item.avatarUrl && (
-                        <span className="border border-gray-300 relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-full">
-                          <Icon type="jersey" className="mx-auto h-6 w-6 text-gray-400" />
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1 flex justify-between items-center">
-                      <div className="flex items-center">
-                        <p className="mr-3 text-sm text-gray-500">#{item.number}</p>
-                        <div className="text-sm font-medium text-gray-900">
-                          <a>
-                            {item.name}
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                );
-              }}
+              {renderListItem}
             </List>
           )}
 
@@ -368,32 +398,7 @@ export default function AddTeam() {
 
             {players.allIds.length > 0 && (
               <List items={players} onSelectItem={onAddPlayerToTeam} dropdownItems={dropdownItems}>
-                {({ item, onSelectItem }) => {
-                  return (
-                    <button onClick={() => onSelectItem(item)} className="w-full group flex items-center p-4 pr-10 focus-visible:outline-orange-600">
-                      <div className="mr-3">
-                        {item.avatarUrl && (
-                          <img className="rounded-full h-10 w-10" src={item.avatarUrl} />
-                        )}
-                        {!item.avatarUrl && (
-                          <span className="border border-gray-300 relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-full">
-                            <Icon type="jersey" className="mx-auto h-6 w-6 text-gray-400" />
-                          </span>
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1 flex justify-between items-center">
-                        <div className="flex items-center">
-                          <p className="mr-3 text-sm text-gray-500">#{item.number}</p>
-                          <div className="text-sm font-medium text-gray-900">
-                            <a>
-                              {item.name}
-                            </a>
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                }}
+                {renderListItem}
               </List>
             )}
 
@@ -430,6 +435,14 @@ export default function AddTeam() {
           </button>
         </div>
       </div>
+      <Dialog
+        open={modalOpen}
+        handleClose={onCloseModal}
+        onConfirm={onDeletePlayerConfirm}
+        confirmButtonTitle="Delete"
+        loading={deletePlayerLoading}
+        title="Are you sure you want to delete this player?"
+      />
     </div>
   )
 }

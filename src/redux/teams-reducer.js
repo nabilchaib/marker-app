@@ -25,8 +25,12 @@ export const teamsSlice = createSlice({
     },
     editTeam: (state, action) => {
       const { team } = action.payload;
-      console.log('TEAM: ', team)
       state.byId[team.id] = team;
+    },
+    deleteTeam: (state, action) => {
+      const { team } = action.payload;
+      state.byId[team.id] = null;
+      state.allIds = state.allIds.filter(id => id !== team.id);
     },
     addTeams: (state, action) => {
       const { teams } = action.payload;
@@ -46,7 +50,7 @@ export const teamsSlice = createSlice({
     addPlayerToTeamCache: (state, action) => {
       const { player } = action.payload;
       if (state.editing.players[player.id]?.toRemove) {
-        state.editing.players[ player.id] = null;
+        state.editing.players[player.id] = null;
       } else {
         const updatedPlayer = { ...player, toAdd: true };
         state.editing.players[player.id] = updatedPlayer;
@@ -62,7 +66,8 @@ export const teamsSlice = createSlice({
       }
     },
     addTeamCache: (state, action) => {
-      const { name, avatar, avatarUrl, players, id, createdBy } = action.payload;
+      const { team } = action.payload;
+      const { name, avatar, avatarUrl, players, id, createdBy } = team;
       if (id) {
         state.editing.id = id;
       }
@@ -93,12 +98,18 @@ export const teamsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase('resetStore', () => initialState);
+    builder.addCase('players/deletePlayer', (state, action) => {
+      const { player } = action.payload;
+      state.editing.playersFromServer = state.editing.playersFromServer.filter(id => id !== player.id);
+      state.editing.players[player.id] = null;
+    });
   }
 });
 
 export const {
   addTeam,
   editTeam,
+  deleteTeam,
   addTeams,
   addTeamCache,
   addPlayerToTeamCache,

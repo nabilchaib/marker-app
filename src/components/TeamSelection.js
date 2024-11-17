@@ -13,14 +13,12 @@ const TeamSelectionPage = () => {
   const navigate = useNavigate();
 
   const state = useSelector(state => state);
-  console.log('MAP: ', state)
 
   useEffect(() => {
     const fetchTeams = async () => {
       const teamsCollection = collection(db, 'teams');
       const teamsSnapshot = await getDocs(teamsCollection);
       const teamsData = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      console.log('T: ', teamsData);
       setTeams(teamsData);
     };
     fetchTeams();

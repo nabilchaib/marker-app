@@ -60,4 +60,4 @@ const List = ({ items, onSelectItem, dropdownItems, hasChevron = false, children
   );
 };
 
-export default memo(List, (prevProps, nextProps) => prevProps.items === nextProps.items);
+export default memo(List, (prevProps, nextProps) => prevProps.items === nextProps.items && prevProps.children === nextProps.children);

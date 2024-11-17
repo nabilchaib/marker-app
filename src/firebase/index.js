@@ -11,7 +11,7 @@ import {
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
 } from "firebase/auth";
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { createFirebaseConfig } from '../utils';
 
 const firebaseConfig = createFirebaseConfig();
@@ -28,6 +28,7 @@ export {
   ref,
   getDownloadURL,
   uploadBytes,
+  deleteObject,
   signInWithPopup,
   GoogleAuthProvider,
   FacebookAuthProvider,
