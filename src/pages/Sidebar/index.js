@@ -59,14 +59,32 @@ export default function Sidebar() {
     <div>
       {/* Sidebar for Mobile */}
       <Dialog open={sidebarOpen} onClose={setSidebarOpen} className="relative z-50 lg:hidden">
-        <DialogBackdrop className="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear" />
+      <DialogBackdrop
+          transition
+          className="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear data-[closed]:opacity-0"
+        />
+        {/* <DialogBackdrop className="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear" /> */}
         <div className="fixed inset-0 flex">
-          <DialogPanel className="relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out">
+        <DialogPanel
+            transition
+            className="relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out data-[closed]:-translate-x-full"
+          >
+            <TransitionChild>
+              <div className="absolute left-full top-0 flex w-16 justify-center pt-5 duration-300 ease-in-out data-[closed]:opacity-0">
+                <button type="button" onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5">
+                  <span className="sr-only">Close sidebar</span>
+                  <XMarkIcon aria-hidden="true" className="h-6 w-6 text-white" />
+                </button>
+              </div>
+            </TransitionChild>
+            {/* Sidebar component, swap this element with another sidebar if you like */}
+ 
+          {/* <DialogPanel className="relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out">
             <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
               <button type="button" onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5">
                 <XMarkIcon aria-hidden="true" className="h-6 w-6 text-white" />
               </button>
-            </div>
+            </div> */}
             <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-orange-600 px-6 pb-2">
               <div className="flex h-16 shrink-0 items-center">
                 <button className="flex items-center">
@@ -177,6 +195,53 @@ export default function Sidebar() {
           </nav>
         </div>
       </div>
+
+      <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-orange-600 px-4 py-4 shadow-sm sm:px-6 lg:hidden">
+        <button type="button" onClick={() => setSidebarOpen(true)} className="-m-2.5 p-2.5 text-orange-200 lg:hidden">
+          <span className="sr-only">Open sidebar</span>
+          <Bars3Icon aria-hidden="true" className="h-6 w-6" />
+        </button>
+        <div className="flex-1 text-sm font-semibold leading-6 text-white">
+          <button className="flex items-center">
+            <img
+              alt="Your Company"
+              src="/hoop-trackr-logo-ball.svg"
+              className="h-8 w-auto"
+            />
+            <img
+              alt="Your Company"
+              src="/hoop-trackr-logo-text.svg"
+              className="mt-2 ml-1 h-8 w-auto"
+            />
+          </button>
+        </div>
+        <Menu>
+          <MenuButton as={Fragment}>
+            <a href="#">
+              <span className="sr-only">Your profile</span>
+              <Icon className="h-8 w-8" type="avatar" />
+            </a>
+          </MenuButton>
+          <MenuItems
+            anchor={{ to: "bottom", offset: '-4.5rem' }}
+            className="z-100 w-52 bg-white rounded-xl border border-gray/5 p-1 text-sm/6 transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
+          >
+            <MenuItem>
+              <button className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-gray-200">
+                <UserCircleIcon className="size-4 fill-white/30" />
+                Your profile
+              </button>
+            </MenuItem>
+            <MenuItem>
+              <button onClick={onLogout} className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-gray-200">
+                <MoonIcon className="size-4 fill-white/30" />
+                Log out
+              </button>
+            </MenuItem>
+          </MenuItems>
+        </Menu>
+      </div>
+
 
       <main className="lg:pl-72">
         <Outlet />

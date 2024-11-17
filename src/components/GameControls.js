@@ -242,11 +242,10 @@ const GameControls = ({mode}) => {
     }
   };
 
-
   // const buttonText = selectedPlayer ? selectedPlayer?.number : 'Select Player';
-  const playerOptions = mode === 'game' 
-    ? selectedTeam === 'teamA' ? teamA.players : teamB.players
-    : allPlayers;
+  // const playerOptions = mode === 'game' 
+  //   ? selectedTeam === 'teamA' ? teamA.players : teamB.players
+  //   : allPlayers;
 
   return (
     <div className="Controls">
@@ -296,54 +295,22 @@ const GameControls = ({mode}) => {
           </button>
   
           {/* Drill or Game Mode Scoring Controls */}
-          {mode === "drill" ? (
-            <div className="flex space-x-4">
+          {mode === "drill" && (
+            <div className="flex space-x-4 w-full">
               <button
                 onClick={() => handleAttempt(0)}
                 disabled={attemptLoading}
-                className={`py-4 px-8 text-lg font-bold text-white bg-red-500 rounded-lg hover:bg-red-600 shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                className="w-full sm:w-1/2 py-4 text-lg sm:text-xl font-bold text-white bg-red-600 rounded-lg shadow-md hover:bg-red-500 focus:outline-none"
               >
                 {attemptLoading ? "Loading..." : "Miss"}
               </button>
               <button
                 onClick={() => handleMade(0)}
                 disabled={madeLoading}
-                className={`py-4 px-8 text-lg font-bold text-white bg-[#f64e07] rounded-lg hover:bg-orange-600 shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                className="w-full sm:w-1/2 py-4 text-lg sm:text-xl font-bold text-white bg-green-600 rounded-lg shadow-md hover:bg-green-500 focus:outline-none"
               >
                 {madeLoading ? "Loading..." : "Made"}
               </button>
-            </div>
-          ) : (
-            <div className="Remote">
-              <div className="grid grid-cols-3 gap-4 text-center py-4">
-                {[1, 2, 3].map((points) => (
-                  <div key={points}>
-                    <h3 className="font-semibold text-white">{points} Points</h3>
-                    <button
-                      disabled={madeLoading === points}
-                      className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white 
-                        ${madeLoading === points ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'}
-                        shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                      onClick={() => handleMade(points)}
-                    >
-                      <span className="inline-block w-8 text-center">
-                        {madeLoading === points ? 'Loading...' : `+${points}`}
-                      </span>
-                    </button>
-                    <button
-                      disabled={attemptLoading === points}
-                      className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white mt-2 
-                        ${attemptLoading === points ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'}
-                        shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                      onClick={() => handleAttempt(points)}
-                    >
-                      <span className="inline-block w-8 text-center">
-                        {attemptLoading === points ? 'Loading...' : 'Miss'}
-                      </span>
-                    </button>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
   
@@ -410,32 +377,9 @@ const GameControls = ({mode}) => {
           )}
         </div>
       )}
-  
-      {/* Last Actions Table */}
-      <div className="py-4">
-        <h2 className="text-lg font-bold text-[#f64e07] mb-2">Last Actions</h2>
-        <table className="min-w-full table-auto bg-[#0a355e] border border-[#0aa6d6] rounded-lg">
-          <thead>
-            <tr className="bg-[#0aa6d6] text-white">
-              <th className="py-2 px-4 border border-[#0f1e25]">Action</th>
-              <th className="py-2 px-4 border border-[#0f1e25]">Points</th>
-              <th className="py-2 px-4 border border-[#0f1e25]">Player #</th>
-            </tr>
-          </thead>
-          <tbody>
-            {lastActions.slice(-10).map((action) => (
-              <tr key={action.id} className="bg-white text-black">
-                <td className="py-2 px-4 border border-[#0aa6d6]">{action.action}</td>
-                <td className="py-2 px-4 border border-[#0aa6d6]">{action.points}</td>
-                <td className="py-2 px-4 border border-[#0aa6d6]">#{action.playerNumber}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-  
+
       {/* Undo Last Action */}
-      <div className="controls flex flex-col items-center space-y-6">
+      <div className="controls py-8 px-6 flex flex-col items-center space-y-6">
         <button
           disabled={undoLoading}
           className={`py-2 px-6 w-full md:w-auto rounded-lg font-bold text-white ${
@@ -447,7 +391,7 @@ const GameControls = ({mode}) => {
         </button>
   
         {/* Show Game Result */}
-        <div className="addpoints py-8 px-6 flex justify-center">
+        <div className="addpoints py-4 px-6 flex justify-center">
           <button
             className="py-4 px-6 w-full md:w-auto rounded-lg font-bold text-white bg-[#0aa6d6] hover:bg-blue-600 shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105"
             onClick={handleShowGameResult}
@@ -455,6 +399,48 @@ const GameControls = ({mode}) => {
             {mode === "drill" ? "Drill Stats" : "Game Stats"}
           </button>
         </div>
+      </div>
+  
+      {/* Last Actions Table */}
+      <div className="py-4">
+        <h2 className="text-lg sm:text-xl font-bold text-orange-600 mb-4 text-center">
+          Last Actions
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="min-w-full table-auto bg-gray-100 border border-gray-300 rounded-lg shadow-sm">
+            <thead>
+              <tr className="bg-gray-200 text-gray-800">
+                <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">Action</th>
+                <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">Points</th>
+                <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">Player #</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lastActions.slice(-10).map((action, index) => (
+                <tr
+                  key={action.id}
+                  className={`${
+                    index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                  } hover:bg-gray-200 transition-colors`}
+                >
+                  <td className="py-3 px-6 text-sm text-gray-900 border-b border-gray-300">
+                    {action.action}
+                  </td>
+                  <td className="py-3 px-6 text-sm text-green-600 font-semibold border-b border-gray-300">
+                    {action.points}
+                  </td>
+                  <td className="py-3 px-6 text-sm text-orange-500 font-semibold border-b border-gray-300">
+                    #{action.playerNumber}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+  
+      
   
         {/* Game Result Modal */}
         {showGameResult && (
@@ -470,7 +456,7 @@ const GameControls = ({mode}) => {
             </div>
           </div>
         )}
-      </div>
+      
     </div>
   );  
   
