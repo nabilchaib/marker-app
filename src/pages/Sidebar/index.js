@@ -99,13 +99,13 @@ export default function Sidebar() {
                       {navigation.map((item) => (
                         <li key={item.name}>
                           <a
-                            onClick={() => onNavigation(item)}
                             className={classNames(
                               item.current
-                                ? 'bg-orange-700 text-white'
-                                : 'text-orange-200 hover:bg-orange-700 hover:text-white',
+                              ? 'bg-orange-700 text-white'
+                              : 'text-orange-200 hover:bg-orange-700 hover:text-white',
                               'cursor-pointer group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6'
-                            )}
+                              )}
+                            onClick={() => onNavigation(item)}
                           >
                             <item.icon
                               aria-hidden="true"
@@ -143,13 +143,13 @@ export default function Sidebar() {
                   {navigation.map((item) => (
                     <li key={item.name}>
                       <a
-                        onClick={() => onNavigation(item)}
                         className={classNames(
                           item.current
-                            ? 'bg-orange-700 text-white'
-                            : 'text-orange-200 hover:bg-orange-700 hover:text-white',
+                          ? 'bg-orange-700 text-white'
+                          : 'text-orange-200 hover:bg-orange-700 hover:text-white',
                           'cursor-pointer group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6'
-                        )}
+                          )}
+                        onClick={() => onNavigation(item)}
                       >
                         <item.icon
                           aria-hidden="true"
@@ -175,7 +175,10 @@ export default function Sidebar() {
                       <span>{user.firstName} {user.lastName}</span>
                     </a>
                   </MenuButton>
-                  <MenuItems className="z-100 w-52 bg-white rounded-xl border p-1 text-sm/6">
+                  <MenuItems
+                    anchor={{ to: "top end", offset: '1rem' }}
+                    className="z-100 w-52 bg-white rounded-xl border border-gray/5 p-1 text-sm/6 transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
+                  >
                     <MenuItem>
                       <button className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3">
                         <UserCircleIcon className="h-4 w-4" />
