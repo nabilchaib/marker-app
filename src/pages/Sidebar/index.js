@@ -78,7 +78,7 @@ export default function Sidebar() {
               </div>
             </TransitionChild>
             {/* Sidebar component, swap this element with another sidebar if you like */}
- 
+
           {/* <DialogPanel className="relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out">
             <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
               <button type="button" onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5">
@@ -180,13 +180,13 @@ export default function Sidebar() {
                     className="z-100 w-52 bg-white rounded-xl border border-gray/5 p-1 text-sm/6 transition duration-100 ease-out [--anchor-gap:var(--spacing-1)] focus:outline-none data-[closed]:scale-95 data-[closed]:opacity-0"
                   >
                     <MenuItem>
-                      <button className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3">
+                      <button className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-gray-200">
                         <UserCircleIcon className="h-4 w-4" />
                         Your profile
                       </button>
                     </MenuItem>
                     <MenuItem>
-                      <button onClick={onLogout} className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3">
+                      <button onClick={onLogout} className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-gray-200">
                         <MoonIcon className="h-4 w-4" />
                         Log out
                       </button>
