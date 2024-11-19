@@ -21,6 +21,8 @@ import AddPlayer from './pages/AddPlayer';
 import AddDrill from './pages/AddDrill';
 import Login from './pages/Login';
 import reportWebVitals from './reportWebVitals';
+import Teams from './pages/Teams';
+import Players from './pages/Players';
 import {
   createBrowserRouter,
   RouterProvider,
@@ -97,7 +99,11 @@ const router = createBrowserRouter([
       },
       {
         path: 'teams',
-        element: <div>teams</div>
+        element: <Teams />
+      },
+      {
+        path: 'players',
+        element: <Players />
       }
     ]
   },

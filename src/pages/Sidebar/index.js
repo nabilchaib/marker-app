@@ -1,4 +1,4 @@
-import { useMemo, useState, Fragment } from 'react'
+import { useMemo, useState, Fragment } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { Dialog, DialogBackdrop, DialogPanel, TransitionChild } from '@headlessui/react'
@@ -7,17 +7,11 @@ import {
   XMarkIcon,
   UserCircleIcon,
   MoonIcon,
-} from '@heroicons/react/24/outline'
+} from '@heroicons/react/24/outline';
 import { auth, signOut } from '../../firebase';
 import Icon from '../../components/Icon';
 import Dropdown from '../../components/Dropdown';
 import { classNames } from '../../utils';
-
-const teams = [
-  { id: 1, name: 'Heroicons', href: '#', initial: 'H', current: false },
-  { id: 2, name: 'Tailwind Labs', href: '#', initial: 'T', current: false },
-  { id: 3, name: 'Workcation', href: '#', initial: 'W', current: false },
-]
 
 const isCurrentMenu = (menu, path) => {
   const menuMap = {
@@ -26,7 +20,8 @@ const isCurrentMenu = (menu, path) => {
     '/games/create': 'games',
     '/games/teams/create': 'games',
     '/pick-up-game/create': 'games',
-    '/teams': 'teams'
+    '/teams': 'teams',
+    '/players': 'players', // Added mapping for players page
   };
 
   return menu === menuMap[path];
@@ -64,10 +59,14 @@ export default function Sidebar() {
     onCloseTopDropdown();
   };
 
-  const navigation = useMemo(() => [
-    { name: 'Games', href: '/games', icon: (props) => <Icon type="hoop" {...props} />, current: isCurrentMenu('games', location.pathname) },
-    { name: 'Teams', href: '/teams', icon: (props) => <Icon type="jersey" {...props} />, current: location.pathname === '/teams' },
-  ], [location.pathname]);
+  const navigation = useMemo(
+    () => [
+      { name: 'Games', href: '/games', icon: (props) => <Icon type="hoop" {...props} />, current: isCurrentMenu('games', location.pathname) },
+      { name: 'Teams', href: '/teams', icon: (props) => <Icon type="jersey" {...props} />, current: location.pathname === '/teams' },
+      { name: 'Players', href: '/players', icon: (props) => <Icon type="player" {...props} />, current: location.pathname === '/players' }, // Added Players menu
+    ],
+    [location.pathname]
+  );
 
   const onLogout = async () => {
     onCloseSideDropdown();
@@ -76,7 +75,7 @@ export default function Sidebar() {
     try {
       await signOut(auth);
     } catch (err) {
-      console.log('ERR LOGGING OUT: ', err)
+      console.error('Error logging out:', err);
     }
   };
 
@@ -92,14 +91,15 @@ export default function Sidebar() {
 
   return (
     <div>
+      {/* Sidebar for Mobile */}
       <Dialog open={sidebarOpen} onClose={setSidebarOpen} className="relative z-50 lg:hidden">
-        <DialogBackdrop
+      <DialogBackdrop
           transition
           className="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear data-[closed]:opacity-0"
         />
-
+        {/* <DialogBackdrop className="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear" /> */}
         <div className="fixed inset-0 flex">
-          <DialogPanel
+        <DialogPanel
             transition
             className="relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out data-[closed]:-translate-x-full"
           >
@@ -112,18 +112,25 @@ export default function Sidebar() {
               </div>
             </TransitionChild>
             {/* Sidebar component, swap this element with another sidebar if you like */}
+
+          {/* <DialogPanel className="relative mr-16 flex w-full max-w-xs flex-1 transform transition duration-300 ease-in-out">
+            <div className="absolute left-full top-0 flex w-16 justify-center pt-5">
+              <button type="button" onClick={() => setSidebarOpen(false)} className="-m-2.5 p-2.5">
+                <XMarkIcon aria-hidden="true" className="h-6 w-6 text-white" />
+              </button>
+            </div> */}
             <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-orange-600 px-6 pb-2">
               <div className="flex h-16 items-center">
                 <button className="flex items-center outline-none focus-visible:outline-orange-700 focus-visible:rounded-md">
                   <img
-                    alt="Your Company"
+                    alt="HoopTrackr"
                     src="/hoop-trackr-logo-ball.svg"
-                    className="h-8 w-8"
+                    className="h-8 w-auto"
                   />
                   <img
-                    alt="Your Company"
+                    alt="HoopTrackr"
                     src="/hoop-trackr-logo-text.svg"
-                    className="mt-2 ml-1 h-8 w-16"
+                    className="mt-2 ml-1 h-8 w-auto"
                   />
                 </button>
               </div>
@@ -146,7 +153,7 @@ export default function Sidebar() {
                               aria-hidden="true"
                               className={classNames(
                                 item.current ? 'text-white' : 'text-orange-200 group-hover:text-white',
-                                'h-6 w-6 shrink-0',
+                                'h-6 w-6 shrink-0'
                               )}
                             />
                             {item.name}
@@ -162,19 +169,18 @@ export default function Sidebar() {
         </div>
       </Dialog>
 
-      {/* Static sidebar for desktop */}
+      {/* Sidebar for Desktop */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-        {/* Sidebar component, swap this element with another sidebar if you like */}
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-orange-600 px-6">
-          <div className="flex items-center h-16 shrink-0 items-center">
+          <div className="flex items-center h-16 shrink-0">
             <button className="flex items-center outline-none focus-visible:outline-orange-700 focus-visible:rounded-md">
               <img
-                alt="Your Company"
+                alt="HoopTrackr"
                 src="/hoop-trackr-logo-ball.svg"
                 className="h-8 w-auto"
               />
               <img
-                alt="Your Company"
+                alt="HoopTrackr"
                 src="/hoop-trackr-logo-text.svg"
                 className="mt-2 ml-1 h-8 w-auto"
               />
@@ -199,7 +205,7 @@ export default function Sidebar() {
                           aria-hidden="true"
                           className={classNames(
                             item.current ? 'text-white' : 'text-orange-200 group-hover:text-white',
-                            'h-6 w-6 shrink-0',
+                            'h-6 w-6 shrink-0'
                           )}
                         />
                         {item.name}
@@ -244,12 +250,12 @@ export default function Sidebar() {
         <div className="flex-1 text-sm font-semibold leading-6 text-white">
           <button className="flex items-center outline-none focus-visible:outline-orange-700 focus-visible:rounded-md">
             <img
-              alt="Your Company"
+              alt="HoopTrackr"
               src="/hoop-trackr-logo-ball.svg"
               className="h-8 w-auto"
             />
             <img
-              alt="Your Company"
+              alt="HoopTrackr"
               src="/hoop-trackr-logo-text.svg"
               className="mt-2 ml-1 h-8 w-auto"
             />
@@ -276,9 +282,10 @@ export default function Sidebar() {
         />
       </div>
 
+
       <main className="lg:pl-72">
         <Outlet />
       </main>
     </div>
-  )
+  );
 }

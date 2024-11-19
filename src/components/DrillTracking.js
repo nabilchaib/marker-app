@@ -19,7 +19,7 @@ const DrillTracking = () => {
 
   const attempts = game?.players?.[selectedPlayer?.id]?.stats?.drill_attempts || 0;
   const completions = game?.players?.[selectedPlayer?.id]?.stats?.drill_made || 0;
-  const successRate = attempts > 0 ? ((completions / attempts) * 100).toFixed(2) : '0';
+  const successRate = attempts > 0 ? ((completions / attempts) * 100).toFixed(1) : '0';
 
   useEffect(() => {
     if (!selectedPlayer?.id) return;
@@ -78,33 +78,39 @@ const DrillTracking = () => {
   };
 
   return (
-    <div className="DrillTracking flex flex-col items-center w-4/5 justify-center space-y-6 p-6 bg-black bg-opacity-50 rounded-lg shadow-xl text-white">
-      <BgImg />
-      <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#f64e07] to-[#0aa6d6] tracking-wider relative">
-        Drill Tracking for {selectedPlayer ? selectedPlayer.name : 'Unknown Player'}
-      </h2>
+  <div className="DrillTracking flex flex-col items-center w-full max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 bg-black bg-opacity-50 rounded-lg shadow-xl text-white">
+    <BgImg />
+    <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#f64e07] to-[#0aa6d6] tracking-wider text-center">
+      Drill Tracking for {selectedPlayer ? selectedPlayer.name : 'Unknown Player'}
+    </h2>
 
-      <div className="flex flex-row justify-around w-full max-w-lg items-center space-x-4">
-        <div className="flex flex-col items-center space-y-2 bg-gray-800 bg-opacity-90 py-4 px-6 rounded-lg shadow-md w-full sm:w-1/3">
-          <h3 className="text-lg font-semibold tracking-widest text-center">Attempts</h3>
-          <div className="text-5xl font-extrabold text-orange-600">{attempts}</div>
-        </div>
-        <div className="w-px h-16 mx-4 bg-gradient-to-b from-[#f64e07] to-[#0aa6d6] opacity-80"></div>
-        <div className="flex flex-col items-center space-y-2 bg-gray-800 bg-opacity-90 py-4 px-6 rounded-lg shadow-md w-full sm:w-1/3">
-          <h3 className="text-lg font-semibold tracking-widest text-center">Completions</h3>
-          <div className="text-5xl font-extrabold text-green-500">{completions}</div>
-        </div>
-        <div className="w-px h-16 mx-4 bg-gradient-to-b from-[#f64e07] to-[#0aa6d6] opacity-80"></div>
-        <div className="flex flex-col items-center space-y-2 bg-gray-800 bg-opacity-90 py-4 px-6 rounded-lg shadow-md w-full sm:w-1/3">
-          <h3 className="text-lg font-semibold tracking-widest text-center">Success Rate</h3>
-          <div className="text-5xl font-extrabold text-blue-600">{successRate}%</div>
-        </div>
+    {/* Stats Section */}
+    <div className="grid grid-cols-3 gap-2 mt-4 w-full sm:max-w-lg lg:max-w-3xl">
+      <div className="flex flex-col items-center space-y-1 bg-gray-800 bg-opacity-90 py-2 px-4 rounded-lg shadow-md">
+        <h3 className="text-sm sm:text-base font-semibold tracking-wide text-center">Attempts</h3>
+        <div className="text-3xl sm:text-4xl font-extrabold text-orange-600">{attempts}</div>
       </div>
 
-      <GameControls mode="drill" onMade={handleMade} onMissed={handleMissed} />
+      <div className="flex flex-col items-center space-y-1 bg-gray-800 bg-opacity-90 py-2 px-4 rounded-lg shadow-md">
+        <h3 className="text-sm sm:text-base font-semibold tracking-wide text-center">Completions</h3>
+        <div className="text-3xl sm:text-4xl font-extrabold text-green-500">{completions}</div>
+      </div>
 
-      <div className="mt-6 bg-white rounded-lg shadow-md p-4 w-full max-w-lg">
-        <h3 className="text-xl font-bold text-gray-900 mb-4">Action Log</h3>
+      <div className="flex flex-col items-center space-y-1 bg-gray-800 bg-opacity-90 py-2 px-4 rounded-lg shadow-md">
+        <h3 className="text-sm sm:text-base font-semibold tracking-wide text-center">Success Rate</h3>
+        <div className="text-3xl sm:text-4xl font-extrabold text-blue-600">{successRate}%</div>
+      </div>
+    </div>
+
+    {/* Game Controls Section */}
+    <div className="mt-6 flex flex-col items-center w-full">
+      <GameControls mode="drill" onMade={handleMade} onMissed={handleMissed} />
+    </div>
+
+    {/* Action Log Section */}
+    <div className="mt-6 bg-white rounded-lg shadow-md p-4 w-full max-w-xl">
+      <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 text-center">Action Log</h3>
+      <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
           <thead>
             <tr className="bg-gray-100">
@@ -118,7 +124,9 @@ const DrillTracking = () => {
         </table>
       </div>
     </div>
-  );
+  </div>
+);
+  
 };
 
 export default DrillTracking;
