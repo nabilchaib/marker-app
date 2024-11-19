@@ -137,7 +137,7 @@ export default function Sidebar() {
               <nav className="flex flex-1 flex-col">
                 <ul role="list" className="flex flex-1 flex-col gap-y-7">
                   <li>
-                    <ul role="list" className="-mx-2 space-y-1">
+                    <ul role="list" className="-mx-2">
                       {navigation.map((item) => (
                         <li key={item.name} className="mb-2">
                           <button
@@ -189,7 +189,7 @@ export default function Sidebar() {
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
               <li>
-                <ul role="list" className="-mx-2 space-y-1">
+                <ul role="list" className="-mx-2">
                   {navigation.map((item) => (
                     <li key={item.name} className="mb-2">
                       <button
