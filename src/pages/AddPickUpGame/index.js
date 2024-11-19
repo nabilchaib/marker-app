@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { EllipsisHorizontalIcon, PlusIcon } from '@heroicons/react/24/solid'
+import { TrashIcon, PencilIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { toast } from 'react-toastify'
 
 import Icon from '../../components/Icon';
-import { getTeamsApi } from '../../firebase/api';
-import { addTeams, resetTeamCache } from '../../redux/teams-reducer';
+import List from '../../components/List';
+import Dialog from '../../components/Dialog';
+import { getTeamsApi, deleteTeamApi } from '../../firebase/api';
+import { addTeams, resetTeamCache, addTeamCache, deleteTeam } from '../../redux/teams-reducer';
 import { addGameToCache, removeGameFromCache } from '../../redux/games-reducer';
 import { colors } from '../../utils';
 
@@ -16,12 +18,15 @@ export default function AddPickUpGame() {
   const dispatch = useDispatch();
 
   const [getTeamsLoading, setGetTeamsLoading] = useState(false);
+  const [deleteTeamLoading, setDeleteTeamLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [teamToDelete, setTeamToDelete] = useState(null);
+
 
   const state = useSelector(state => state);
   const user = useSelector(state => state.user);
   const teams = useSelector(state => state.teams);
   const games = useSelector(state => state.games);
-  console.log('MAP: ', state)
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -46,23 +51,23 @@ export default function AddPickUpGame() {
     navigate('/games/teams/create')
   };
 
-  const onSelectTeam = teamId => {
-    if (games.editing.teamA === teamId) {
+  const onSelectTeam = team => {
+    if (games.editing.teamA === team.id) {
       dispatch(removeGameFromCache({ type: 'teamA' }));
       return false;
     }
 
-    if (games.editing.teamB === teamId) {
+    if (games.editing.teamB === team.id) {
       dispatch(removeGameFromCache({ type: 'teamB' }));
       return false;
     }
 
     if (games.editing.teamA) {
-      dispatch(addGameToCache({ teamB: teamId }))
+      dispatch(addGameToCache({ teamB: team.id }))
       return false;
     }
 
-    dispatch(addGameToCache({ teamA: teamId }))
+    dispatch(addGameToCache({ teamA: team.id }))
   };
 
   const onCreateNewPickUpGame = () => {
@@ -87,8 +92,66 @@ export default function AddPickUpGame() {
     }
   };
 
+  const onDeleteTeam = (team) => {
+    setTeamToDelete(team);
+    setModalOpen(true);
+  };
+
+  const onDeleteTeamConfirm = async () => {
+    try {
+      setDeleteTeamLoading(true);
+      await deleteTeamApi({ team: teamToDelete });
+      dispatch(deleteTeam({ team: teamToDelete }));
+      setDeleteTeamLoading(false);
+      onCloseModal();
+    } catch (err) {
+      setDeleteTeamLoading(false);
+      console.log('DELETE TEAM ERR: ', err)
+    }
+  };
+
+  const onCloseModal = () => {
+    setTeamToDelete(null);
+    setModalOpen(false);
+  };
+
+  const onEditTeam = (team) => {
+    dispatch(addTeamCache({ team }));
+    navigate('/games/teams/edit')
+  };
+
   const teamA = teams.byId[games.editing.teamA];
   const teamB = teams.byId[games.editing.teamB];
+  const dropdownItems = [
+    { text: 'Delete', icon: TrashIcon, onClick: onDeleteTeam },
+    { text: 'Edit', icon: PencilIcon, onClick: onEditTeam },
+  ];
+
+  const renderListItem = useCallback(({ item, onSelectItem }) => {
+    return (
+      <button onClick={() => onSelectItem(item)} className="w-full group flex items-center p-4 pr-10 focus-visible:outline-orange-600">
+        <div className="mr-3">
+          {item.avatarUrl && (
+            <img className="rounded-full h-10 w-10" src={item.avatarUrl} alt="Team Avatar" />
+          )}
+          {!item.avatarUrl && (
+            <span className="border border-gray-300 relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-full">
+              <Icon type="jersey" className="mx-auto h-6 w-6 text-gray-400" />
+            </span>
+          )}
+        </div>
+        <div className="min-w-0 flex-1 flex justify-between items-center">
+          <div className="flex items-center">
+            <div className="text-sm font-medium text-gray-900">
+              <a>
+                {item.name}
+              </a>
+            </div>
+          </div>
+        </div>
+      </button>
+    );
+  }, [games.editing]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -143,39 +206,9 @@ export default function AddPickUpGame() {
               New team
             </button>
           </div>
-          <ul role="list" className="mt-6 divide-y divide-gray-200 border-b border-t border-gray-200">
-            {teams.allIds.map((teamId) => {
-              const team = teams.byId[teamId];
-              return (
-                <li onClick={() => onSelectTeam(teamId)} key={team.id} className="hover:bg-orange-100 cursor-pointer">
-                  <div className="group flex items-center p-4">
-                    <div className="mr-3">
-                      {team.avatarUrl && (
-                        <img className="rounded-full h-10 w-10" src={team.avatarUrl} />
-                      )}
-                      {!team.avatarUrl && (
-                        <span className="border border-gray-300 relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-full">
-                          <Icon type="jersey" className="mx-auto h-6 w-6 text-gray-400" />
-                        </span>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1 flex justify-between items-center">
-                      <div className="flex items-center">
-                        <div className="text-sm font-medium text-gray-900">
-                          <a>
-                            {team.name}
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 self-center">
-                      <EllipsisHorizontalIcon aria-hidden="true" className="h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+          <List items={teams} onSelectItem={onSelectTeam} dropdownItems={dropdownItems} editingState={games.editing}>
+            {renderListItem}
+          </List>
         </div>
       )}
 
@@ -209,6 +242,14 @@ export default function AddPickUpGame() {
           Create new pick-up game
         </button>
       </div>
+      <Dialog
+        open={modalOpen}
+        handleClose={onCloseModal}
+        onConfirm={onDeleteTeamConfirm}
+        confirmButtonTitle="Delete"
+        loading={deleteTeamLoading}
+        title="Are you sure you want to delete this team?"
+      />
     </div>
   )
 }

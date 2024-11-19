@@ -2,6 +2,7 @@ import {
   getDoc,
   addDoc,
   getDocs,
+  deleteDoc,
   query,
   collection,
   where,
@@ -14,7 +15,7 @@ import {
   serverTimestamp,
   runTransaction,
 } from 'firebase/firestore';
-import { db, storage, ref, uploadBytes, getDownloadURL } from '.';
+import { db, storage, ref, uploadBytes, getDownloadURL, deleteObject } from '.';
 
 const emptyStats = {
   points: {
@@ -150,19 +151,19 @@ export const addMadeShotApi = async ({ game, selectedTeam, playerId, points, typ
     try {
       let newStats;
       let newGame;
-      
+
       if (type_of_game === "drill") {
         // Directly access the player for drill mode without a team context
         if (!game.playerId || game.playerId !== playerId) {
           throw new Error(`Player with ID ${playerId} not found in the game`);
         }
-        
+
         // Define new stats for drill mode
         newStats = {
           drill_attempts: (game.drill_attempts || 0) + 1,
           drill_made: (game.drill_made || 0) + 1,
         };
-        
+
         // Update game directly without player/team structure
         newGame = {
           ...game,
@@ -212,7 +213,7 @@ export const addAttemptedShotApi = async ({ game, selectedTeam, playerId, points
         if (!game.playerId || game.playerId !== playerId) {
           throw new Error(`Player with ID ${playerId} not found in the game`);
         }
-        
+
         newStats = {
           drill_attempts: (game.players[playerId].stats.drill_attempts || 0) + 1,
         };
@@ -552,62 +553,119 @@ export const getPlayersApi = async ({ user }) => {
 export const addPlayerApi = async ({ player, image }) => {
   return new Promise(async (resolve, reject) => {
     try {
+      await runTransaction(db, async (transaction) => {
+        try {
           const playersCollection = collection(db, 'players');
-          const playerStatsCollection = collection(db, 'player_stats');
-
-          const newPlayerRef = await runTransaction(db, async (transaction) => {
-            const playerRef = await addDoc(playersCollection, {
-              ...player,
-              avatarUrl: '', // Placeholder for avatar URL
-            });
+          let downloadURL = '';
+          const newPlayerRef = await addDoc(playersCollection, {
+            ...player,
+            avatarUrl: downloadURL // Placeholder
+          });
 
           if (image) {
+            // get image blob
+            const imageBlob = await fetch(image).then(r => r.blob());
             // Define metadata for the upload
             const metadata = {
               contentType: 'image/png', // Set the MIME type of the image
             };
             // 3. Upload the avatar
             const storageRef = ref(storage, `avatars/players/${newPlayerRef.id}.png`);
-            const uploadTaskSnapshot = await uploadBytes(storageRef, image, metadata);
-            const downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
-            transaction.update(playerRef, { avatarUrl: downloadURL });
+            const uploadTaskSnapshot = await uploadBytes(storageRef, imageBlob, metadata);
+            downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
+            transaction.update(newPlayerRef, { avatarUrl: downloadURL });
           }
 
-          const initialStats = {
-            playerId: playerRef.id,
-            playerName: player.name, // Added player name for easier identification
-            gameId: null,  // Placeholder; this could be updated once associated with a game
-            date: new Date().toISOString(),
-            points_scored: 0,
-            shots_attempted: [0, 0, 0],
-            shots_made: [0, 0, 0],
-            rebounds_offensive: 0,
-            rebounds_defensive: 0,
-            assists: 0,
-            fouls: 0,
-            type_of_game: "game", // default or set based on your requirements
-          };
-          await addDoc(playerStatsCollection, initialStats);
-    
-          return playerRef;
-        });
-    
-
-          const newPlayerData = { 
-            ...player, 
-            id: newPlayerRef.id, 
-            avatarUrl: image ? await getDownloadURL(ref(storage, `avatars/players/${newPlayerRef.id}.png`)) : '' 
-          };
-          return { player: newPlayerData };
+          const newPlayer = { ...player, avatarUrl: downloadURL, id: newPlayerRef.id };
+          resolve(newPlayer);
         } catch (err) {
-          console.error('ADD PLAYER API AND STATS INIT ERR:', err);
-          throw new Error('Error adding player with stats. Please try again.');
+          throw err;
         }
-      }
-  )};
+      });
+
+    } catch (err) {
+      console.log('ADD PLAYER API ERR: ', err);
+      reject(err);
+    }
+  });
+};
+
+export const editPlayerApi = async ({ player, image }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await runTransaction(db, async (transaction) => {
+        try {
+          let downloadURL = null;
+          if (image) {
+            // get image blob
+            const imageBlob = await fetch(image).then(r => r.blob());
+            // Define metadata for the upload
+            const metadata = {
+              contentType: 'image/png', // Set the MIME type of the image
+            };
+            // 3. Upload the avatar
+            const storageRef = ref(storage, `avatars/players/${player.id}.png`);
+            const uploadTaskSnapshot = await uploadBytes(storageRef, imageBlob, metadata);
+            downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
+
+            // Check if the image upload was successful
+            if (!downloadURL) {
+              throw new Error('Image upload failed');
+            }
+          }
+
+          const docRef = doc(db, 'players', player.id);
+          const newPlayer = {
+            ...player,
+            ...(downloadURL ? { avatarUrl: downloadURL } : {})
+          };
+          const { id, ...playerForUpdate } = newPlayer;
+          transaction.update(docRef, playerForUpdate);
+
+          resolve(newPlayer);
+        } catch (err) {
+          throw err;
+        }
+      });
+
+    } catch (err) {
+      console.log('EDIT PLAYER API ERR: ', err);
+      reject(err);
+    }
+  });
+};
+
+export const deletePlayerApi = async ({ player }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await runTransaction(db, async (transaction) => {
+        try {
+          const { avatarUrl, id } = player;
+
+          if (avatarUrl) {
+            const storageRef = ref(storage, `avatars/players/${id}.png`);
+            await deleteObject(storageRef);
+          }
+
+          const playerRef = doc(db, 'players', id);
+          await deleteDoc(playerRef);
+
+          resolve();
+        } catch (err) {
+          throw err;
+        }
+      });
+
+    } catch (err) {
+      console.log('DELETE PLAYER API ERR: ', err);
+      reject(err);
+    }
+  });
+};
 
 export const addTeamApi = async ({ team, image }) => {
   return new Promise(async (resolve, reject) => {
+    let newTeamRef;
     try {
       await runTransaction(db, async (transaction) => {
         try {
@@ -626,32 +684,86 @@ export const addTeamApi = async ({ team, image }) => {
             return false;
           }
 
-          const newTeamRef = await addDoc(teamsCollection, {
+          newTeamRef = await addDoc(teamsCollection, {
             ...team,
             avatarUrl: '' // Placeholder
           });
 
           if (image) {
+            // get image blob
+            const imageBlob = await fetch(image).then(r => r.blob());
             // Define metadata for the upload
             const metadata = {
               contentType: 'image/png', // Set the MIME type of the image
             };
             // 3. Upload the avatar
             const storageRef = ref(storage, `avatars/teams/${newTeamRef.id}.png`);
-            const uploadTaskSnapshot = await uploadBytes(storageRef, image, metadata);
+            const uploadTaskSnapshot = await uploadBytes(storageRef, imageBlob, metadata);
             const downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
+
+            if (!downloadURL) {
+              throw new Error('Image upload failed');
+            }
+
             transaction.update(newTeamRef, { avatarUrl: downloadURL });
           }
 
           const newTeam = { ...team, id: newTeamRef.id };
-          resolve({ team: newTeam });
+          resolve(newTeam);
         } catch (err) {
+          // Delete the document if the image upload fails
+          transaction.delete(newTeamRef);
           throw err;
         }
       });
 
     } catch (err) {
       console.log('ADD TEAM API ERR: ', err);
+      reject(err);
+    }
+  });
+};
+
+export const editTeamApi = async ({ team, image }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await runTransaction(db, async (transaction) => {
+        try {
+          let downloadURL = null;
+          if (image) {
+            // get image blob
+            const imageBlob = await fetch(image).then(r => r.blob());
+            // Define metadata for the upload
+            const metadata = {
+              contentType: 'image/png', // Set the MIME type of the image
+            };
+            // 3. Upload the avatar
+            const storageRef = ref(storage, `avatars/teams/${team.id}.png`);
+            const uploadTaskSnapshot = await uploadBytes(storageRef, imageBlob, metadata);
+            downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
+
+            // Check if the image upload was successful
+            if (!downloadURL) {
+              throw new Error('Image upload failed');
+            }
+          }
+
+          const docRef = doc(db, 'teams', team.id);
+          const newTeam = {
+            ...team,
+            ...(downloadURL ? { avatarUrl: downloadURL } : {})
+          };
+          const { id, ...teamForUpdate } = newTeam;
+          transaction.update(docRef, teamForUpdate);
+
+          resolve(newTeam);
+        } catch (err) {
+          throw err;
+        }
+      });
+
+    } catch (err) {
+      console.log('EDIT TEAM API ERR: ', err);
       reject(err);
     }
   });
@@ -667,6 +779,34 @@ export const getTeamsApi = async ({ user }) => {
       resolve(teamsList);
     } catch (err) {
       console.log('GET TEAMS API ERR: ', err);
+      reject(err);
+    }
+  });
+};
+
+export const deleteTeamApi = async ({ team }) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      await runTransaction(db, async (transaction) => {
+        try {
+          const { avatarUrl, id } = team;
+
+          if (avatarUrl) {
+            const storageRef = ref(storage, `avatars/teams/${id}.png`);
+            await deleteObject(storageRef);
+          }
+
+          const teamRef = doc(db, 'teams', id);
+          await deleteDoc(teamRef);
+
+          resolve();
+        } catch (err) {
+          throw err;
+        }
+      });
+
+    } catch (err) {
+      console.log('DELETE TEAM API ERR: ', err);
       reject(err);
     }
   });

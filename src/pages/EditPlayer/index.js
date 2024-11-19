@@ -5,13 +5,13 @@ import Cropper from 'react-easy-crop'
 import Slider from '@mui/material/Slider';
 import { PlusIcon, MinusIcon } from '@heroicons/react/24/solid'
 
-import { addPlayer } from '../../redux/players-reducer';
+import { addPlayer, addPlayerCache, editPlayer } from '../../redux/players-reducer';
 import Icon from '../../components/Icon';
-import { addPlayerApi } from '../../firebase/api';
+import { addPlayerApi, editPlayerApi } from '../../firebase/api';
 import { colors, getCroppedImg, validator } from '../../utils';
 
 
-export default function AddPlayer() {
+export default function EditPlayer() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const initialForm = {
@@ -24,11 +24,12 @@ export default function AddPlayer() {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
-  const [croppedImageUrl, setCroppedImageUrl] = useState(null)
-  const [createPlayerLoading, setCreatePlayerLoading] = useState(false);
+  const [updatePlayerLoading, setUpdatePlayerLoading] = useState(false);
   const fileInputRef = useRef(null);
 
   const user = useSelector(state => state.user);
+  const playerToEdit = useSelector(state => state.players.editing);
+  const croppedImageUrl = playerToEdit.avatarUrl;
 
   const onCropComplete = (croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels)
@@ -45,7 +46,11 @@ export default function AddPlayer() {
         croppedAreaPixels,
       )
 
-      setCroppedImageUrl(URL.createObjectURL(croppedImage))
+      dispatch(addPlayerCache({
+        player: {
+          avatarUrl: URL.createObjectURL(croppedImage),
+        }
+      }));
       setAvatarToUpload(null);
     } catch (e) {
       console.error(e)
@@ -76,12 +81,13 @@ export default function AddPlayer() {
     const value = e.target.value;
     const name = e.target.name;
 
-    setForm(prev => ({
-      ...prev,
-      [name]: value
+    dispatch(addPlayerCache({
+      player: {
+        [name]: value
+      }
     }));
 
-    const state = validator(name, value, 'change', form, true);
+    const state = validator(name, value, 'change', playerToEdit, true);
     setFormState(prev => ({
       ...prev,
       [name]: state
@@ -92,7 +98,7 @@ export default function AddPlayer() {
     const value = e.target.value;
     const name = e.target.name;
 
-    const state = validator(name, value, 'blur', form, true);
+    const state = validator(name, value, 'blur', playerToEdit, true);
     setFormState(prev => ({
       ...prev,
       [name]: state
@@ -101,22 +107,23 @@ export default function AddPlayer() {
 
   const onRandomNumber = () => {
     const randomNumber = Math.floor(Math.random() * 100);
-    setForm(prev => ({
-      ...prev,
-      playerNumber: randomNumber
+    dispatch(addPlayerCache({
+      player: {
+        number: randomNumber
+      }
     }));
 
-    const state = validator('playerNumber', randomNumber, 'blur', form, true);
+    const state = validator('playerNumber', randomNumber, 'blur', playerToEdit, true);
     setFormState(prev => ({
       ...prev,
       playerNumber: state
     }))
   };
 
-  const onCreateNewPlayer = async () => {
+  const onUpdateNewPlayer = async () => {
     let valid = true;
-    for (const field of ['playerName', 'playerNumber']) {
-      const fieldState = validator(field, form[field], 'blur', form, true);
+    for (const field of ['name', 'number']) {
+      const fieldState = validator(field, playerToEdit[field], 'blur', playerToEdit, true);
       setFormState(prev => ({
         ...prev,
         [field]: fieldState
@@ -129,25 +136,30 @@ export default function AddPlayer() {
 
     if (valid) {
       try {
-        setCreatePlayerLoading(true);
-        const player = {
-          name: form.playerName,
-          number: form.playerNumber,
-          createdBy: user.email
+        setUpdatePlayerLoading(true);
+
+        const payload = {
+          player: {
+            id: playerToEdit.id,
+            name: playerToEdit.name,
+            number: parseInt(playerToEdit.number),
+            createdBy: playerToEdit.createdBy,
+          }
         };
 
-        const payload = { player };
         if (croppedImageUrl) {
           payload.image = croppedImageUrl;
         }
 
-        const newPlayer = await addPlayerApi(payload);
-        dispatch(addPlayer({ player: newPlayer }));
-        setCreatePlayerLoading(false);
+        console.log('UPLOAD: ', payload)
+
+        const newPlayer = await editPlayerApi(payload);
+        dispatch(editPlayer({ player: newPlayer }));
+        setUpdatePlayerLoading(false);
         navigate(-1);
       } catch (err) {
         console.log('ON CREATE PLAYER API ERR: ', err);
-        setCreatePlayerLoading(false);
+        setUpdatePlayerLoading(false);
       }
     }
   };
@@ -210,7 +222,7 @@ export default function AddPlayer() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <h2 className="text-base font-semibold leading-6 text-gray-900">Create a new player</h2>
+      <h2 className="text-base font-semibold leading-6 text-gray-900">Edit player {playerToEdit.name}</h2>
 
       <div className="mt-8">
 
@@ -239,26 +251,26 @@ export default function AddPlayer() {
             <div className="relative mt-2">
               <input
                 id="playerName"
-                name="playerName"
+                name="name"
                 type="text"
                 required
                 className={`
                   font-sans block w-full rounded-md border-0 py-3 text-gray-900 shadow-sm ring-1 ring-inset
-                  ${formState.playerName?.state === 'error' ? 'ring-red-700' : 'ring-gray-300'}
-                  ${formState.playerName?.state === 'error' ? 'focus:ring-red-700' : 'focus:ring-orange-600'}
+                  ${formState.name?.state === 'error' ? 'ring-red-700' : 'ring-gray-300'}
+                  ${formState.name?.state === 'error' ? 'focus:ring-red-700' : 'focus:ring-orange-600'}
                   placeholder:text-gray-400 ring-gray-300 focus:ring-orange-600 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6
                 `}
-                value={form.playerName}
+                value={playerToEdit.name}
                 onChange={onInputChange}
                 onBlur={onInputBlur}
               />
-              {formState.playerName?.state === 'error' && (
+              {formState.name?.state === 'error' && (
                 <Icon type="error" className="h-5 w-5 text-red-700 absolute top-1/2 -translate-y-1/2 right-2" />
               )}
             </div>
-            {formState.playerName?.state === 'error' && (
+            {formState.name?.state === 'error' && (
               <div className="mt-1 text-red-700 text-xs">
-                {formState.playerName?.errorMessage}
+                {formState.name?.errorMessage}
               </div>
             )}
           </div>
@@ -271,22 +283,22 @@ export default function AddPlayer() {
               <div className="w-full relative">
                 <input
                   id="playerNumber"
-                  name="playerNumber"
+                  name="number"
                   type="number"
                   max={99}
                   min={0}
                   required
                   className={`
                     arrow-hide font-sans block w-full rounded-l-md border-0 py-3 text-gray-900 shadow-sm ring-1 ring-inset
-                    ${formState.playerNumber?.state === 'error' ? 'ring-red-700' : 'ring-gray-300'}
-                    ${formState.playerNumber?.state === 'error' ? 'focus:ring-red-700' : 'focus:ring-orange-600'}
+                    ${formState.number?.state === 'error' ? 'ring-red-700' : 'ring-gray-300'}
+                    ${formState.number?.state === 'error' ? 'focus:ring-red-700' : 'focus:ring-orange-600'}
                     placeholder:text-gray-400 ring-gray-300 focus:ring-orange-600 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6
                   `}
-                  value={form.playerNumber}
+                  value={playerToEdit.number}
                   onChange={onInputChange}
                   onBlur={onInputBlur}
                 />
-                {formState.playerNumber?.state === 'error' && (
+                {formState.number?.state === 'error' && (
                   <Icon type="error" className="h-5 w-5 text-red-700 absolute top-1/2 -translate-y-1/2 right-2" />
                 )}
               </div>
@@ -299,9 +311,9 @@ export default function AddPlayer() {
                 Random number
               </button>
             </div>
-            {formState.playerNumber?.state === 'error' && (
+            {formState.number?.state === 'error' && (
               <div className="mt-1 text-red-700 text-xs">
-                {formState.playerNumber?.errorMessage}
+                {formState.number?.errorMessage}
               </div>
             )}
           </div>
@@ -311,12 +323,12 @@ export default function AddPlayer() {
           <button
             type="button"
             className="w-full sm:w-auto inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
-            onClick={onCreateNewPlayer}
+            onClick={onUpdateNewPlayer}
           >
-            {createPlayerLoading && (
+            {updatePlayerLoading && (
               <Icon type="loader" className="h-5 w-5 mr-2" spinnerColor={colors.orange600} spinnerBackgroundColor={colors.grey300} />
             )}
-            Create new player
+            Update new player
           </button>
         </div>
       </div>

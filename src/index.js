@@ -15,6 +15,8 @@ import Games from './pages/Games';
 import AddGame from './pages/AddGame';
 import AddPickUpGame from './pages/AddPickUpGame';
 import AddTeam from './pages/AddTeam';
+import EditTeam from './pages/EditTeam';
+import EditPlayer from './pages/EditPlayer';
 import AddPlayer from './pages/AddPlayer';
 import AddDrill from './pages/AddDrill';
 import Login from './pages/Login';
@@ -72,8 +74,16 @@ const router = createBrowserRouter([
         element: <AddTeam />
       },
       {
+        path: 'games/teams/edit',
+        element: <EditTeam />
+      },
+      {
         path: 'games/teams/players/create',
         element: <AddPlayer />
+      },
+      {
+        path: 'games/teams/players/edit',
+        element: <EditPlayer />
       },
       {
         path: 'pick-up-game/create',

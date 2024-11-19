@@ -58,7 +58,7 @@ const Login = () => {
       setLoginWithGoogleLoading(false);
       navigate('/');
     } catch (err) {
-      console.log('ERR: ', err);
+      console.log('LOGIN WITH GOOGLE ERR: ', err);
       setLoginWithGoogleLoading(false);
     }
   };
@@ -80,7 +80,7 @@ const Login = () => {
       setLoginWithFacebookLoading(false);
       navigate('/');
     } catch (err) {
-      console.log('ERR: ', err.message);
+      console.log('LOGIN WITH FACEBOOK ERR: ', err.message);
       if (
         err.message.includes('auth/account-exists-with-different-credential') ||
         err.message.includes('auth/email-already-in-use')
@@ -281,7 +281,7 @@ const Login = () => {
   };
 
   return (
-    <div className="h-full sm:h-auto font-audiowide h-full flex min-h-full flex-1 flex-col justify-center sm:py-12 sm:px-6 lg:px-8">
+    <div className="h-full sm:h-auto h-full flex min-h-full flex-1 flex-col justify-center sm:py-12 sm:px-6 lg:px-8">
       <BgImg/>
       <div className="h-full sm:mx-auto sm:w-full sm:max-w-[480px]">
         <div className="h-full bg-white shadow sm:rounded-lg">

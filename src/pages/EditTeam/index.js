@@ -6,16 +6,16 @@ import Slider from '@mui/material/Slider';
 import { TrashIcon, PencilIcon, PlusIcon, MinusIcon } from '@heroicons/react/24/outline'
 import { toast } from 'react-toastify'
 
-import { getPlayersApi, addTeamApi, deletePlayerApi } from '../../firebase/api';
+import { getPlayersApi, editTeamApi, deletePlayerApi } from '../../firebase/api';
 import { addPlayers, addPlayerCache, deletePlayer } from '../../redux/players-reducer';
-import { addTeam, addTeamCache, addPlayerToTeamCache, removePlayerFromTeamCache } from '../../redux/teams-reducer';
+import { editTeam, addTeamCache, addPlayerToTeamCache, removePlayerFromTeamCache } from '../../redux/teams-reducer';
 import Icon from '../../components/Icon';
 import List from '../../components/List';
 import Dialog from '../../components/Dialog';
 import { colors, getCroppedImg, validator, classNames } from '../../utils';
 
 
-export default function AddTeam() {
+export default function EditTeam() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [teamNameState, setTeamState] = useState({});
@@ -23,35 +23,49 @@ export default function AddTeam() {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
-  const [getPlayersLoading, setGetPlayersLoading] = useState(false);
-  const [createTeamLoading, setCreateTeamLoading] = useState(false);
+  const [getPlayersLoading, setGetPlayersLoading] = useState(true);
+  const [updateTeamLoading, setUpdateTeamLoading] = useState(false);
   const [playersInTeam, setPlayersInTeam] = useState({ byId: {}, allIds: [] });
   const [playerToDelete, setPlayerToDelete] = useState(null);
   const [deletePlayerLoading, setDeletePlayerLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const fileInputRef = useRef(null);
 
+  const state = useSelector(state => state);
   const user = useSelector(state => state.user);
   const players = useSelector(state => state.players);
   const teams = useSelector(state => state.teams);
   const teamName = teams.editing.name;
+  const teamId = teams.editing.id;
   const croppedImageUrl = teams.editing.avatarUrl;
 
   useEffect(() => {
-    const inTeam = {
-      byId: {},
-      allIds: []
-    };
+    if (!getPlayersLoading) {
+      const inTeam = {
+        byId: {},
+        allIds: []
+      };
 
-    for (const player of Object.values(teams.editing.players)) {
-      if (player?.toAdd) {
-        inTeam.allIds.push(player.id);
-        inTeam.byId[player.id] = player;
+      for (const playerId of teams.editing.playersFromServer) {
+        if (!teams.editing.players[playerId]?.toRemove) {
+          const player = players.byId[playerId];
+          if (player) {
+            inTeam.allIds.push(player.id);
+            inTeam.byId[player.id] = player;
+          }
+        }
       }
-    }
 
-    setPlayersInTeam(inTeam);
-  }, [players, teams]);
+      for (const player of Object.values(teams.editing.players)) {
+        if (player?.toAdd) {
+          inTeam.allIds.push(player.id);
+          inTeam.byId[player.id] = player;
+        }
+      }
+
+      setPlayersInTeam(inTeam);
+    }
+  }, [players, teams, getPlayersLoading]);
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -139,7 +153,7 @@ export default function AddTeam() {
     navigate('/games/teams/players/create')
   };
 
-  const onCreateNewTeam = async () => {
+  const onUpdateTeam = async () => {
     const fieldState = validator('teamName', teamName, 'blur', {}, true);
     setTeamState(fieldState);
 
@@ -148,12 +162,11 @@ export default function AddTeam() {
     }
 
     try {
-      setCreateTeamLoading(true);
+      setUpdateTeamLoading(true);
       const team = {
+        id: teamId,
         name: teamName,
-        players: Object.values(teams.editing.players)
-          .filter(player => player.toAdd)
-          .map(player => player.id),
+        players: playersInTeam.allIds,
         createdBy: user.email
       };
 
@@ -162,36 +175,28 @@ export default function AddTeam() {
         payload.image = croppedImageUrl;
       }
 
-      const newTeam = await addTeamApi(payload);
-      if (newTeam?.isDuplicate) {
-        toast.error('This team name is already in use', {
-          position: 'top-center'
-        })
-        setCreateTeamLoading(false);
-        return false;
-      }
-
-      dispatch(addTeam({ team: newTeam }));
-      setCreateTeamLoading(false);
+      const newTeam = await editTeamApi(payload);
+      dispatch(editTeam({ team: newTeam }));
+      setUpdateTeamLoading(false);
       navigate(-1);
-      toast.success(`Team ${newTeam.name} was successfully created`, {
+      toast.success(`Team ${newTeam.name} was successfully updated`, {
         position: 'top-center'
       })
     } catch (err) {
-      console.log('ON CREATE TEAM API ERR: ', err);
-      setCreateTeamLoading(false);
+      console.log('ON UPDATE TEAM API ERR: ', err);
+      setUpdateTeamLoading(false);
     }
   };
 
-  const onAddPlayerToTeam = (player) => {
+  const onAddPlayerToTeam = useCallback((player) => {
     if (!playersInTeam.byId[player.id]) {
       dispatch(addPlayerToTeamCache({ player }));
     }
-  };
+  }, [playersInTeam.byId]);
 
-  const onRemovePlayerFromTeam = (player) => {
+  const onRemovePlayerFromTeam = useCallback((player) => {
     dispatch(removePlayerFromTeamCache({ player }));
-  };
+  }, []);
 
   const onDeletePlayer = (player) => {
     setPlayerToDelete(player);
@@ -205,6 +210,7 @@ export default function AddTeam() {
       dispatch(deletePlayer({ player: playerToDelete }));
       setDeletePlayerLoading(false);
       onCloseModal();
+      console.log('TEAMS MAP: ', teams)
     } catch (err) {
       setDeletePlayerLoading(false);
       console.log('DELETE PLAYER ERR: ', err)
@@ -217,6 +223,7 @@ export default function AddTeam() {
   };
 
   const onEditPlayer = (player) => {
+    console.log('PPP: ', player)
     dispatch(addPlayerCache({ player }));
     navigate('/games/teams/players/edit')
   };
@@ -226,32 +233,35 @@ export default function AddTeam() {
     { text: 'Edit', icon: PencilIcon, onClick: onEditPlayer },
   ];
 
-  const renderListItem = useCallback(({ item, onSelectItem }) => {
-    return (
-      <button onClick={() => onSelectItem(item)} className="w-full group flex items-center p-4 pr-10 focus-visible:outline-orange-600">
-        <div className="mr-3">
-          {item.avatarUrl && (
-            <img className="rounded-full h-10 w-10" src={item.avatarUrl} />
-          )}
-          {!item.avatarUrl && (
-            <span className="border border-gray-300 relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-full">
-              <Icon type="jersey" className="mx-auto h-6 w-6 text-gray-400" />
-            </span>
-          )}
-        </div>
-        <div className="min-w-0 flex-1 flex justify-between items-center">
-          <div className="flex items-center">
-            <p className="mr-3 text-sm text-gray-500">#{item.number}</p>
-            <div className="text-sm font-medium text-gray-900">
-              <a>
-                {item.name}
-              </a>
+  const renderPlayerItem = useCallback(
+    ({ item, onSelectItem }) => {
+      return (
+        <button onClick={() => onSelectItem(item)} className="w-full group flex items-center p-4 pr-10 focus-visible:outline-orange-600">
+          <div className="mr-3">
+            {item.avatarUrl && (
+              <img className="rounded-full h-10 w-10" src={item.avatarUrl} />
+            )}
+            {!item.avatarUrl && (
+              <span className="border border-gray-300 relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-full">
+                <Icon type="jersey" className="mx-auto h-6 w-6 text-gray-400" />
+              </span>
+            )}
+          </div>
+          <div className="min-w-0 flex-1 flex justify-between items-center">
+            <div className="flex items-center">
+              <p className="mr-3 text-sm text-gray-500">#{item.number}</p>
+              <div className="text-sm font-medium text-gray-900">
+                <a>
+                  {item.name}
+                </a>
+              </div>
             </div>
           </div>
-        </div>
-      </button>
-    );
-  }, [playersInTeam]);
+        </button>
+      );
+    },
+    []
+  );
 
   const renderCropper = () => {
     return (
@@ -311,7 +321,7 @@ export default function AddTeam() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <h2 className="text-base font-semibold leading-6 text-gray-900">Create a new team</h2>
+      <h2 className="text-base font-semibold leading-6 text-gray-900">Edit team {teamName}</h2>
 
       <div className="mt-8">
 
@@ -330,7 +340,7 @@ export default function AddTeam() {
               </button>
             )}
           </div>
-          <h2 className="mt-2 text-sm font-semibold text-gray-800">Upload new team avatar</h2>
+          <h2 className="mt-2 text-sm font-semibold text-gray-800">Edit team avatar</h2>
         </div>
         <div className="flex justify-between items-end">
           <div className="w-full sm:w-2/5">
@@ -377,7 +387,7 @@ export default function AddTeam() {
 
           {playersInTeam.allIds.length > 0 && (
             <List items={playersInTeam} onSelectItem={onRemovePlayerFromTeam} dropdownItems={dropdownItems}>
-              {renderListItem}
+              {renderPlayerItem}
             </List>
           )}
 
@@ -398,7 +408,7 @@ export default function AddTeam() {
 
             {players.allIds.length > 0 && (
               <List items={players} onSelectItem={onAddPlayerToTeam} dropdownItems={dropdownItems}>
-                {renderListItem}
+                {renderPlayerItem}
               </List>
             )}
 
@@ -426,12 +436,12 @@ export default function AddTeam() {
           <button
             type="button"
             className="w-full sm:w-auto inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
-            onClick={onCreateNewTeam}
+            onClick={onUpdateTeam}
           >
-            {createTeamLoading && (
+            {updateTeamLoading && (
               <Icon type="loader" className="h-5 w-5 mr-2" spinnerColor={colors.orange600} spinnerBackgroundColor={colors.grey300} />
             )}
-            Create new team
+            Update team
           </button>
         </div>
       </div>
