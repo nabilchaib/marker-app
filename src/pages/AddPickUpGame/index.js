@@ -1,15 +1,15 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { TrashIcon, PencilIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { toast } from 'react-toastify'
+import { v4 as uuid } from 'uuid';
 
 import Icon from '../../components/Icon';
 import List from '../../components/List';
-import Dialog from '../../components/Dialog';
-import { getTeamsApi, deleteTeamApi } from '../../firebase/api';
-import { addTeams, resetTeamCache, addTeamCache, deleteTeam } from '../../redux/teams-reducer';
-import { addGameToCache, removeGameFromCache } from '../../redux/games-reducer';
+import { getTeamsApi, getPlayersApi } from '../../firebase/api';
+import { addTeams } from '../../redux/teams-reducer';
+import { addPlayers } from '../../redux/players-reducer';
+import { addGameToCache, removeGameFromCache, addNewGame } from '../../redux/games-reducer';
 import { colors } from '../../utils';
 
 
@@ -18,12 +18,7 @@ export default function AddPickUpGame() {
   const dispatch = useDispatch();
 
   const [getTeamsLoading, setGetTeamsLoading] = useState(false);
-  const [deleteTeamLoading, setDeleteTeamLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [teamToDelete, setTeamToDelete] = useState(null);
 
-
-  const state = useSelector(state => state);
   const user = useSelector(state => state.user);
   const teams = useSelector(state => state.teams);
   const games = useSelector(state => state.games);
@@ -33,6 +28,8 @@ export default function AddPickUpGame() {
       try {
         setGetTeamsLoading(true);
         const teams = await getTeamsApi({ user });
+        const players = await getPlayersApi({ user });
+        dispatch(addPlayers({ players }));
         dispatch(addTeams({ teams }));
         setGetTeamsLoading(false);
       } catch (err) {
@@ -45,11 +42,6 @@ export default function AddPickUpGame() {
       fetchTeams();
     }
   }, [user?.email]);
-
-  const onNewTeam = () => {
-    dispatch(resetTeamCache());
-    navigate('/games/teams/create')
-  };
 
   const onSelectTeam = team => {
     if (games.editing.teamA === team.id) {
@@ -89,43 +81,29 @@ export default function AddPickUpGame() {
       toast.error(`There are no players in team ${teamB.name}`, {
         position: 'top-center'
       });
+      return false;
     }
-  };
 
-  const onDeleteTeam = (team) => {
-    setTeamToDelete(team);
-    setModalOpen(true);
-  };
+    const newGame = {
+      id: uuid(),
+      teamAId: teamA.id,
+      teamBId: teamB.id,
+      createdBy: user.id,
+      createdOn: new Date().getTime(),
+      actions: [],
+      type: 'pick-up',
+      teamAScore: 0,
+      teamBScore: 0,
+      notSaved: true,
+      stats: {},
+    };
 
-  const onDeleteTeamConfirm = async () => {
-    try {
-      setDeleteTeamLoading(true);
-      await deleteTeamApi({ team: teamToDelete });
-      dispatch(deleteTeam({ team: teamToDelete }));
-      setDeleteTeamLoading(false);
-      onCloseModal();
-    } catch (err) {
-      setDeleteTeamLoading(false);
-      console.log('DELETE TEAM ERR: ', err)
-    }
-  };
-
-  const onCloseModal = () => {
-    setTeamToDelete(null);
-    setModalOpen(false);
-  };
-
-  const onEditTeam = (team) => {
-    dispatch(addTeamCache({ team }));
-    navigate('/games/teams/edit')
+    dispatch(addNewGame(newGame));
+    navigate(`/games/pick-up-game/${newGame.id}`);
   };
 
   const teamA = teams.byId[games.editing.teamA];
   const teamB = teams.byId[games.editing.teamB];
-  const dropdownItems = [
-    { text: 'Delete', icon: TrashIcon, onClick: onDeleteTeam },
-    { text: 'Edit', icon: PencilIcon, onClick: onEditTeam },
-  ];
 
   const renderListItem = useCallback(({ item, onSelectItem }) => {
     return (
@@ -197,16 +175,8 @@ export default function AddPickUpGame() {
         <div className="mt-4">
           <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between">
             <h2 className="text-base font-semibold leading-6 text-gray-900">Select 2 teams for your pick-up game</h2>
-            <button
-              type="button"
-              className="mt-4 sm:mt-0 w-full sm:w-auto inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
-              onClick={onNewTeam}
-            >
-              <PlusIcon aria-hidden="true" className="-ml-0.5 mr-1.5 h-5 w-5" />
-              New team
-            </button>
           </div>
-          <List items={teams} onSelectItem={onSelectTeam} dropdownItems={dropdownItems} editingState={games.editing}>
+          <List items={teams} onSelectItem={onSelectTeam}>
             {renderListItem}
           </List>
         </div>
@@ -217,16 +187,6 @@ export default function AddPickUpGame() {
           <Icon type="jersey" className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-semibold text-gray-900">No teams</h3>
           <p className="mt-1 text-sm text-gray-500">Get started by creating a new team.</p>
-          <div className="mt-6">
-            <button
-              type="button"
-              className="inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
-              onClick={onNewTeam}
-            >
-              <PlusIcon aria-hidden="true" className="-ml-0.5 mr-1.5 h-5 w-5" />
-              New Team
-            </button>
-          </div>
         </div>
       )}
 
@@ -242,14 +202,6 @@ export default function AddPickUpGame() {
           Create new pick-up game
         </button>
       </div>
-      <Dialog
-        open={modalOpen}
-        handleClose={onCloseModal}
-        onConfirm={onDeleteTeamConfirm}
-        confirmButtonTitle="Delete"
-        loading={deleteTeamLoading}
-        title="Are you sure you want to delete this team?"
-      />
     </div>
   )
 }

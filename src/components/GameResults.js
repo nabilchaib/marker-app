@@ -1,56 +1,65 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
-import { selectTeamScore } from './selectors/selectors';
-import { pushStatsToFirebase } from '../firebase/api';
 import { useNavigate } from 'react-router-dom';
+import { initialStats } from '../redux/games-reducer';
 
-const GameResults = ({ onBackClick }) => {
+const GameResults = ({ game, onBackClick }) => {
   const navigate = useNavigate();
-  const game = useSelector((state) => state.game);
-  const isDrillMode = game.type_of_game === 'drill';
-  
-  // Get drill stats from the selected player in drill mode
-  const drillStats = isDrillMode && game.players ? Object.values(game.players)[0].stats : null;
-  
+  const isDrillMode = game.type === 'drill';
+  const { teamAId, teamAScore, teamBId, teamBScore } = game;
+
   // Only retrieve team scores if not in drill mode
-  const teamA = useSelector((state) => state.game.teamA);
-  const teamB = useSelector((state) => state.game.teamB);
-  const teamAScore = useSelector((state) => selectTeamScore(state, 'teamA'));
-  const teamBScore = useSelector((state) => selectTeamScore(state, 'teamB'));
+  const teams = useSelector(state => state.teams);
+  const players = useSelector(state => state.players);
+  const teamA = teams.byId[teamAId];
+  const teamB = teams.byId[teamBId];
+
+  // Get drill stats from the selected player in drill mode
+  const drillStats = isDrillMode && game.stats;
+  const drillPlayer = players.byId[game.playerId];
+
 
   // Render player stats based on game mode
   const playerStats = (team) => {
-    return Object.values(team.players).map((player) => (
-      <tr key={player.id} className="hover:bg-gray-100 bg-gray-50 odd:bg-white even:bg-gray-50">
-        <td className="p-3 text-sm">{player.name}</td>
-        <td className="p-3 text-sm">{player.stats.points.made[1] + player.stats.points.made[2] * 2 + player.stats.points.made[3] * 3} pts</td>
-        <td className="p-3 text-sm">{player.stats.rebounds.offensive + player.stats.rebounds.defensive}</td>
-        <td className="p-3 text-sm">{player.stats.assists}</td>
-        <td className="p-3 text-sm">{player.stats.fouls}</td>
-      </tr>
-    ));
+    return Object.values(team.players).map((playerId) => {
+      const player = players.byId[playerId];
+      const stats = game.stats[team.id]?.[playerId] || { ...initialStats };
+      return (
+        <tr key={player.id} className="hover:bg-gray-100 bg-gray-50 odd:bg-white even:bg-gray-50">
+          <td className="p-3 text-sm">{player.name}</td>
+          <td className="p-3 text-sm">{stats.freeThrows + (stats.twos * 2) + (stats.threes * 3)} pts</td>
+          <td className="p-3 text-sm">{stats.offensiveRebounds + stats.defensiveRebounds}</td>
+          <td className="p-3 text-sm">{stats.assists}</td>
+          <td className="p-3 text-sm">{stats.fouls}</td>
+        </tr>
+      );
+    });
   };
 
   // Render drill stats if in drill mode
-  const drillPlayerStats = () => (
-    <tr className="hover:bg-gray-100 bg-gray-50 odd:bg-white even:bg-gray-50">
-      <td className="p-3 text-sm">Attempts</td>
-      <td className="p-3 text-sm">{drillStats.drill_attempts}</td>
-      <td className="p-3 text-sm">Completions</td>
-      <td className="p-3 text-sm">{drillStats.drill_made}</td>
-      <td className="p-3 text-sm">
-        {drillStats.drill_attempts > 0 ? `${((drillStats.drill_made / drillStats.drill_attempts) * 100).toFixed(2)}%` : '0%'}
-      </td>
-    </tr>
-  );
+  const drillPlayerStats = () => {
+    return Object.entries(drillStats).map(playerStats => {
+      const id = playerStats[0];
+      const stats = playerStats[1];
+      return (
+        <tr key={id} className="hover:bg-gray-100 bg-gray-50 odd:bg-white even:bg-gray-50">
+          <td className="p-3 text-sm">{drillPlayer.name}</td>
+          <td className="p-3 text-sm">Attempts</td>
+          <td className="p-3 text-sm">{stats.attempts}</td>
+          <td className="p-3 text-sm">Completions</td>
+          <td className="p-3 text-sm">{stats.completions}</td>
+          <td className="p-3 text-sm">
+            {stats.attempts > 0 ? `${((stats.completions / stats.attempts) * 100).toFixed(2)}%` : '0%'}
+          </td>
+        </tr>
+      );
+    });
+  };
 
   const EndButton = () => {
     const handleClick = async () => {
-      if (!isDrillMode) {
-        await pushStatsToFirebase(game, teamA, teamB);
-      }
-      navigate('/teamselection');
+      navigate('/games');
     };
 
     return (
@@ -64,10 +73,10 @@ const GameResults = ({ onBackClick }) => {
   };
 
   return (
-    <div className="GameResults flex flex-col items-center justify-center p-8 bg-gray-100 rounded-lg shadow-2xl w-full md:w-3/4 lg:w-1/2 mx-auto space-y-6">
+    <div className="GameResults flex flex-col items-center justify-center p-8 bg-gray-100 rounded-lg shadow-2xl w-full md:w-3/4 lg:w-1/2 mx-auto space-y-6 overflow-y-auto max-h-screen">
       <motion.div className="overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }}></motion.div>
 
-      <motion.div className="content bg-white rounded-lg p-8" initial={{ y: '-100vh' }} animate={{ y: '0' }}>
+      <motion.div className="content bg-white rounded-lg p-8 overflow-y-auto max-h-full" initial={{ y: '-100vh' }} animate={{ y: '0' }}>
         <h2 className="text-3xl md:text-4xl font-bold text-[#f64e07] tracking-wider mb-8">
           {isDrillMode ? 'Drill Results' : 'Game Results'}
         </h2>
@@ -78,6 +87,7 @@ const GameResults = ({ onBackClick }) => {
             <table className="min-w-full bg-white border-collapse border border-gray-200 text-left rounded-lg shadow-sm">
               <thead className="bg-gray-200 text-gray-700">
                 <tr>
+                  <th className="p-3 font-semibold text-sm">Player</th>
                   <th className="p-3 font-semibold text-sm">Metric</th>
                   <th className="p-3 font-semibold text-sm">Value</th>
                   <th className="p-3 font-semibold text-sm">Metric</th>

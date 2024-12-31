@@ -1,44 +1,110 @@
-import React, { useEffect, useState, Fragment } from 'react';
+import React, { useEffect, useState, useCallback} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { getDocs, collection } from 'firebase/firestore';
-import { db } from '../../firebase';
-import { addPlayers } from '../../redux/players-reducer';
-import { EllipsisHorizontalIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/solid';
-import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/react';
+import { TrashIcon, PlusIcon, PencilIcon } from '@heroicons/react/24/solid';
+
+import { getPlayersApi, deletePlayerApi } from '../../firebase/api';
+import { addPlayers, addPlayerCache, deletePlayer } from '../../redux/players-reducer';
 import Icon from '../../components/Icon';
+import List from '../../components/List';
+import Dialog from '../../components/Dialog';
 
 export default function Players() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [getPlayersLoading, setGetPlayersLoading] = useState(false);
+  const [playerToDelete, setPlayerToDelete] = useState(null);
+  const [deletePlayerLoading, setDeletePlayerLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
-  // Access players from Redux store
-  const players = useSelector(state => state.players.allIds.map(id => state.players.byId[id]));
+  const user = useSelector(state => state.user);
+  const players = useSelector(state => state.players);
 
-  // Fetch players from Firebase and update Redux store
   useEffect(() => {
     const fetchPlayers = async () => {
       try {
-        const playersCollection = collection(db, 'players');
-        const playersSnapshot = await getDocs(playersCollection);
-        const playersData = playersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        dispatch(addPlayers({ players: playersData }));
-        setLoading(false);
-      } catch (error) {
-        setError('Failed to load players');
-        setLoading(false);
+        setGetPlayersLoading(true);
+        const players = await getPlayersApi({ user });
+        dispatch(addPlayers({ players }));
+        setGetPlayersLoading(false);
+      } catch (err) {
+        console.log('FETCH PLAYERS ERR: ', err);
+        setGetPlayersLoading(false);
       }
     };
 
-    fetchPlayers();
-  }, [dispatch]);
+    if (user?.email && players.allIds.length <= 0) {
+      fetchPlayers();
+    }
+  }, [user?.email]);
+
+  const onCloseModal = () => {
+    setPlayerToDelete(null);
+    setModalOpen(false);
+  };
+
+  const onEditPlayer = (player) => {
+    dispatch(addPlayerCache({ player }));
+    navigate('/players/edit')
+  };
+
+  const onDeletePlayer = (player) => {
+    setPlayerToDelete(player);
+    setModalOpen(true);
+  };
+
+  const onDeletePlayerConfirm = async () => {
+    try {
+      setDeletePlayerLoading(true);
+      await deletePlayerApi({ player: playerToDelete });
+      dispatch(deletePlayer({ player: playerToDelete }));
+      setDeletePlayerLoading(false);
+      onCloseModal();
+    } catch (err) {
+      setDeletePlayerLoading(false);
+      console.log('DELETE PLAYER ERR: ', err)
+    }
+  };
 
   const onNewPlayer = () => {
-    navigate('/games/teams/players/create'); // Redirect to player creation page
+    navigate('/players/create');
   };
+
+  const renderListItem = useCallback(
+    ({ item }) => {
+      return (
+        <div className="w-full group flex items-center p-4 pr-10 focus-visible:outline-orange-600">
+          <div className="mr-3">
+            {item.avatarUrl && (
+              <img className="rounded-full h-10 w-10" src={item.avatarUrl} />
+            )}
+            {!item.avatarUrl && (
+              <span className="border border-gray-300 relative inline-flex p-2 h-10 w-10 items-center justify-center rounded-full">
+                <Icon type="jersey" className="mx-auto h-6 w-6 text-gray-400" />
+              </span>
+            )}
+          </div>
+          <div className="min-w-0 flex-1 flex justify-between items-center">
+            <div className="flex items-center">
+              <p className="mr-3 text-sm text-gray-500">#{item.number}</p>
+              <div className="text-sm font-medium text-gray-900">
+                <a>
+                  {item.name}
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    },
+    []
+  );
+
+  const dropdownItems = [
+    { text: 'Delete', icon: TrashIcon, onClick: onDeletePlayer },
+    { text: 'Edit', icon: PencilIcon, onClick: onEditPlayer },
+  ];
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -54,44 +120,29 @@ export default function Players() {
         </button>
       </div>
 
-      {loading ? (
-        <p>Loading players...</p>
-      ) : error ? (
-        <p className="text-red-500">{error}</p>
-      ) : (
-        <ul role="list" className="divide-y divide-gray-100 overflow-hidden bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl">
-          {players.map(player => (
-            <li key={player.id} className="relative flex justify-between gap-x-6 px-4 py-4 hover:bg-orange-100">
-              <div className="min-w-0 flex-auto">
-                <p className="text-sm font-semibold leading-6 text-gray-900">
-                  <a>{player.name}</a>
-                </p>
-                <p className="mt-1 text-xs leading-5 text-gray-500">
-                  {player.team ? `Team: ${player.team}` : 'No team assigned'}
-                </p>
-                <p className="mt-1 text-xs leading-5 text-gray-500">
-                  {player.position ? `Position: ${player.position}` : 'Position not specified'}
-                </p>
-              </div>
-              <div className="flex items-center gap-x-4">
-                <Menu>
-                  <MenuButton as={Fragment}>
-                    <EllipsisHorizontalIcon aria-hidden="true" className="h-5 w-5 text-gray-400 hover:text-gray-500" />
-                  </MenuButton>
-                  <MenuItems className="z-100 w-52 bg-white rounded-xl border p-1 text-sm/6 focus:outline-none">
-                    <MenuItem>
-                      <button className="group flex w-full items-center gap-2 py-1.5 px-3 hover:bg-gray-200">
-                        <TrashIcon className="h-4 w-4" />
-                        Delete
-                      </button>
-                    </MenuItem>
-                  </MenuItems>
-                </Menu>
-              </div>
-            </li>
-          ))}
-        </ul>
+
+      {!getPlayersLoading && players.allIds.length > 0 && (
+        <div className="mt-4">
+          <List items={players} dropdownItems={dropdownItems}>
+            {renderListItem}
+          </List>
+        </div>
       )}
+      {!getPlayersLoading && players.allIds.length <= 0 && (
+        <div className="mt-4 border text-center rounded-md p-6">
+          <Icon type="jersey" className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-semibold text-gray-900">No players</h3>
+          <p className="mt-1 text-sm text-gray-500">Get started by creating a new player.</p>
+        </div>
+      )}
+      <Dialog
+        open={modalOpen}
+        handleClose={onCloseModal}
+        onConfirm={onDeletePlayerConfirm}
+        confirmButtonTitle="Delete"
+        loading={deletePlayerLoading}
+        title="Are you sure you want to delete this player?"
+      />
     </div>
   );
 }

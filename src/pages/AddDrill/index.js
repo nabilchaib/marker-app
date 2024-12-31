@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { PlusIcon } from '@heroicons/react/24/solid';
 import { toast } from 'react-toastify';
+import { v4 as uuid } from 'uuid';
 
 import Icon from '../../components/Icon';
 import { getPlayersApi } from '../../firebase/api';
 import { addPlayers } from '../../redux/players-reducer';
-import { resetGameCache } from '../../redux/games-reducer';
-import DrillTracking from '../../components/DrillTracking';
+import { addNewGame } from '../../redux/games-reducer';
 
 export default function AddDrill() {
   const navigate = useNavigate();
@@ -39,10 +38,6 @@ export default function AddDrill() {
     }
   }, [user?.email, players.allIds.length]);
 
-  const onNewPlayer = () => {
-    navigate('/games/teams/players/create'); // Redirect to player creation
-  };
-
   const onSelectPlayer = playerId => {
     setSelectedPlayer(playerId === selectedPlayer ? null : playerId);
   };
@@ -55,8 +50,19 @@ export default function AddDrill() {
       return;
     }
 
-    dispatch(resetGameCache());
-    navigate('/drill/tracking', { state: { playerId: selectedPlayer } });
+    const newDrill = {
+      id: uuid(),
+      playerId: selectedPlayer,
+      type: 'drill',
+      createdBy: user.id,
+      createdOn: new Date().getTime(),
+      actions: [],
+      notSaved: true,
+      stats: {},
+    };
+
+    dispatch(addNewGame(newDrill));
+    navigate(`/games/drill/${newDrill.id}`);
   };
 
   const selectedPlayerData = players.byId[selectedPlayer];
@@ -68,7 +74,7 @@ export default function AddDrill() {
 
       <div className="mt-4 flex flex-col items-center justify-center">
         {/* Selected Player Display */}
-        <div className="flex flex-col items-center mb-4">
+        <div className="flex flex-col items-center">
           {!selectedPlayerData?.avatarUrl && (
             <div className="mb-2 border border-gray-300 relative inline-flex p-2 h-32 w-32 items-center justify-center rounded-full">
               <Icon type="jersey" className="mx-auto h-24 w-24 text-gray-400" />
@@ -85,14 +91,6 @@ export default function AddDrill() {
         <div className="mt-4">
           <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between">
             <h2 className="text-base font-semibold leading-6 text-gray-900">Select a Player</h2>
-            <button
-              type="button"
-              className="mt-4 sm:mt-0 w-full sm:w-auto inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
-              onClick={onNewPlayer}
-            >
-              <PlusIcon aria-hidden="true" className="-ml-0.5 mr-1.5 h-5 w-5" />
-              New Player
-            </button>
           </div>
           <ul role="list" className="mt-6 divide-y divide-gray-200 border-b border-t border-gray-200">
             {players.allIds.map((playerId) => {
@@ -129,16 +127,6 @@ export default function AddDrill() {
           <Icon type="jersey" className="mx-auto h-12 w-12 text-gray-400" />
           <h3 className="mt-2 text-sm font-semibold text-gray-900">No players</h3>
           <p className="mt-1 text-sm text-gray-500">Get started by creating a new player.</p>
-          <div className="mt-6">
-            <button
-              type="button"
-              className="inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
-              onClick={onNewPlayer}
-            >
-              <PlusIcon aria-hidden="true" className="-ml-0.5 mr-1.5 h-5 w-5" />
-              New Player
-            </button>
-          </div>
         </div>
       )}
 

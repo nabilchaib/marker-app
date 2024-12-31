@@ -3,18 +3,19 @@ import ReactDOM from 'react-dom/client';
 import { ToastContainer } from 'react-toastify'
 import { Navigate } from 'react-router-dom'
 import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, onAuthStateChanged } from './firebase';
 import { addOrGetUserApi } from './firebase/api';
-import store from './redux/store';
+import { store, persistor } from './redux/store';
 import { addUser } from './redux/user-reducer';
-import './index.css';
-import App from './App';
 import Sidebar from './pages/Sidebar';
 import Games from './pages/Games';
 import AddGame from './pages/AddGame';
 import AddPickUpGame from './pages/AddPickUpGame';
 import AddTeam from './pages/AddTeam';
+import PickUpGame from './pages/PickUpGame';
+import DrillTracking from './pages/DrillTracking';
 import EditTeam from './pages/EditTeam';
 import EditPlayer from './pages/EditPlayer';
 import AddPlayer from './pages/AddPlayer';
@@ -27,10 +28,8 @@ import {
   createBrowserRouter,
   RouterProvider,
 } from "react-router-dom";
-import TeamSelectionPage from './components/TeamSelection';
-import CreateTeamPage from './components/CreateTeam';
 import "react-toastify/dist/ReactToastify.css";
-import DrillTracking from './components/DrillTracking';
+import './index.css';
 
 const Protected = ({ children, type }) => {
   const [user, loading] = useAuthState(auth);
@@ -70,41 +69,37 @@ const router = createBrowserRouter([
         element: <AddGame />
       },
       {
-        path: 'games/teams/create',
-        element: <AddTeam />
-      },
-      {
-        path: 'games/teams/edit',
-        element: <EditTeam />
-      },
-      {
-        path: 'games/teams/players/create',
-        element: <AddPlayer />
-      },
-      {
-        path: 'games/teams/players/edit',
-        element: <EditPlayer />
-      },
-      {
-        path: 'pick-up-game/create',
+        path: 'games/pick-up-game/create',
         element: <AddPickUpGame />
       },
       {
-        path: 'drill/create',
+        path: 'games/drill/create',
         element: <AddDrill />
-      },
-      {
-        path: 'drill/tracking',
-        element: <DrillTracking />
       },
       {
         path: 'teams',
         element: <Teams />
       },
       {
+        path: 'teams/create',
+        element: <AddTeam />
+      },
+      {
+        path: 'teams/edit',
+        element: <EditTeam />
+      },
+      {
         path: 'players',
         element: <Players />
-      }
+      },
+      {
+        path: 'players/create',
+        element: <AddPlayer />
+      },
+      {
+        path: 'players/edit',
+        element: <EditPlayer />
+      },
     ]
   },
   {
@@ -114,20 +109,17 @@ const router = createBrowserRouter([
     </Protected>
   },
   {
-    path: "/teamselection",
+    path: 'games/pick-up-game/:id',
     element: <Protected>
-      <TeamSelectionPage />
+      <PickUpGame />
     </Protected>
   },
   {
-    path: "/createteam",
-    element: <Protected><CreateTeamPage /></Protected>
+    path: 'games/drill/:id',
+    element: <Protected>
+      <DrillTracking />
+    </Protected>
   },
-  {
-    path: "/start-game",
-    element: <Protected><App /></Protected>
-  }
-
 ]);
 
 const MainApp = () => {
@@ -147,10 +139,12 @@ const MainApp = () => {
 
   return (
     <Provider store={store}>
-      <React.StrictMode>
-        <RouterProvider router={router} />
-      </React.StrictMode>
-      <ToastContainer />
+      <PersistGate loading={null} persistor={persistor}>
+        <React.StrictMode>
+          <RouterProvider router={router} />
+        </React.StrictMode>
+        <ToastContainer />
+      </PersistGate>
     </Provider>
   );
 };

@@ -13,7 +13,7 @@ const initialTransformOrigin = {
 };
 
 const Dropdown = ({ entity, items, anchorEl, open, onOpen, onClose, anchorOrigin = initialAnchorOrigin, transformOrigin = initialTransformOrigin }) => {
-  const isMobile = useMediaQuery('(max-width:640px)');
+  const isMobile = useMediaQuery('(max-width:600px)');
 
   const renderMenuItems = (options = {}) => {
     const { isDrawer = false } = options;

@@ -1,4 +1,4 @@
-import { useMemo, useState, Fragment } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { Dialog, DialogBackdrop, DialogPanel, TransitionChild } from '@headlessui/react'
@@ -14,17 +14,12 @@ import Dropdown from '../../components/Dropdown';
 import { classNames } from '../../utils';
 
 const isCurrentMenu = (menu, path) => {
-  const menuMap = {
-    '/': 'games',
-    '/games': 'games',
-    '/games/create': 'games',
-    '/games/teams/create': 'games',
-    '/pick-up-game/create': 'games',
-    '/teams': 'teams',
-    '/players': 'players', // Added mapping for players page
-  };
+  if (path === '/') {
+    return menu === 'games';
+  }
 
-  return menu === menuMap[path];
+  const tab = path.split('/').filter(e => e)[0];
+  return menu === tab;
 };
 
 export default function Sidebar() {
@@ -37,6 +32,10 @@ export default function Sidebar() {
   const user = useSelector(state => state.user);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const onLogoClick = () => {
+    navigate('/');
+  };
 
   const onOpenTopDropdown = (e) => {
     setTopDropdownEl(e.currentTarget);
@@ -62,8 +61,8 @@ export default function Sidebar() {
   const navigation = useMemo(
     () => [
       { name: 'Games', href: '/games', icon: (props) => <Icon type="hoop" {...props} />, current: isCurrentMenu('games', location.pathname) },
-      { name: 'Teams', href: '/teams', icon: (props) => <Icon type="jersey" {...props} />, current: location.pathname === '/teams' },
-      { name: 'Players', href: '/players', icon: (props) => <Icon type="player" {...props} />, current: location.pathname === '/players' }, // Added Players menu
+      { name: 'Teams', href: '/teams', icon: (props) => <Icon type="jersey" {...props} />, current: isCurrentMenu('teams', location.pathname) },
+      { name: 'Players', href: '/players', icon: (props) => <Icon type="player" {...props} />, current: isCurrentMenu('players', location.pathname) },
     ],
     [location.pathname]
   );
@@ -121,7 +120,7 @@ export default function Sidebar() {
             </div> */}
             <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-orange-600 px-6 pb-2">
               <div className="flex h-16 items-center">
-                <button className="flex items-center outline-none focus-visible:outline-orange-700 focus-visible:rounded-md">
+                <button onClick={onLogoClick} className="flex items-center outline-none focus-visible:outline-blue-700 focus-visible:rounded-md">
                   <img
                     alt="HoopTrackr"
                     src="/hoop-trackr-logo-ball.svg"
@@ -173,7 +172,7 @@ export default function Sidebar() {
       <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-orange-600 px-6">
           <div className="flex items-center h-16 shrink-0">
-            <button className="flex items-center outline-none focus-visible:outline-orange-700 focus-visible:rounded-md">
+            <button onClick={onLogoClick} className="flex items-center outline-none focus-visible:outline-orange-700 focus-visible:rounded-md">
               <img
                 alt="HoopTrackr"
                 src="/hoop-trackr-logo-ball.svg"
@@ -248,7 +247,7 @@ export default function Sidebar() {
           <Bars3Icon aria-hidden="true" className="h-6 w-6" />
         </button>
         <div className="flex-1 text-sm font-semibold leading-6 text-white">
-          <button className="flex items-center outline-none focus-visible:outline-orange-700 focus-visible:rounded-md">
+          <button onClick={onLogoClick} className="flex items-center outline-none focus-visible:outline-orange-700 focus-visible:rounded-md">
             <img
               alt="HoopTrackr"
               src="/hoop-trackr-logo-ball.svg"
