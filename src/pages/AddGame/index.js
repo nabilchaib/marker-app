@@ -56,9 +56,9 @@ export default function AddGame() {
     dispatch(resetGameCache()); // Reset cache on all game types
 
     if (gameType === 'Pick-up game') {
-      navigate('/pick-up-game/create');
+      navigate('/games/pick-up-game/create');
     } else if (gameType === 'Drill') {
-      navigate('/drill/create');  // Navigate to drill setup or tracking page
+      navigate('/games/drill/create');  // Navigate to drill setup or tracking page
     }
   };
 

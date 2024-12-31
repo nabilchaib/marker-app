@@ -5,9 +5,9 @@ import Cropper from 'react-easy-crop'
 import Slider from '@mui/material/Slider';
 import { PlusIcon, MinusIcon } from '@heroicons/react/24/solid'
 
-import { addPlayer, addPlayerCache, editPlayer } from '../../redux/players-reducer';
+import { addPlayerCache, editPlayer } from '../../redux/players-reducer';
 import Icon from '../../components/Icon';
-import { addPlayerApi, editPlayerApi } from '../../firebase/api';
+import { editPlayerApi } from '../../firebase/api';
 import { colors, getCroppedImg, validator } from '../../utils';
 
 
@@ -18,18 +18,17 @@ export default function EditPlayer() {
     playerName: '',
     playerNumber: '',
   };
-  const [form, setForm] = useState(initialForm);
   const [formState, setFormState] = useState({});
   const [avatarToUpload, setAvatarToUpload] = useState(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const [updatePlayerLoading, setUpdatePlayerLoading] = useState(false);
+  const [croppedImageUrl, setCroppedImageUrl] = useState(null)
   const fileInputRef = useRef(null);
 
-  const user = useSelector(state => state.user);
   const playerToEdit = useSelector(state => state.players.editing);
-  const croppedImageUrl = playerToEdit.avatarUrl;
+  const newCroppedImageUrl = croppedImageUrl || playerToEdit.avatarUrl;
 
   const onCropComplete = (croppedArea, croppedAreaPixels) => {
     setCroppedAreaPixels(croppedAreaPixels)
@@ -46,11 +45,7 @@ export default function EditPlayer() {
         croppedAreaPixels,
       )
 
-      dispatch(addPlayerCache({
-        player: {
-          avatarUrl: URL.createObjectURL(croppedImage),
-        }
-      }));
+      setCroppedImageUrl(URL.createObjectURL(croppedImage))
       setAvatarToUpload(null);
     } catch (e) {
       console.error(e)
@@ -147,18 +142,20 @@ export default function EditPlayer() {
           }
         };
 
+        if (playerToEdit.avatarUrl) {
+          payload.player.avatarUrl = playerToEdit.avatarUrl;
+        }
+
         if (croppedImageUrl) {
           payload.image = croppedImageUrl;
         }
-
-        console.log('UPLOAD: ', payload)
 
         const newPlayer = await editPlayerApi(payload);
         dispatch(editPlayer({ player: newPlayer }));
         setUpdatePlayerLoading(false);
         navigate(-1);
       } catch (err) {
-        console.log('ON CREATE PLAYER API ERR: ', err);
+        console.log('ON EDIT PLAYER API ERR: ', err);
         setUpdatePlayerLoading(false);
       }
     }
@@ -228,13 +225,13 @@ export default function EditPlayer() {
 
         <div className="flex flex-col items-center">
           <div className="group flex">
-            {croppedImageUrl && (
+            {newCroppedImageUrl && (
               <button onClick={onSelectPlayerAvatar} className="rounded-full active:scale-95 focus-visible:outline-orange-600">
                 <input ref={fileInputRef} type="file" onChange={onUploadPlayerAvatar} accept="image/*" style={{ display: "none" }} />
-                <img className="rounded-full h-24 w-24" src={croppedImageUrl} />
+                <img className="rounded-full h-24 w-24" src={newCroppedImageUrl} />
               </button>
             )}
-            {!croppedImageUrl && (
+            {!newCroppedImageUrl && (
               <button onClick={onSelectPlayerAvatar} className="group flex items-center justify-center h-24 w-24 border rounded-full border-gray-300 group-hover:border-orange-600 active:scale-95 group-active:border-orange-600 focus-visible:outline-orange-600 focus-within:border-orange-600">
                 <input ref={fileInputRef} type="file" onChange={onUploadPlayerAvatar} accept="image/*" style={{ display: "none" }} />
                 <Icon type="jersey" className="mx-auto h-16 w-16 text-gray-300 group-hover:text-orange-600 group-focus:text-orange-600" />

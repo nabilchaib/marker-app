@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, current } from '@reduxjs/toolkit';
 
 const initialState = {
   byId: {},
@@ -8,8 +8,7 @@ const initialState = {
     name: '',
     avatar: null,
     avatarUrl: null,
-    players: {},
-    playersFromServer: [],
+    players: [],
     createdBy: null
   }
 };
@@ -49,21 +48,11 @@ export const teamsSlice = createSlice({
     },
     addPlayerToTeamCache: (state, action) => {
       const { player } = action.payload;
-      if (state.editing.players[player.id]?.toRemove) {
-        state.editing.players[player.id] = null;
-      } else {
-        const updatedPlayer = { ...player, toAdd: true };
-        state.editing.players[player.id] = updatedPlayer;
-      }
+      state.editing.players.push(player.id);
     },
     removePlayerFromTeamCache: (state, action) => {
       const { player } = action.payload;
-      if (state.editing.players[player.id]?.toAdd) {
-        state.editing.players[player.id] = null;
-      } else {
-        const updatedPlayer = { ...player, toRemove: true };
-        state.editing.players[player.id] = updatedPlayer;
-      }
+      state.editing.players = state.editing.players.filter(id => id !== player.id);
     },
     addTeamCache: (state, action) => {
       const { team } = action.payload;
@@ -85,7 +74,7 @@ export const teamsSlice = createSlice({
       }
 
       if (players) {
-        state.editing.playersFromServer = players;
+        state.editing.players = players;
       }
 
       if (createdBy) {
@@ -100,8 +89,7 @@ export const teamsSlice = createSlice({
     builder.addCase('resetStore', () => initialState);
     builder.addCase('players/deletePlayer', (state, action) => {
       const { player } = action.payload;
-      state.editing.playersFromServer = state.editing.playersFromServer.filter(id => id !== player.id);
-      state.editing.players[player.id] = null;
+      state.editing.players = state.editing.players.filter(id => id !== player.id);
     });
   }
 });

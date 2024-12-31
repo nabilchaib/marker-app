@@ -24,7 +24,7 @@ const ListItem = ({
   return (
     <li
       key={item.id}
-      className={classNames(!dropdownOpen ? 'hover:bg-orange-100' : '', 'cursor-pointer')}
+      className={classNames(!dropdownOpen && onSelectItem ? 'hover:bg-orange-100' : '', onSelectItem ? 'cursor-pointer' : '')}
     >
       <div className="group relative">
         <Item item={item} onSelectItem={onSelectItem} />

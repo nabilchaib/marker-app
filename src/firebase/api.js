@@ -689,6 +689,7 @@ export const addTeamApi = async ({ team, image }) => {
             avatarUrl: '' // Placeholder
           });
 
+          let downloadURL = null;
           if (image) {
             // get image blob
             const imageBlob = await fetch(image).then(r => r.blob());
@@ -699,7 +700,7 @@ export const addTeamApi = async ({ team, image }) => {
             // 3. Upload the avatar
             const storageRef = ref(storage, `avatars/teams/${newTeamRef.id}.png`);
             const uploadTaskSnapshot = await uploadBytes(storageRef, imageBlob, metadata);
-            const downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
+            downloadURL = await getDownloadURL(uploadTaskSnapshot.ref);
 
             if (!downloadURL) {
               throw new Error('Image upload failed');
@@ -708,7 +709,11 @@ export const addTeamApi = async ({ team, image }) => {
             transaction.update(newTeamRef, { avatarUrl: downloadURL });
           }
 
-          const newTeam = { ...team, id: newTeamRef.id };
+          const newTeam = {
+            ...team,
+            ...(downloadURL ? { avatarUrl: downloadURL } : {}),
+            id: newTeamRef.id
+          };
           resolve(newTeam);
         } catch (err) {
           // Delete the document if the image upload fails

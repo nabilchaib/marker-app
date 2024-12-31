@@ -1,35 +1,44 @@
-import React, { useState, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { useSelector, useDispatch } from 'react-redux';
-import { selectAllPlayers } from './selectors/selectors';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from "react";
+import { v4 as uuid } from "uuid";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import {
-  addMadeShotApi,
-  addAttemptedShotApi,
-  addReboundApi,
-  addAssistApi,
-  addFoulApi,
-  updateLastActionsApi,
-  undoLastActionApi,
-} from '../firebase/api';
-import {
+  addMadeShot,
+  addAttemptedShot,
   addRebound,
   addAssist,
   addFoul,
-  addAttemptedShot,
-  addMadeShot,
-  undoLastAction,
+  addDrillAttempt,
+  addDrillCompletion,
   updateLastActions,
-} from '../redux/game-reducer';
-import '../css/main.css'
-import PlayerSelection from './PlayerSelection';
-// import { motion } from 'framer-motion';
-import GameResult from './GameResults';
+  undoLastAction,
+} from "../redux/games-reducer";
+import "../css/main.css";
+import PlayerSelection from "./PlayerSelection";
+import GameResult from "./GameResults";
 
-const GameControls = ({mode}) => {
+const GameControls = ({ currentGameId, currentPlayer }) => {
   const dispatch = useDispatch();
-  const [selectedTeam, setSelectedTeam] = useState(mode === 'game' ? 'teamA' : null);
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const state = useSelector((state) => state);
+  const currentGame = useSelector((state) => state.games.byId[currentGameId]);
+  const teamA = useSelector((state) => state.teams.byId[currentGame.teamAId]);
+  const teamB = useSelector((state) => state.teams.byId[currentGame.teamBId]);
+  const players = useSelector((state) => state.players);
+  const allPlayers = useMemo(() => {
+    return players.allIds.map((playerId) => players.byId[playerId]);
+  }, [players.allIds]);
+  const teamAPlayers = useMemo(() => {
+    return (teamA?.players || []).map((playerId) => players.byId[playerId]);
+  }, [teamA?.players]);
+  const teamBPlayers = useMemo(() => {
+    return (teamB?.players || []).map((playerId) => players.byId[playerId]);
+  }, [teamB?.players]);
+  const mode = currentGame.type;
+
+  const [selectedTeam, setSelectedTeam] = useState(
+    mode === "pick-up" ? "teamA" : null
+  );
+  const [selectedPlayer, setSelectedPlayer] = useState(currentPlayer);
   const [showPlayerSelection, setShowPlayerSelection] = useState(false);
   const [showGameResult, setShowGameResult] = useState(false);
   const [undoLoading, setUndoLoading] = useState(false);
@@ -40,52 +49,31 @@ const GameControls = ({mode}) => {
   const [foulLoading, setFoulLoading] = useState(false);
   const [playerOptionsMap, setPlayerOptionsMap] = useState({
     teamA: [],
-    teamB: []
+    teamB: [],
   });
   const navigate = useNavigate();
-  
-  const teamA = useSelector((state) => state.game.teamA);
-  const teamB = useSelector((state) => state.game.teamB);
-  const game = useSelector((state) => state.game);
-  const allPlayers = useSelector(selectAllPlayers); 
-  const [lastActions, setLastActions] = useState(game.actions || []);
+
+  const [lastActions, setLastActions] = useState(currentGame.actions || []);
 
   useEffect(() => {
     if (mode === "drill") {
       setPlayerOptionsMap({
         teamA: allPlayers,
-        teamB: allPlayers
+        teamB: allPlayers,
       });
-    } else if (mode === "game") {
-      if (!teamA || !teamB) {
-        navigate('/teamselection');
-      } else {
-        setPlayerOptionsMap({
-          teamA: Object.values(teamA.players || {}),
-          teamB: Object.values(teamB.players || {}),
-        });
-      }
+    } else if (mode === "pick-up") {
+      setPlayerOptionsMap({
+        teamA: teamAPlayers,
+        teamB: teamBPlayers,
+      });
     }
   }, [mode, teamA, teamB, navigate]);
 
   useEffect(() => {
-    const updateActions = async () => {
-      try {
-        await updateLastActionsApi(game, lastActions);
-        dispatch(updateLastActions(lastActions));
-      } catch (err) {
-
-      }
-    };
-
-    if (teamA && teamB) {
-      updateActions();
-    }
+    dispatch(
+      updateLastActions({ gameId: currentGame.id, actions: lastActions })
+    );
   }, [lastActions, dispatch]);
-
-  if (mode === "game" && (!teamA || !teamB)) {
-    return <div className="loading">loading...</div>
-  }
 
   const handleTeamChange = (teamValue) => {
     setSelectedTeam(teamValue);
@@ -93,129 +81,200 @@ const GameControls = ({mode}) => {
   };
 
   const handlePlayerSelect = (player) => {
-    const newPlayer = {
-      id: player.id,
-      number: player.number
-    };
-    setSelectedPlayer(newPlayer);
+    console.log('PP: ', player, currentPlayer)
+    setSelectedPlayer(player);
     setShowPlayerSelection(false);
   };
 
   const handleAttempt = async (points) => {
-    if (attemptLoading) {
-      return false;
-    }
-
     if (!selectedPlayer) {
       setShowPlayerSelection(true);
     } else {
-      try {
-        setAttemptLoading(points);
-        const type_of_game = mode === "drill" ? "drill" : "game";
-        const effectivePoints = mode === "drill" ? 0 : points;
-        await addAttemptedShotApi({ game, selectedTeam, playerId: selectedPlayer.id, points: effectivePoints, type_of_game });
-        dispatch(addAttemptedShot({ team: selectedTeam, playerId: selectedPlayer.id, points: effectivePoints, type_of_game }));
-
-        setLastActions(prev => [
-          ...prev,
-          {
-            id: uuidv4(),
-            action: 'addAttemptedShot',
-            points: effectivePoints,
-            playerId: selectedPlayer.id,
-            playerNumber: selectedPlayer.number,
-            team: selectedTeam,
-            type_of_game
-          }
-        ]);
-        setAttemptLoading(false);
-      } catch (err) {
-        console.error('Error in handleAttempt:', err);
-        setAttemptLoading(false);
-      }
+      dispatch(
+        addAttemptedShot({
+          gameId: currentGame.id,
+          teamId: selectedTeam === "teamA" ? teamA.id : teamB.id,
+          playerId: selectedPlayer.id,
+          gameMode: mode,
+          points,
+        })
+      );
+      setLastActions((prev) => [
+        ...prev,
+        {
+          id: uuid(),
+          action: "addAttemptedShot",
+          gameId: currentGame.id,
+          teamId: selectedTeam === "teamA" ? teamA.id : teamB.id,
+          playerId: selectedPlayer.id,
+          points: points,
+          playerNumber: selectedPlayer.number,
+          gameMode: mode,
+        },
+      ]);
     }
   };
 
-
   const handleMade = async (points) => {
-    if (madeLoading) {
-      return false;
-    }
-
     if (!selectedPlayer) {
-      setShowPlayerSelection(true)
+      setShowPlayerSelection(true);
     } else {
-      try {
-        setMadeLoading(points);
-        const type_of_game = mode === "drill" ? "drill" : "game";
-        const effectivePoints = mode === "drill" ? 0 : points;
-        await addMadeShotApi({ game, selectedTeam, playerId: selectedPlayer.id, points: effectivePoints, type_of_game });
-        dispatch(addMadeShot({ team: selectedTeam, playerId: selectedPlayer.id, points: effectivePoints, type_of_game }));
-        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addMadeShot', points:effectivePoints, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam, type_of_game }])
-        setMadeLoading(false);
-      } catch (err) {
-        setMadeLoading(false);
-      }
+      dispatch(
+        addMadeShot({
+          gameId: currentGame.id,
+          teamId: selectedTeam === "teamA" ? teamA.id : teamB.id,
+          playerId: selectedPlayer.id,
+          gameMode: mode,
+          points,
+        })
+      );
+      setLastActions((prev) => [
+        ...prev,
+        {
+          id: uuid(),
+          action: "addMadeShot",
+          gameId: currentGame.id,
+          teamId: selectedTeam === "teamA" ? teamA.id : teamB.id,
+          playerId: selectedPlayer.id,
+          points,
+          playerNumber: selectedPlayer.number,
+          gameMode: mode,
+        },
+      ]);
     }
-  }
+  };
 
   const handleRebound = async (type) => {
-    if (reboundLoading) {
-      return false;
-    }
-
     if (!selectedPlayer) {
-      setShowPlayerSelection(true)
+      setShowPlayerSelection(true);
     } else {
-      try {
-        setReboundLoading(type);
-        await addReboundApi({ game, selectedTeam, playerId: selectedPlayer.id, type });
-        dispatch(addRebound({ team: selectedTeam, playerId: selectedPlayer.id, type }));
-        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addRebound', type, playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
-        setReboundLoading(false);
-      } catch (err) {
-        setReboundLoading(false);
-      }
-    };
-  }
+      dispatch(
+        addRebound({
+          gameId: currentGame.id,
+          teamId: selectedTeam === "teamA" ? teamA.id : teamB.id,
+          playerId: selectedPlayer.id,
+          gameMode: mode,
+          reboundType: type,
+        })
+      );
+      setLastActions((prev) => [
+        ...prev,
+        {
+          id: uuid(),
+          action: "addRebound",
+          gameId: currentGame.id,
+          teamId: selectedTeam === "teamA" ? teamA.id : teamB.id,
+          playerId: selectedPlayer.id,
+          reboundType: type,
+          playerNumber: selectedPlayer.number,
+          gameMode: mode,
+        },
+      ]);
+    }
+  };
+
   const handleAssist = async () => {
-    if (assistLoading) {
-      return false;
-    }
-
     if (!selectedPlayer) {
-      setShowPlayerSelection(true)
+      setShowPlayerSelection(true);
     } else {
-      try {
-        setAssistLoading(true);
-        await addAssistApi({ game, selectedTeam, playerId: selectedPlayer.id });
-        dispatch(addAssist({ team: selectedTeam, playerId: selectedPlayer.id }));
-        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addAssist', playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
-        setAssistLoading(false);
-      } catch (err) {
-        setAssistLoading(false);
-      }
-    };
-  }
+      dispatch(
+        addAssist({
+          gameId: currentGame.id,
+          teamId: selectedTeam === "teamA" ? teamA.id : teamB.id,
+          playerId: selectedPlayer.id,
+          gameMode: mode,
+        })
+      );
+      setLastActions((prev) => [
+        ...prev,
+        {
+          id: uuid(),
+          action: "addAssist",
+          gameId: currentGame.id,
+          teamId: selectedTeam === "teamA" ? teamA.id : teamB.id,
+          playerId: selectedPlayer.id,
+          playerNumber: selectedPlayer.number,
+          gameMode: mode,
+        },
+      ]);
+    }
+  };
+
   const handleFoul = async () => {
-    if (foulLoading) {
-      return false;
-    }
-
     if (!selectedPlayer) {
-      setShowPlayerSelection(true)
+      setShowPlayerSelection(true);
     } else {
-      try {
-        setFoulLoading(true);
-        await addFoulApi({ game, selectedTeam, playerId: selectedPlayer.id });
-        dispatch(addFoul({ team: selectedTeam, playerId: selectedPlayer.id }));
-        setLastActions(prev => [...prev, { id: uuidv4(), action: 'addFoul', playerId: selectedPlayer.id, playerNumber: selectedPlayer.number, team: selectedTeam }])
-        setFoulLoading(false);
-      } catch (err) {
-        setFoulLoading(false);
-      }
-    };
-  }
+      dispatch(
+        addFoul({
+          gameId: currentGame.id,
+          teamId: selectedTeam === "teamA" ? teamA.id : teamB.id,
+          playerId: selectedPlayer.id,
+          gameMode: mode,
+        })
+      );
+      setLastActions((prev) => [
+        ...prev,
+        {
+          id: uuid(),
+          action: "addFoul",
+          gameId: currentGame.id,
+          teamId: selectedTeam === "teamA" ? teamA.id : teamB.id,
+          playerId: selectedPlayer.id,
+          playerNumber: selectedPlayer.number,
+          gameMode: mode,
+        },
+      ]);
+    }
+  };
+
+  const handleDrillCompletion = () => {
+    if (!selectedPlayer) {
+      setShowPlayerSelection(true);
+    } else {
+      dispatch(
+        addDrillCompletion({
+          gameId: currentGame.id,
+          playerId: selectedPlayer.id,
+        })
+      );
+      setLastActions((prev) => [
+        ...prev,
+        {
+          id: uuid(),
+          action: "addDrillCompletion",
+          gameId: currentGame.id,
+          playerId: selectedPlayer.id,
+          playerNumber: selectedPlayer.number,
+          gameMode: mode,
+        },
+      ]);
+    }
+  };
+
+  const handleDrillAttempt = () => {
+    if (!selectedPlayer) {
+      setShowPlayerSelection(true);
+    } else {
+      dispatch(
+        addDrillAttempt({
+          gameId: currentGame.id,
+          playerId: selectedPlayer.id,
+        })
+      );
+      setLastActions((prev) => [
+        ...prev,
+        {
+          id: uuid(),
+          action: "addDrillAttempt",
+          gameId: currentGame.id,
+          playerId: selectedPlayer.id,
+          playerNumber: selectedPlayer.number,
+          gameMode: mode,
+        },
+      ]);
+    }
+  };
+
   const handleShowGameResult = () => {
     setShowGameResult(true);
   };
@@ -225,87 +284,80 @@ const GameControls = ({mode}) => {
   };
 
   const handleDeleteLastAction = async () => {
-    if (undoLoading) {
-      return true;
-    }
-
-    try {
-      setUndoLoading(true);
-      await undoLastActionApi(lastActions, game);
-      dispatch(undoLastAction(lastActions));
-      setLastActions(prevLastActions => {
-        return prevLastActions.slice(0, -1);
-      })
-      setUndoLoading(false);
-    } catch (err) {
-      setUndoLoading(false);
-    }
+    dispatch(undoLastAction({ gameId: currentGame.id, actions: lastActions }));
+    setLastActions((prevLastActions) => {
+      return prevLastActions.slice(0, -1);
+    });
   };
-
-  // const buttonText = selectedPlayer ? selectedPlayer?.number : 'Select Player';
-  // const playerOptions = mode === 'game' 
-  //   ? selectedTeam === 'teamA' ? teamA.players : teamB.players
-  //   : allPlayers;
 
   return (
     <div className="Controls">
       {/* Team Selection */}
-      {mode === "game" && (
-      <div className="flex justify-around py-4">
-        <button
-          className={`py-4 px-8 md:py-5 md:px-10 text-lg md:text-xl font-bold rounded-lg transition-transform duration-200 transform ${
-            selectedTeam === 'teamA' ? 'bg-[#f64e07] text-white scale-110' : 'bg-gray-300 text-gray-700'
-          }`}
-          onClick={() => handleTeamChange('teamA')}
-        >
-          {teamA?.name || 'Team A'}
-        </button>
+      {mode === "pick-up" && (
+        <div className="flex justify-around py-4">
+          <button
+            className={`py-4 px-8 md:py-5 md:px-10 text-lg md:text-xl font-bold rounded-lg transition-transform duration-200 transform ${
+              selectedTeam === "teamA"
+                ? "bg-[#f64e07] text-white scale-110"
+                : "bg-gray-300 text-gray-700"
+            }`}
+            onClick={() => handleTeamChange("teamA")}
+          >
+            {teamA?.name || "Team A"}
+          </button>
 
-        <button
-          className={`py-4 px-8 md:py-5 md:px-10 text-lg md:text-xl font-bold rounded-lg transition-transform duration-200 transform ${
-            selectedTeam === 'teamB' ? 'bg-[#f64e07] text-white scale-110' : 'bg-gray-300 text-gray-700'
-          }`}
-          onClick={() => handleTeamChange('teamB')}
-        >
-          {teamB?.name || 'Team B'}
-        </button>
-      </div>
-    )}
-  
+          <button
+            className={`py-4 px-8 md:py-5 md:px-10 text-lg md:text-xl font-bold rounded-lg transition-transform duration-200 transform ${
+              selectedTeam === "teamB"
+                ? "bg-[#f64e07] text-white scale-110"
+                : "bg-gray-300 text-gray-700"
+            }`}
+            onClick={() => handleTeamChange("teamB")}
+          >
+            {teamB?.name || "Team B"}
+          </button>
+        </div>
+      )}
+
       {/* Player Selection */}
       {showPlayerSelection ? (
         <PlayerSelection
-        team={mode === 'game' ? selectedTeam : null} // Pass `null` or handle differently for drills
-        players={mode === 'drill' ? allPlayers : playerOptionsMap[selectedTeam]} // Show all players in drill mode
-        onSelect={handlePlayerSelect}
-        onClose={setShowPlayerSelection}
-      />
+          team={mode === "pick-up" ? selectedTeam : null} // Pass `null` or handle differently for drills
+          players={
+            mode === "drill" ? allPlayers : playerOptionsMap[selectedTeam]
+          } // Show all players in drill mode
+          onSelect={handlePlayerSelect}
+          onClose={setShowPlayerSelection}
+        />
       ) : (
         <div className="flex flex-col items-center space-y-4">
           <button
-            className="relative w-full sm:w-auto py-2 px-4 md:py-4 md:px-8 text-base md:text-xl font-bold text-white bg-[#0aa6d6] 
-                      rounded-lg shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105 hover:rotate-2 duration-200 
+            disabled={!!currentPlayer}
+            className="relative w-full sm:w-auto py-2 px-4 md:py-4 md:px-8 text-base md:text-xl font-bold text-white bg-[#0aa6d6]
+                      rounded-lg shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105 hover:rotate-2 duration-200
                       focus:outline-none focus:ring-4 focus:ring-[#0aa6d6]"
             onClick={() => setShowPlayerSelection(true)}
           >
             <span className="absolute inset-0 bg-[#0a355e] opacity-75 blur-lg rounded-lg animate-pulse"></span>
             <span className="relative z-10">
-              {selectedPlayer ? `Player #${selectedPlayer.number}` : 'Select Player'}
+              {selectedPlayer
+                ? `#${selectedPlayer.number} - ${selectedPlayer.name}`
+                : "Select Player"}
             </span>
           </button>
-  
+
           {/* Drill or Game Mode Scoring Controls */}
           {mode === "drill" && (
             <div className="flex space-x-4 w-full">
               <button
-                onClick={() => handleAttempt(0)}
+                onClick={handleDrillAttempt}
                 disabled={attemptLoading}
                 className="w-full sm:w-1/2 py-4 text-lg sm:text-xl font-bold text-white bg-red-600 rounded-lg shadow-md hover:bg-red-500 focus:outline-none"
               >
                 {attemptLoading ? "Loading..." : "Miss"}
               </button>
               <button
-                onClick={() => handleMade(0)}
+                onClick={handleDrillCompletion}
                 disabled={madeLoading}
                 className="w-full sm:w-1/2 py-4 text-lg sm:text-xl font-bold text-white bg-green-600 rounded-lg shadow-md hover:bg-green-500 focus:outline-none"
               >
@@ -313,63 +365,194 @@ const GameControls = ({mode}) => {
               </button>
             </div>
           )}
-  
+
+          {mode === "pick-up" && (
+            <div className="addpoints flex flex-wrap justify-between items-center space-y-4 md:space-y-2 md:space-x-4">
+              <div className="grid grid-cols-3 gap-4 text-center py-4">
+                {/* Free Throw */}
+                <div>
+                  <h3 className="font-semibold text-white">Free Throw</h3>
+                  <button
+                    disabled={madeLoading === 1}
+                    className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white
+                      ${
+                        madeLoading === 1
+                          ? "bg-gray-400"
+                          : "bg-[#f64e07] hover:bg-orange-600"
+                      }
+                      shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                    onClick={() => handleMade(1)}
+                  >
+                    <span className="inline-block w-8 text-center">
+                      {madeLoading === 1 ? "Loading..." : "+1"}
+                    </span>
+                  </button>
+                  <button
+                    disabled={attemptLoading === 1}
+                    className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white mt-2
+                      ${
+                        attemptLoading === 1
+                          ? "bg-gray-400"
+                          : "bg-red-500 hover:bg-red-600"
+                      }
+                      shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                    onClick={() => handleAttempt(1)}
+                  >
+                    <span className="inline-block w-8 text-center">
+                      {attemptLoading === 1 ? "Loading..." : "Miss"}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Two Points */}
+                <div>
+                  <h3 className="font-semibold text-white">2 Points</h3>
+                  <button
+                    disabled={madeLoading === 2}
+                    className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white
+                      ${
+                        madeLoading === 2
+                          ? "bg-gray-400"
+                          : "bg-[#f64e07] hover:bg-orange-600"
+                      }
+                      shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                    onClick={() => handleMade(2)}
+                  >
+                    <span className="inline-block w-8 text-center">
+                      {madeLoading === 2 ? "Loading..." : "+2"}
+                    </span>
+                  </button>
+                  <button
+                    disabled={attemptLoading === 2}
+                    className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white mt-2
+                      ${
+                        attemptLoading === 2
+                          ? "bg-gray-400"
+                          : "bg-red-500 hover:bg-red-600"
+                      }
+                      shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                    onClick={() => handleAttempt(2)}
+                  >
+                    <span className="inline-block w-8 text-center">
+                      {attemptLoading === 2 ? "Loading..." : "Miss"}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Three Points */}
+                <div>
+                  <h3 className="font-semibold text-white">3 Points</h3>
+                  <button
+                    disabled={madeLoading === 3}
+                    className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white
+                      ${
+                        madeLoading === 3
+                          ? "bg-gray-400"
+                          : "bg-[#f64e07] hover:bg-orange-600"
+                      }
+                      shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                    onClick={() => handleMade(3)}
+                  >
+                    <span className="inline-block w-8 text-center">
+                      {madeLoading === 3 ? "Loading..." : "+3"}
+                    </span>
+                  </button>
+                  <button
+                    disabled={attemptLoading === 3}
+                    className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white mt-2
+                      ${
+                        attemptLoading === 3
+                          ? "bg-gray-400"
+                          : "bg-red-500 hover:bg-red-600"
+                      }
+                      shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
+                    onClick={() => handleAttempt(3)}
+                  >
+                    <span className="inline-block w-8 text-center">
+                      {attemptLoading === 3 ? "Loading..." : "Miss"}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Rebounds, Assists, Fouls - Shown only in Game Mode */}
-          {mode === "game" && (
+          {mode === "pick-up" && (
             <div className="addpoints flex flex-wrap justify-between items-center space-y-4 md:space-y-2 md:space-x-4">
               {/* Rebound */}
               <div className="stat flex flex-col items-center w-full md:w-1/3 space-y-2">
                 <h3 className="font-semibold text-white mb-2">Rebound</h3>
                 <div className="flex space-x-2">
                   <button
-                    disabled={reboundLoading === 'offensive'}
+                    disabled={reboundLoading === "offensive"}
                     className={`py-2 px-4 text-sm md:text-base rounded-lg font-bold text-white
-                      ${reboundLoading === 'offensive' ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'}
+                      ${
+                        reboundLoading === "offensive"
+                          ? "bg-gray-400"
+                          : "bg-[#f64e07] hover:bg-orange-600"
+                      }
                       shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                    onClick={() => handleRebound('offensive')}
+                    onClick={() => handleRebound("offensive")}
                   >
                     <span className="inline-block w-12 text-center">
-                      {reboundLoading === 'offensive' ? 'Loading...' : 'Offense'}
+                      {reboundLoading === "offensive"
+                        ? "Loading..."
+                        : "Offense"}
                     </span>
                   </button>
-  
+
                   <button
-                    disabled={reboundLoading === 'defensive'}
+                    disabled={reboundLoading === "defensive"}
                     className={`py-2 px-4 text-sm md:text-base rounded-lg font-bold text-white
-                      ${reboundLoading === 'defensive' ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'}
+                      ${
+                        reboundLoading === "defensive"
+                          ? "bg-gray-400"
+                          : "bg-[#f64e07] hover:bg-orange-600"
+                      }
                       shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                    onClick={() => handleRebound('defensive')}
+                    onClick={() => handleRebound("defensive")}
                   >
                     <span className="inline-block w-12 text-center">
-                      {reboundLoading === 'defensive' ? 'Loading...' : 'Defense'}
+                      {reboundLoading === "defensive"
+                        ? "Loading..."
+                        : "Defense"}
                     </span>
                   </button>
                 </div>
               </div>
-  
+
               {/* Assist and Foul */}
               <div className="stat flex flex-col items-center w-full md:w-1/3 space-y-4">
                 <button
                   disabled={assistLoading}
                   className={`py-2 px-6 md:py-3 md:px-8 lg:py-4 lg:px-10 w-full rounded-lg font-bold text-white
-                    ${assistLoading ? 'bg-gray-400' : 'bg-[#0aa6d6] hover:bg-blue-600'}
+                    ${
+                      assistLoading
+                        ? "bg-gray-400"
+                        : "bg-[#0aa6d6] hover:bg-blue-600"
+                    }
                     shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
                   onClick={handleAssist}
                 >
                   <span className="inline-block w-12 text-center">
-                    {assistLoading ? 'Loading...' : 'Assist'}
+                    {assistLoading ? "Loading..." : "Assist"}
                   </span>
                 </button>
-  
+
                 <button
                   disabled={foulLoading}
                   className={`py-2 px-6 md:py-3 md:px-8 lg:py-4 lg:px-10 w-full rounded-lg font-bold text-white
-                    ${foulLoading ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'}
+                    ${
+                      foulLoading
+                        ? "bg-gray-400"
+                        : "bg-red-500 hover:bg-red-600"
+                    }
                     shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
                   onClick={handleFoul}
                 >
                   <span className="inline-block w-12 text-center">
-                    {foulLoading ? 'Loading...' : 'Foul'}
+                    {foulLoading ? "Loading..." : "Foul"}
                   </span>
                 </button>
               </div>
@@ -383,13 +566,13 @@ const GameControls = ({mode}) => {
         <button
           disabled={undoLoading}
           className={`py-2 px-6 w-full md:w-auto rounded-lg font-bold text-white ${
-            undoLoading ? 'bg-gray-400' : 'bg-[#f64e07] hover:bg-orange-600'
+            undoLoading ? "bg-gray-400" : "bg-[#f64e07] hover:bg-orange-600"
           } shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
           onClick={handleDeleteLastAction}
         >
-          {undoLoading ? 'Loading...' : 'Undo Last Action'}
+          {undoLoading ? "Loading..." : "Undo Last Action"}
         </button>
-  
+
         {/* Show Game Result */}
         <div className="addpoints py-4 px-6 flex justify-center">
           <button
@@ -400,7 +583,7 @@ const GameControls = ({mode}) => {
           </button>
         </div>
       </div>
-  
+
       {/* Last Actions Table */}
       <div className="py-4">
         <h2 className="text-lg sm:text-xl font-bold text-orange-600 mb-4 text-center">
@@ -410,9 +593,15 @@ const GameControls = ({mode}) => {
           <table className="min-w-full table-auto bg-gray-100 border border-gray-300 rounded-lg shadow-sm">
             <thead>
               <tr className="bg-gray-200 text-gray-800">
-                <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">Action</th>
-                <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">Points</th>
-                <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">Player #</th>
+                <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">
+                  Action
+                </th>
+                <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">
+                  Points
+                </th>
+                <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">
+                  Player #
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -420,7 +609,7 @@ const GameControls = ({mode}) => {
                 <tr
                   key={action.id}
                   className={`${
-                    index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                    index % 2 === 0 ? "bg-white" : "bg-gray-50"
                   } hover:bg-gray-200 transition-colors`}
                 >
                   <td className="py-3 px-6 text-sm text-gray-900 border-b border-gray-300">
@@ -439,28 +628,16 @@ const GameControls = ({mode}) => {
         </div>
       </div>
 
-  
-      
-  
-        {/* Game Result Modal */}
-        {showGameResult && (
-          <div className="game-result-overlay fixed inset-0 flex justify-center items-center bg-black bg-opacity-80 z-50">
-            <div className="game-result-container w-full max-w-4xl p-8 rounded-lg shadow-2xl bg-white text-center relative">
-              <GameResult onBackClick={handleBackClick} />
-              <button
-                className="mt-6 py-2 px-6 rounded-lg bg-[#0aa6d6] text-white hover:bg-blue-600 shadow-md hover:shadow-xl transition-transform transform hover:scale-105"
-                onClick={handleBackClick}
-              >
-                Back
-              </button>
-            </div>
+      {/* Game Result Modal */}
+      {showGameResult && (
+        <div className="game-result-overlay fixed inset-0 flex justify-center items-center bg-black bg-opacity-80 z-50">
+          <div className="game-result-container w-full max-w-4xl rounded-lg shadow-2xl bg-white text-center relative overflow-y-auto max-h-screen">
+            <GameResult game={currentGame} onBackClick={handleBackClick} />
           </div>
-        )}
-      
+        </div>
+      )}
     </div>
-  );  
-  
-  
+  );
 };
 
 export default GameControls;

@@ -1,17 +1,16 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import Cropper from 'react-easy-crop'
 import Slider from '@mui/material/Slider';
-import { TrashIcon, PencilIcon, PlusIcon, MinusIcon } from '@heroicons/react/24/outline'
+import { PlusIcon, MinusIcon } from '@heroicons/react/24/outline'
 import { toast } from 'react-toastify'
 
-import { getPlayersApi, editTeamApi, deletePlayerApi } from '../../firebase/api';
-import { addPlayers, addPlayerCache, deletePlayer } from '../../redux/players-reducer';
+import { getPlayersApi, editTeamApi } from '../../firebase/api';
+import { addPlayers } from '../../redux/players-reducer';
 import { editTeam, addTeamCache, addPlayerToTeamCache, removePlayerFromTeamCache } from '../../redux/teams-reducer';
 import Icon from '../../components/Icon';
 import List from '../../components/List';
-import Dialog from '../../components/Dialog';
 import { colors, getCroppedImg, validator, classNames } from '../../utils';
 
 
@@ -25,10 +24,7 @@ export default function EditTeam() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null)
   const [getPlayersLoading, setGetPlayersLoading] = useState(true);
   const [updateTeamLoading, setUpdateTeamLoading] = useState(false);
-  const [playersInTeam, setPlayersInTeam] = useState({ byId: {}, allIds: [] });
-  const [playerToDelete, setPlayerToDelete] = useState(null);
-  const [deletePlayerLoading, setDeletePlayerLoading] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [croppedImageUrl, setCroppedImageUrl] = useState(null)
   const fileInputRef = useRef(null);
 
   const state = useSelector(state => state);
@@ -37,35 +33,19 @@ export default function EditTeam() {
   const teams = useSelector(state => state.teams);
   const teamName = teams.editing.name;
   const teamId = teams.editing.id;
-  const croppedImageUrl = teams.editing.avatarUrl;
-
-  useEffect(() => {
-    if (!getPlayersLoading) {
-      const inTeam = {
-        byId: {},
-        allIds: []
-      };
-
-      for (const playerId of teams.editing.playersFromServer) {
-        if (!teams.editing.players[playerId]?.toRemove) {
-          const player = players.byId[playerId];
-          if (player) {
-            inTeam.allIds.push(player.id);
-            inTeam.byId[player.id] = player;
-          }
-        }
+  const newCroppedImageUrl = croppedImageUrl || teams.editing.avatarUrl;
+  const playersInTeam = useMemo(() => {
+    const inTeam = [];
+    const inTeamMap = {};
+    for (const playerId of teams.editing.players) {
+      if (players.byId[playerId]) {
+        inTeam.push(playerId);
+        inTeamMap[playerId] = players.byId[playerId];
       }
-
-      for (const player of Object.values(teams.editing.players)) {
-        if (player?.toAdd) {
-          inTeam.allIds.push(player.id);
-          inTeam.byId[player.id] = player;
-        }
-      }
-
-      setPlayersInTeam(inTeam);
     }
-  }, [players, teams, getPlayersLoading]);
+
+    return { allIds: inTeam, byId: inTeamMap };
+  }, [teams.editing.players, players.byId]);
 
   useEffect(() => {
     const fetchPlayers = async () => {
@@ -100,11 +80,7 @@ export default function EditTeam() {
         croppedAreaPixels,
       )
 
-      dispatch(addTeamCache({
-        team: {
-          avatarUrl: URL.createObjectURL(croppedImage)
-        }
-      }));
+      setCroppedImageUrl(URL.createObjectURL(croppedImage))
       setAvatarToUpload(null);
     } catch (e) {
       console.error(e)
@@ -149,10 +125,6 @@ export default function EditTeam() {
     setTeamState(state);
   };
 
-  const onNewPlayer = () => {
-    navigate('/games/teams/players/create')
-  };
-
   const onUpdateTeam = async () => {
     const fieldState = validator('teamName', teamName, 'blur', {}, true);
     setTeamState(fieldState);
@@ -166,11 +138,16 @@ export default function EditTeam() {
       const team = {
         id: teamId,
         name: teamName,
-        players: playersInTeam.allIds,
+        players: teams.editing.players,
         createdBy: user.email
       };
 
       const payload = { team };
+
+      if (teams.editing.avatarUrl) {
+        payload.team.avatarUrl = teams.editing.avatarUrl;
+      }
+
       if (croppedImageUrl) {
         payload.image = croppedImageUrl;
       }
@@ -197,41 +174,6 @@ export default function EditTeam() {
   const onRemovePlayerFromTeam = useCallback((player) => {
     dispatch(removePlayerFromTeamCache({ player }));
   }, []);
-
-  const onDeletePlayer = (player) => {
-    setPlayerToDelete(player);
-    setModalOpen(true);
-  };
-
-  const onDeletePlayerConfirm = async () => {
-    try {
-      setDeletePlayerLoading(true);
-      await deletePlayerApi({ player: playerToDelete });
-      dispatch(deletePlayer({ player: playerToDelete }));
-      setDeletePlayerLoading(false);
-      onCloseModal();
-      console.log('TEAMS MAP: ', teams)
-    } catch (err) {
-      setDeletePlayerLoading(false);
-      console.log('DELETE PLAYER ERR: ', err)
-    }
-  };
-
-  const onCloseModal = () => {
-    setPlayerToDelete(null);
-    setModalOpen(false);
-  };
-
-  const onEditPlayer = (player) => {
-    console.log('PPP: ', player)
-    dispatch(addPlayerCache({ player }));
-    navigate('/games/teams/players/edit')
-  };
-
-  const dropdownItems = [
-    { text: 'Delete', icon: TrashIcon, onClick: onDeletePlayer },
-    { text: 'Edit', icon: PencilIcon, onClick: onEditPlayer },
-  ];
 
   const renderPlayerItem = useCallback(
     ({ item, onSelectItem }) => {
@@ -260,7 +202,7 @@ export default function EditTeam() {
         </button>
       );
     },
-    []
+    [teams.editing, playersInTeam]
   );
 
   const renderCropper = () => {
@@ -327,13 +269,13 @@ export default function EditTeam() {
 
         <div className="flex flex-col items-center">
           <div className="group flex">
-            {croppedImageUrl && (
+            {newCroppedImageUrl && (
               <button onClick={onSelectTeamAvatar} className="rounded-full active:scale-95 focus-visible:outline-orange-600">
                 <input ref={fileInputRef} type="file" onChange={onUploadTeamAvatar} accept="image/*" style={{ display: "none" }} />
-                <img className="rounded-full h-24 w-24" src={croppedImageUrl} />
+                <img className="rounded-full h-24 w-24" src={newCroppedImageUrl} />
               </button>
             )}
-            {!croppedImageUrl && (
+            {!newCroppedImageUrl && (
               <button onClick={onSelectTeamAvatar} className="group flex items-center justify-center h-24 w-24 border rounded-full border-gray-300 group-hover:border-orange-600 active:scale-95 group-active:border-orange-600 focus-visible:outline-orange-600 focus-within:border-orange-600">
                 <input ref={fileInputRef} type="file" onChange={onUploadTeamAvatar} accept="image/*" style={{ display: "none" }} />
                 <Icon type="jersey" className="mx-auto h-16 w-16 text-gray-300 group-hover:text-orange-600 group-focus:text-orange-600" />
@@ -386,7 +328,7 @@ export default function EditTeam() {
           )}
 
           {playersInTeam.allIds.length > 0 && (
-            <List items={playersInTeam} onSelectItem={onRemovePlayerFromTeam} dropdownItems={dropdownItems}>
+            <List items={playersInTeam} onSelectItem={onRemovePlayerFromTeam}>
               {renderPlayerItem}
             </List>
           )}
@@ -394,20 +336,10 @@ export default function EditTeam() {
           <div>
             <div className="mt-8 flex items-center justify-between">
               <h2 className="text-base font-semibold leading-6 text-gray-900">Select players for your team</h2>
-              {players.allIds.length > 0 && (
-                <button
-                  type="button"
-                  className="inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
-                  onClick={onNewPlayer}
-                >
-                  <PlusIcon aria-hidden="true" className="-ml-0.5 mr-1.5 h-5 w-5" />
-                  New Player
-                </button>
-              )}
             </div>
 
             {players.allIds.length > 0 && (
-              <List items={players} onSelectItem={onAddPlayerToTeam} dropdownItems={dropdownItems}>
+              <List items={players} onSelectItem={onAddPlayerToTeam}>
                 {renderPlayerItem}
               </List>
             )}
@@ -417,16 +349,6 @@ export default function EditTeam() {
                 <Icon type="jersey" className="mx-auto h-12 w-12 text-gray-400" />
                 <h3 className="mt-2 text-sm font-semibold text-gray-900">No players</h3>
                 <p className="mt-1 text-sm text-gray-500">Get started by creating a new player.</p>
-                <div className="mt-6">
-                  <button
-                    type="button"
-                    className="inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
-                    onClick={onNewPlayer}
-                  >
-                    <PlusIcon aria-hidden="true" className="-ml-0.5 mr-1.5 h-5 w-5" />
-                    New Player
-                  </button>
-                </div>
               </div>
             )}
           </div>
@@ -445,14 +367,6 @@ export default function EditTeam() {
           </button>
         </div>
       </div>
-      <Dialog
-        open={modalOpen}
-        handleClose={onCloseModal}
-        onConfirm={onDeletePlayerConfirm}
-        confirmButtonTitle="Delete"
-        loading={deletePlayerLoading}
-        title="Are you sure you want to delete this player?"
-      />
     </div>
   )
 }
