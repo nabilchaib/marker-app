@@ -35,7 +35,9 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "env-development": "./scripts/env-development.sh"
+    "env-development": "./scripts/env-development.sh",
+    "env-production": "./scripts/env-production.sh",
+    "deploy": "firebase deploy --only hosting"
   },
   "eslintConfig": {
     "extends": [
