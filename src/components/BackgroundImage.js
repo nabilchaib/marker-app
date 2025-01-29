@@ -33,8 +33,8 @@ const BgImg = () => {
 
     return (
       <div
-        className="fixed inset-0 bg-cover bg-center z-n1 bg-white sm:bg-[image:var(--image-url)]"
-        style={{'--image-url': `url(${bgUrl})`}}
+        className="fixed inset-0 bg-cover bg-center z-n1 bg-[image:var(--image-url)]"
+        style={{ '--image-url': `url(${bgUrl})` }}
       />
     );
 };
