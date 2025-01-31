@@ -8,3 +8,5 @@ Once you've added this file, you will be able to run `npm run env-development`. 
 Next, run `npm install` to install dependencies.
 
 Finally, you can run run the app with `npm start` and open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+
+To deploy to prod, run `npm run env-production` and then `firebase deploy --only hosting`.
