@@ -618,7 +618,7 @@ const Login = () => {
                     <img
                       alt="Your Company"
                       src="./hoop-trackr-logo-ball.svg"
-                      className="mx-auto h-60 w-auto"
+                      className="mx-auto h-40 w-auto"
                     />
                     <h2 className="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
                       Log in or sign up
