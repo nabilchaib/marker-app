@@ -126,10 +126,9 @@ const Tournaments = () => {
       </div>
 
       {tournaments.length > 0 ? (
-        <List
-          items={tournaments}
-          renderItem={renderTournamentItem}
-        />
+        <div className="divide-y divide-gray-200 border-b border-t border-gray-200">
+          {tournaments.map(tournament => renderTournamentItem(tournament))}
+        </div>
       ) : (
         <div className="text-center py-8 text-gray-500">
           <Icon type="trophy" size={48} className="mx-auto mb-2" />

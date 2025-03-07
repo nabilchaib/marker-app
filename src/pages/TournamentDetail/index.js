@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { v4 as uuid } from 'uuid';
 import { getTournamentByIdApi, addGameApi, updateTournamentApi } from '../../firebase/api';
 import { updateTournament, addGameToTournament, updateTournamentMatch } from '../../redux/tournaments-reducer';
 import { addNewGame } from '../../redux/games-reducer';
@@ -12,12 +13,13 @@ const TournamentDetail = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const user = useSelector(state => state.user);
+  console.log('UU: ', user)
   const teams = useSelector(state => state.teams.byId);
   const games = useSelector(state => state.games.byId);
-  
+
   // Get tournament from Redux store
   const tournament = useSelector(state => state.tournaments.byId[tournamentId]);
-  
+
   useEffect(() => {
     const fetchTournament = async () => {
       try {
@@ -40,43 +42,43 @@ const TournamentDetail = () => {
   const handleStartGame = async (round, matchIndex) => {
     try {
       const match = tournament.rounds.find(r => r.name === round)?.games[matchIndex];
-      
+
       if (!match || match.status === 'completed') {
         return;
       }
-      
+
       // Get team data for both teams
       const teamA = teams[match.teamAId];
       const teamB = teams[match.teamBId];
-      
+
       // Check if both teams are valid
       if (!teamA || !teamB || match.teamAId.startsWith('bye-') || match.teamBId.startsWith('bye-')) {
         alert('Cannot start game: At least one team is not available or is a BYE.');
         return;
       }
-      
+
       // Create a new game
       const gameData = {
-        type_of_game: 'game',
+        id: uuid(),
         teamAId: teamA.id,
         teamBId: teamB.id,
-        teamAName: teamA.name,
-        teamBName: teamB.name,
+        createdBy: user.email,
+        createdOn: new Date().getTime(),
+        actions: [],
+        type: 'tournament',
         teamAScore: 0,
         teamBScore: 0,
-        date: new Date().toISOString(),
-        createdBy: user.email,
+        notSaved: true,
         stats: {},
-        actions: [],
         tournamentId: tournamentId,
         tournamentRound: round,
         tournamentMatchIndex: matchIndex
       };
-      
+
       // Save to Firestore and Redux
       const newGame = await addGameApi(gameData);
       dispatch(addNewGame(newGame));
-      
+
       // Update the tournament match with the game ID
       dispatch(addGameToTournament({
         tournamentId,
@@ -84,7 +86,7 @@ const TournamentDetail = () => {
         round,
         matchIndex
       }));
-      
+
       // Update the match in Firestore
       await updateTournamentApi({
         tournament: {
@@ -103,7 +105,7 @@ const TournamentDetail = () => {
           })
         }
       });
-      
+
       // Navigate to the game page
       navigate(`/games/${newGame.id}`);
     } catch (error) {
@@ -126,16 +128,16 @@ const TournamentDetail = () => {
               <div className="space-y-8">
                 {round.games.map((match, matchIndex) => {
                   // Calculate spacing to align matches properly
-                  const matchesInPreviousRound = roundIndex > 0 
-                    ? tournament.rounds[roundIndex - 1].games.length 
+                  const matchesInPreviousRound = roundIndex > 0
+                    ? tournament.rounds[roundIndex - 1].games.length
                     : 0;
                   const matchSpacing = matchesInPreviousRound > round.games.length
                     ? `${matchesInPreviousRound / round.games.length * 8}rem`
                     : '8rem';
-                  
+
                   return (
-                    <div 
-                      key={`${round.name}-${matchIndex}`} 
+                    <div
+                      key={`${round.name}-${matchIndex}`}
                       className="bg-white border rounded-lg shadow-sm p-3"
                       style={{ marginTop: matchIndex > 0 ? matchSpacing : '0' }}
                     >
@@ -155,7 +157,7 @@ const TournamentDetail = () => {
                           </span>
                         )}
                       </div>
-                      
+
                       <div className={`flex items-center justify-between p-2 ${match.winnerId === match.teamAId ? 'bg-green-50' : ''}`}>
                         <div className="flex items-center">
                           {match.teamAId ? (
@@ -166,9 +168,9 @@ const TournamentDetail = () => {
                         </div>
                         <div className="font-bold">{match.teamAScore}</div>
                       </div>
-                      
+
                       <div className="border-t my-1"></div>
-                      
+
                       <div className={`flex items-center justify-between p-2 ${match.winnerId === match.teamBId ? 'bg-green-50' : ''}`}>
                         <div className="flex items-center">
                           {match.teamBId ? (
@@ -179,12 +181,12 @@ const TournamentDetail = () => {
                         </div>
                         <div className="font-bold">{match.teamBScore}</div>
                       </div>
-                      
-                      {match.status !== 'completed' && match.teamAId && match.teamBId && 
+
+                      {match.status !== 'completed' && match.teamAId && match.teamBId &&
                        !match.teamAId.startsWith('bye-') && !match.teamBId.startsWith('bye-') && (
                         <div className="mt-2 text-center">
                           {match.gameId ? (
-                            <Link 
+                            <Link
                               to={`/games/${match.gameId}`}
                               className="inline-block text-sm text-blue-600 hover:text-blue-800"
                             >
@@ -266,7 +268,7 @@ const TournamentDetail = () => {
             </table>
           </div>
         </div>
-        
+
         {/* Schedule */}
         <div>
           <h3 className="text-lg font-semibold mb-2">Schedule</h3>
@@ -295,7 +297,7 @@ const TournamentDetail = () => {
                           </span>
                         )}
                       </div>
-                      
+
                       <div className="flex items-center justify-between">
                         <div className="flex-1 flex items-center">
                           <div className={`${match.winnerId === match.teamAId ? 'font-bold' : ''}`}>
@@ -308,11 +310,11 @@ const TournamentDetail = () => {
                             {match.teamBName}
                           </div>
                         </div>
-                        
+
                         {match.status !== 'completed' && (
                           <div>
                             {match.gameId ? (
-                              <Link 
+                              <Link
                                 to={`/games/${match.gameId}`}
                                 className="inline-block text-sm text-blue-600 hover:text-blue-800"
                               >
@@ -379,9 +381,9 @@ const TournamentDetail = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="flex items-center">
-          <Link 
+          <Link
             to="/tournaments"
             className="inline-flex items-center text-blue-500 hover:text-blue-700"
           >
@@ -390,14 +392,14 @@ const TournamentDetail = () => {
           </Link>
         </div>
       </div>
-      
+
       {tournament.description && (
         <div className="bg-white p-4 mb-6 rounded-lg shadow-sm">
           <h2 className="text-lg font-semibold mb-2">Description</h2>
           <p className="text-gray-700">{tournament.description}</p>
         </div>
       )}
-      
+
       <div className="bg-white p-4 mb-6 rounded-lg shadow-sm">
         <h2 className="text-lg font-semibold mb-2">Tournament Format</h2>
         <div className="flex items-center">
@@ -405,13 +407,13 @@ const TournamentDetail = () => {
             {tournament.format === 'knockout' ? 'Knockout' : 'Round-Robin'}
           </span>
           <span className="text-gray-700">
-            {tournament.format === 'knockout' 
+            {tournament.format === 'knockout'
               ? 'Single elimination tournament bracket'
               : 'All teams play against each other'}
           </span>
         </div>
       </div>
-      
+
       <div className="bg-white p-4 mb-6 rounded-lg shadow-sm">
         <h2 className="text-lg font-semibold mb-4">Teams</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -429,14 +431,14 @@ const TournamentDetail = () => {
           ))}
         </div>
       </div>
-      
+
       <div className="bg-white p-4 rounded-lg shadow-sm">
         <h2 className="text-lg font-semibold mb-4">
           {tournament.format === 'knockout' ? 'Tournament Bracket' : 'Tournament Schedule & Standings'}
         </h2>
-        
-        {tournament.format === 'knockout' 
-          ? renderKnockoutBracket() 
+
+        {tournament.format === 'knockout'
+          ? renderKnockoutBracket()
           : renderRoundRobinSchedule()
         }
       </div>
