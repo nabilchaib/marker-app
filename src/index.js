@@ -24,6 +24,9 @@ import Login from './pages/Login';
 import reportWebVitals from './reportWebVitals';
 import Teams from './pages/Teams';
 import Players from './pages/Players';
+import Tournaments from './pages/Tournaments';
+import AddTournament from './pages/AddTournament';
+import TournamentDetail from './pages/TournamentDetail';
 import {
   createBrowserRouter,
   RouterProvider,
@@ -99,6 +102,18 @@ const router = createBrowserRouter([
       {
         path: 'players/edit',
         element: <EditPlayer />
+      },
+      {
+        path: 'tournaments',
+        element: <Tournaments />
+      },
+      {
+        path: 'add-tournament',
+        element: <AddTournament />
+      },
+      {
+        path: 'tournaments/:tournamentId',
+        element: <TournamentDetail />
       },
     ]
   },

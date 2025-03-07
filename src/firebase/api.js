@@ -817,6 +817,93 @@ export const deleteTeamApi = async ({ team }) => {
   });
 };
 
+// Tournament API functions
+export const addTournamentApi = async ({ tournament }) => {
+  try {
+    const tournamentRef = collection(db, 'tournaments');
+    const newTournamentRef = await addDoc(tournamentRef, {
+      ...tournament,
+      createdAt: serverTimestamp()
+    });
+    const newTournamentSnapshot = await getDoc(newTournamentRef);
+    const newTournamentData = newTournamentSnapshot.data();
+    return {
+      id: newTournamentRef.id,
+      ...newTournamentData,
+      createdAt: newTournamentData.createdAt?.toDate().toISOString(),
+      startDate: newTournamentData.startDate?.toDate().toISOString(),
+      endDate: newTournamentData.endDate?.toDate().toISOString()
+    };
+  } catch (err) {
+    console.log('ADD TOURNAMENT API ERR: ', err);
+    throw err;
+  }
+};
+
+export const getTournamentsApi = async ({ user }) => {
+  try {
+    const tournamentsRef = collection(db, 'tournaments');
+    const tournamentsQuery = query(tournamentsRef, where('createdBy', '==', user.email));
+    const tournamentsSnapshot = await getDocs(tournamentsQuery);
+    return tournamentsSnapshot.docs.map(doc => ({ 
+      id: doc.id, 
+      ...doc.data(),
+      createdAt: doc.data().createdAt?.toDate().toISOString(),
+      startDate: doc.data().startDate?.toDate().toISOString(),
+      endDate: doc.data().endDate?.toDate().toISOString()
+    }));
+  } catch (err) {
+    console.log('GET TOURNAMENTS API ERR: ', err);
+    throw err;
+  }
+};
+
+export const updateTournamentApi = async ({ tournament }) => {
+  try {
+    const tournamentRef = doc(db, 'tournaments', tournament.id);
+    const { id, ...tournamentData } = tournament;
+    await updateDoc(tournamentRef, tournamentData);
+    return tournament;
+  } catch (err) {
+    console.log('UPDATE TOURNAMENT API ERR: ', err);
+    throw err;
+  }
+};
+
+export const deleteTournamentApi = async ({ tournamentId }) => {
+  try {
+    const tournamentRef = doc(db, 'tournaments', tournamentId);
+    await deleteDoc(tournamentRef);
+    return tournamentId;
+  } catch (err) {
+    console.log('DELETE TOURNAMENT API ERR: ', err);
+    throw err;
+  }
+};
+
+export const getTournamentByIdApi = async ({ tournamentId }) => {
+  try {
+    const tournamentRef = doc(db, 'tournaments', tournamentId);
+    const tournamentSnapshot = await getDoc(tournamentRef);
+    
+    if (!tournamentSnapshot.exists()) {
+      throw new Error(`Tournament with ID ${tournamentId} not found`);
+    }
+    
+    const tournamentData = tournamentSnapshot.data();
+    return {
+      id: tournamentSnapshot.id,
+      ...tournamentData,
+      createdAt: tournamentData.createdAt?.toDate().toISOString(),
+      startDate: tournamentData.startDate?.toDate().toISOString(),
+      endDate: tournamentData.endDate?.toDate().toISOString()
+    };
+  } catch (err) {
+    console.log('GET TOURNAMENT BY ID API ERR: ', err);
+    throw err;
+  }
+};
+
 export const addPlayerStatsApi = async (playerId, gameId, date, type_of_game) => {
   try {
     const playerStatsCollection = collection(db, 'player_stats');
