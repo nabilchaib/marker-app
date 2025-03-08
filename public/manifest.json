@@ -4,27 +4,32 @@
   "description": "Track basketball games, drills, and stats with HoopTrackr.",
   "icons": [
     {
-      "src": "public/hoop-trackr-logo-ball-192x192.png",
+      "src": "hoop-trackr-logo-ball.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "hoop-trackr-logo-ball-192x192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "public/hoop-trackr-logo-ball-256x256.png",
+      "src": "hoop-trackr-logo-ball-256x256.png",
       "type": "image/png",
       "sizes": "256x256"
     },
     {
-      "src": "public/hoop-trackr-logo-ball-384x384.png",
+      "src": "hoop-trackr-logo-ball-384x384.png",
       "type": "image/png",
       "sizes": "384x384"
     },
     {
-      "src": "public/hoop-trackr-logo-ball-512x512.png",
+      "src": "hoop-trackr-logo-ball-512x512.png",
       "type": "image/png",
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "./",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
