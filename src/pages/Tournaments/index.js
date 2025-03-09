@@ -78,13 +78,13 @@ const Tournaments = () => {
             onClick={() => handleViewTournament(tournament.id)}
             className="p-2 text-blue-500 hover:text-blue-700"
           >
-            <Icon type="eye" size={20} />
+            <Icon type="eye" className="w-5 h-5" />
           </button>
           <button
             onClick={() => handleDeleteTournament(tournament.id)}
             className="p-2 text-red-500 hover:text-red-700"
           >
-            <Icon type="trash" size={20} />
+            <Icon type="trash" className="w-5 h-5" />
           </button>
         </div>
       </div>
