@@ -12,8 +12,13 @@ export const tournamentsSlice = createSlice({
   reducers: {
     addNewTournament: (state, action) => {
       const newTournament = action.payload;
-      state.byId[newTournament.id] = newTournament;
-      state.allIds.push(newTournament.id);
+      if (!state.byId[newTournament.id]) {
+        state.byId[newTournament.id] = newTournament;
+    
+        if (!state.allIds.includes(newTournament.id)) {
+          state.allIds.push(newTournament.id);
+        }
+      }
     },
     deleteTournament: (state, action) => {
       const tournamentId = action.payload;

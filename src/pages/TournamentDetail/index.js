@@ -195,7 +195,7 @@ const TournamentDetail = () => {
                           ) : (
                             <button
                               onClick={() => handleStartGame(round.name, matchIndex)}
-                              className="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded"
+                              className="bg-[#f64e07] hover:bg-[#d84307] text-white font-bold py-1 px-3 rounded-lg shadow-md transition-all"
                             >
                               Start Game
                             </button>
@@ -365,18 +365,18 @@ const TournamentDetail = () => {
           <div className="text-gray-600">
             {tournament.location && (
               <div className="mt-1 flex items-center">
-                <Icon type="map-pin" size={16} className="mr-1" />
+                <Icon type="map-pin" className="w-5 h-5 text-gray-700 mr-1" />
                 <span>{tournament.location}</span>
               </div>
             )}
             <div className="mt-1 flex items-center">
-              <Icon type="calendar" size={16} className="mr-1" />
+              <Icon type="calendar" className="w-5 h-5 text-gray-700 mr-1" />
               <span>
                 {new Date(tournament.startDate).toLocaleDateString()} - {new Date(tournament.endDate).toLocaleDateString()}
               </span>
             </div>
             <div className="mt-1 flex items-center">
-              <Icon type="users" size={16} className="mr-1" />
+              <Icon type="users" className="w-5 h-5 text-gray-700 mr-1" />
               <span>{tournament.teams.length} Teams</span>
             </div>
           </div>
@@ -385,7 +385,7 @@ const TournamentDetail = () => {
         <div className="flex items-center">
           <Link
             to="/tournaments"
-            className="inline-flex items-center text-blue-500 hover:text-blue-700"
+            className="text-[#f64e07] hover:text-[#d84307] font-semibold flex items-center"
           >
             <Icon type="arrow-left" size={16} className="mr-1" />
             Back to Tournaments
