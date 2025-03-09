@@ -5,6 +5,7 @@ import { userSlice } from './user-reducer';
 import { playersSlice } from './players-reducer'
 import { teamsSlice } from './teams-reducer'
 import { gamesSlice } from './games-reducer'
+import { tournamentsSlice } from './tournaments-reducer'
 
 const persistConfig = {
   key: 'root',
@@ -16,6 +17,7 @@ const rootReducer = combineReducers( {
   players: playersSlice.reducer,
   teams: teamsSlice.reducer,
   games: gamesSlice.reducer,
+  tournaments: tournamentsSlice.reducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer)

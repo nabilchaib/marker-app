@@ -63,6 +63,7 @@ export default function Sidebar() {
       { name: 'Games', href: '/games', icon: (props) => <Icon type="hoop" {...props} />, current: isCurrentMenu('games', location.pathname) },
       { name: 'Teams', href: '/teams', icon: (props) => <Icon type="jersey" {...props} />, current: isCurrentMenu('teams', location.pathname) },
       { name: 'Players', href: '/players', icon: (props) => <Icon type="player" {...props} />, current: isCurrentMenu('players', location.pathname) },
+      { name: 'Tournaments', href: '/tournaments', icon: (props) => <Icon type="trophy" {...props} />, current: isCurrentMenu('tournaments', location.pathname) },
     ],
     [location.pathname]
   );

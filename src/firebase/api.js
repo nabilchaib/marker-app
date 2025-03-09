@@ -817,6 +817,123 @@ export const deleteTeamApi = async ({ team }) => {
   });
 };
 
+// Tournament API functions
+export const addTournamentApi = async ({ tournament }) => {
+  try {
+    // Create a copy of the tournament data 
+    // with timestamp conversions for dates that are strings
+    const tournamentData = {
+      ...tournament,
+      createdAt: serverTimestamp()
+    };
+    
+    const tournamentRef = collection(db, 'tournaments');
+    const newTournamentRef = await addDoc(tournamentRef, tournamentData);
+    const newTournamentSnapshot = await getDoc(newTournamentRef);
+    const newTournamentData = newTournamentSnapshot.data();
+    
+    // Handle date conversions safely with type checking
+    const resultData = {
+      id: newTournamentRef.id,
+      ...newTournamentData,
+    };
+    
+    // Only convert timestamps, leave string dates alone
+    if (newTournamentData.createdAt && typeof newTournamentData.createdAt.toDate === 'function') {
+      resultData.createdAt = newTournamentData.createdAt.toDate().toISOString();
+    }
+    
+    // Leave the original string dates as they are
+    resultData.startDate = tournament.startDate;
+    resultData.endDate = tournament.endDate;
+    
+    return resultData;
+  } catch (err) {
+    console.log('ADD TOURNAMENT API ERR: ', err);
+    throw err;
+  }
+};
+
+export const getTournamentsApi = async ({ user }) => {
+  try {
+    const tournamentsRef = collection(db, 'tournaments');
+    const tournamentsQuery = query(tournamentsRef, where('createdBy', '==', user.email));
+    const tournamentsSnapshot = await getDocs(tournamentsQuery);
+    
+    return tournamentsSnapshot.docs.map(doc => {
+      const data = doc.data();
+      const result = { 
+        id: doc.id, 
+        ...data 
+      };
+      
+      // Safely convert Firebase timestamps to ISO strings
+      if (data.createdAt && typeof data.createdAt.toDate === 'function') {
+        result.createdAt = data.createdAt.toDate().toISOString();
+      }
+      
+      // For startDate and endDate, keep them as they are (they should already be strings)
+      
+      return result;
+    });
+  } catch (err) {
+    console.log('GET TOURNAMENTS API ERR: ', err);
+    throw err;
+  }
+};
+
+export const updateTournamentApi = async ({ tournament }) => {
+  try {
+    const tournamentRef = doc(db, 'tournaments', tournament.id);
+    const { id, ...tournamentData } = tournament;
+    await updateDoc(tournamentRef, tournamentData);
+    return tournament;
+  } catch (err) {
+    console.log('UPDATE TOURNAMENT API ERR: ', err);
+    throw err;
+  }
+};
+
+export const deleteTournamentApi = async ({ tournamentId }) => {
+  try {
+    const tournamentRef = doc(db, 'tournaments', tournamentId);
+    await deleteDoc(tournamentRef);
+    return tournamentId;
+  } catch (err) {
+    console.log('DELETE TOURNAMENT API ERR: ', err);
+    throw err;
+  }
+};
+
+export const getTournamentByIdApi = async ({ tournamentId }) => {
+  try {
+    const tournamentRef = doc(db, 'tournaments', tournamentId);
+    const tournamentSnapshot = await getDoc(tournamentRef);
+    
+    if (!tournamentSnapshot.exists()) {
+      throw new Error(`Tournament with ID ${tournamentId} not found`);
+    }
+    
+    const tournamentData = tournamentSnapshot.data();
+    const result = {
+      id: tournamentSnapshot.id,
+      ...tournamentData
+    };
+    
+    // Safely convert Firebase timestamps to ISO strings
+    if (tournamentData.createdAt && typeof tournamentData.createdAt.toDate === 'function') {
+      result.createdAt = tournamentData.createdAt.toDate().toISOString();
+    }
+    
+    // For startDate and endDate, keep them as they are (they should already be strings)
+    
+    return result;
+  } catch (err) {
+    console.log('GET TOURNAMENT BY ID API ERR: ', err);
+    throw err;
+  }
+};
+
 export const addPlayerStatsApi = async (playerId, gameId, date, type_of_game) => {
   try {
     const playerStatsCollection = collection(db, 'player_stats');
