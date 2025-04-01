@@ -15,6 +15,7 @@ const initialTransformOrigin = {
 const Dropdown = ({ entity, items, anchorEl, open, onOpen, onClose, anchorOrigin = initialAnchorOrigin, transformOrigin = initialTransformOrigin }) => {
   const isMobile = useMediaQuery('(max-width:600px)');
 
+  console.log('ITEMS: ', items)
   const renderMenuItems = (options = {}) => {
     const { isDrawer = false } = options;
     return items.map((item) =>

@@ -20,6 +20,7 @@ export default function AddPickUpGame() {
   const [getTeamsLoading, setGetTeamsLoading] = useState(false);
 
   const user = useSelector(state => state.user);
+  console.log('LALA: ', user)
   const teams = useSelector(state => state.teams);
   const games = useSelector(state => state.games);
 
