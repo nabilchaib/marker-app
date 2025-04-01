@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { v4 as uuid } from 'uuid';
 import { getTournamentByIdApi, addGameApi, updateTournamentApi } from '../../firebase/api';
-import { updateTournament, addGameToTournament, updateTournamentMatch } from '../../redux/tournaments-reducer';
+import { updateTournament, addGameToTournament } from '../../redux/tournaments-reducer';
 import { addNewGame } from '../../redux/games-reducer';
 import Icon from '../../components/Icon';
 
@@ -13,9 +13,7 @@ const TournamentDetail = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const user = useSelector(state => state.user);
-  console.log('UU: ', user)
   const teams = useSelector(state => state.teams.byId);
-  const games = useSelector(state => state.games.byId);
 
   // Get tournament from Redux store
   const tournament = useSelector(state => state.tournaments.byId[tournamentId]);
@@ -65,7 +63,7 @@ const TournamentDetail = () => {
         createdBy: user.email,
         createdOn: new Date().getTime(),
         actions: [],
-        type: 'tournament',
+        type: 'pick-up',
         teamAScore: 0,
         teamBScore: 0,
         notSaved: true,
@@ -107,7 +105,7 @@ const TournamentDetail = () => {
       });
 
       // Navigate to the game page
-      navigate(`/games/${newGame.id}`);
+      navigate(`/games/pick-up-game/${newGame.id}`);
     } catch (error) {
       console.error('Error starting game:', error);
       alert('Error starting game. Please try again.');
@@ -158,7 +156,7 @@ const TournamentDetail = () => {
                         )}
                       </div>
 
-                      <div className={`flex items-center justify-between p-2 ${match.winnerId === match.teamAId ? 'bg-green-50' : ''}`}>
+                      <div className={`flex items-center justify-between p-2 ${match.winnerId === match.teamAId ? 'bg-[#f64e07] bg-opacity-10' : ''}`}>
                         <div className="flex items-center">
                           {match.teamAId ? (
                             <span>{match.teamAName}</span>
@@ -171,7 +169,7 @@ const TournamentDetail = () => {
 
                       <div className="border-t my-1"></div>
 
-                      <div className={`flex items-center justify-between p-2 ${match.winnerId === match.teamBId ? 'bg-green-50' : ''}`}>
+                      <div className={`flex items-center justify-between p-2 ${match.winnerId === match.teamBId ? 'bg-[#f64e07] bg-opacity-10' : ''}`}>
                         <div className="flex items-center">
                           {match.teamBId ? (
                             <span>{match.teamBName}</span>
@@ -187,7 +185,7 @@ const TournamentDetail = () => {
                         <div className="mt-2 text-center">
                           {match.gameId ? (
                             <Link
-                              to={`/games/${match.gameId}`}
+                              to={`/games/pick-up-game/${match.gameId}`}
                               className="inline-block text-sm text-blue-600 hover:text-blue-800"
                             >
                               View Game
@@ -385,9 +383,9 @@ const TournamentDetail = () => {
         <div className="flex items-center">
           <Link
             to="/tournaments"
-            className="text-[#f64e07] hover:text-[#d84307] font-semibold flex items-center"
+            className="px-4 py-2 flex items-center bg-[#0aa6d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#0989b3] transition-all"
           >
-            <Icon type="arrow-left" size={16} className="mr-1" />
+            <Icon type="arrow-left" size={16} className="mr-2" />
             Back to Tournaments
           </Link>
         </div>

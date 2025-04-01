@@ -302,12 +302,23 @@ const AddTournament = () => {
           }))
         : [];
 
-      // Prepare tournament data
+      // Prepare tournament data with default values for undefined fields
       const tournamentData = {
-        ...formData,
-        rounds,
-        standings,
-        createdBy: user.email,
+        name: formData.name || '',
+        description: formData.description || '',
+        location: formData.location || '',
+        startDate: formData.startDate || new Date().toISOString(),
+        endDate: formData.endDate || new Date().toISOString(),
+        format: formData.format || 'knockout',
+        status: formData.status || 'upcoming',
+        teams: selectedTeams.map(team => ({
+          id: team.id,
+          name: team.name,
+          avatarUrl: team.avatarUrl || ''
+        })),
+        rounds: rounds || [],
+        standings: standings || [],
+        createdBy: user.email || '',
         createdAt: new Date().toISOString()
       };
 
@@ -515,16 +526,27 @@ const AddTournament = () => {
           <button
             type="button"
             onClick={() => navigate('/tournaments')}
-            className="mr-2 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            className="mr-2 px-4 py-2 flex items-center text-[#f64e07] hover:text-white hover:bg-[#f64e07] font-semibold rounded-lg shadow-md transition-all"
           >
-            Cancel
+            <Icon type="arrow-left" size={16} className="mr-2" />
+            Back to Tournaments
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50"
+            className="px-4 py-2 flex items-center bg-[#f64e07] text-white font-semibold rounded-lg shadow-md hover:bg-[#d84307] transition-all disabled:opacity-50"
           >
-            {isSubmitting ? 'Creating...' : 'Create Tournament'}
+            {isSubmitting ? (
+              <>
+                <Icon type="loading" size={16} className="mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <Icon type="plus" size={16} className="mr-2" />
+                Create Tournament
+              </>
+            )}
           </button>
         </div>
       </form>

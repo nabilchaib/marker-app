@@ -1,24 +1,41 @@
 {
   "colors": {
-    "primaryOrange": "#f64e07",
-    "accentBlue": "#0aa6d6",
-    "darkBackground": "#0e191d",
-    "white": "#FFFFFF",
-    "lightGray": "#e0e0e0"
+    "primary": "#f64e07",
+    "primaryHover": "#d94606",
+    "secondary": "#0aa6d6",
+    "secondaryHover": "#0895bb",
+    "backgroundDark": "#0e191d",
+    "backgroundLight": "#ffffff",
+    "grayLight": "#e0e0e0",
+    "grayMedium": "#b0b0b0",
+    "textPrimary": "#ffffff",
+    "textSecondary": "#000000"
   },
   "fonts": {
-    "primary": "Audiowide, sans-serif",
-    "body": "Roboto, Segoe UI, sans-serif"
+    "display": "Audiowide, sans-serif",
+    "body": "Roboto, Segoe UI, sans-serif",
+    "weights": {
+      "regular": 400,
+      "bold": 700,
+      "extraBold": 800
+    },
+    "sizes": {
+      "sm": "0.875rem",
+      "base": "1rem",
+      "lg": "1.25rem",
+      "xl": "1.5rem",
+      "2xl": "2rem"
+    }
   },
   "buttons": {
     "primary": {
       "background": "#f64e07",
-      "text": "#FFFFFF",
+      "text": "#ffffff",
       "hover": "#d94606"
     },
     "secondary": {
       "background": "#0aa6d6",
-      "text": "#FFFFFF",
+      "text": "#ffffff",
       "hover": "#0895bb"
     },
     "disabled": {
@@ -26,9 +43,21 @@
       "text": "#b0b0b0"
     }
   },
-  "borderRadius": "4px",
+  "borderRadius": {
+    "sm": "4px",
+    "md": "8px",
+    "lg": "16px"
+  },
+  "spacing": {
+    "xs": "4px",
+    "sm": "8px",
+    "md": "16px",
+    "lg": "24px",
+    "xl": "32px"
+  },
   "boxShadow": {
     "card": "0px 4px 6px rgba(0, 0, 0, 0.1)",
-    "buttonHover": "0px 2px 4px rgba(0, 0, 0, 0.08)"
+    "buttonHover": "0px 2px 4px rgba(0, 0, 0, 0.08)",
+    "modal": "0px 8px 16px rgba(0, 0, 0, 0.12)"
   }
 }

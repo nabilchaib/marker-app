@@ -76,13 +76,14 @@ const Tournaments = () => {
         <div className="flex">
           <button
             onClick={() => handleViewTournament(tournament.id)}
-            className="p-2 text-blue-500 hover:text-blue-700"
+            className="px-3 py-1 flex items-center bg-[#0aa6d6] text-white font-semibold rounded-lg shadow-md hover:bg-[#0989b3] transition-all mr-2"
           >
-            <Icon type="eye" className="w-5 h-5" />
+            <Icon type="eye" size={16} className="mr-1" />
+            View
           </button>
           <button
             onClick={() => handleDeleteTournament(tournament.id)}
-            className="p-2 text-red-500 hover:text-red-700"
+            className="p-2 text-red-500 hover:text-red-700 transition-colors"
           >
             <Icon type="trash" className="w-5 h-5" />
           </button>
@@ -119,8 +120,9 @@ const Tournaments = () => {
         <h1 className="text-xl font-bold">Tournaments</h1>
         <Link 
           to="/add-tournament"
-          className="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded"
+          className="px-4 py-2 flex items-center bg-[#f64e07] text-white font-semibold rounded-lg shadow-md hover:bg-[#d84307] transition-all"
         >
+          <Icon type="plus" size={16} className="mr-2" />
           Create Tournament
         </Link>
       </div>
@@ -130,10 +132,19 @@ const Tournaments = () => {
           {tournaments.map(tournament => renderTournamentItem(tournament))}
         </div>
       ) : (
-        <div className="text-center py-8 text-gray-500">
-          <Icon type="trophy" size={48} className="mx-auto mb-2" />
-          <p>No tournaments yet</p>
-          <p className="text-sm mt-2">Create your first tournament to get started</p>
+        <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+          <div className="w-16 h-16 bg-[#f64e07] bg-opacity-10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Icon type="trophy" size={32} className="text-[#f64e07]" />
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No tournaments yet</h3>
+          <p className="text-gray-600 mb-6">Create your first tournament to get started</p>
+          <Link 
+            to="/add-tournament"
+            className="inline-flex items-center px-4 py-2 bg-[#f64e07] text-white font-semibold rounded-lg shadow-md hover:bg-[#d84307] transition-all"
+          >
+            <Icon type="plus" size={16} className="mr-2" />
+            Create Tournament
+          </Link>
         </div>
       )}
     </div>
