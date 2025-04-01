@@ -27,6 +27,8 @@ import Players from './pages/Players';
 import Tournaments from './pages/Tournaments';
 import AddTournament from './pages/AddTournament';
 import TournamentDetail from './pages/TournamentDetail';
+import LandingPage from './pages/LandingPage';
+import Demo from './pages/Demo';
 import {
   createBrowserRouter,
   RouterProvider,
@@ -41,8 +43,11 @@ const Protected = ({ children, type }) => {
     return null;
   }
 
-  if (!user && type !== 'login') {
-    return <Navigate to="/login" />;
+  if (!user) {
+    if (type === 'login') {
+      return children;
+    }
+    return <Navigate to="/landing" />;
   }
 
   if (user && type === 'login') {
@@ -118,6 +123,14 @@ const router = createBrowserRouter([
     ]
   },
   {
+    path: '/landing',
+    element: <LandingPage />
+  },
+  {
+    path: '/demo',
+    element: <Demo />
+  },
+  {
     path: '/login',
     element: <Protected type="login">
       <Login />
@@ -138,6 +151,8 @@ const router = createBrowserRouter([
 ]);
 
 const MainApp = () => {
+  const [user, loading] = useAuthState(auth);
+
   useEffect(() => {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
@@ -151,6 +166,10 @@ const MainApp = () => {
       }
     });
   }, []);
+
+  if (loading) {
+    return null;
+  }
 
   return (
     <Provider store={store}>
