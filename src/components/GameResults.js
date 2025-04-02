@@ -1,11 +1,13 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { initialStats } from '../redux/games-reducer';
+import { updateTournamentMatch, advanceTeamInTournament } from '../redux/tournaments-reducer';
 
 const GameResults = ({ game, onBackClick }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const isDrillMode = game.type === 'drill';
   const { teamAId, teamAScore, teamBId, teamBScore } = game;
 
@@ -59,7 +61,38 @@ const GameResults = ({ game, onBackClick }) => {
 
   const EndButton = () => {
     const handleClick = async () => {
-      navigate('/games');
+      if (game.tournamentId) {
+        // Update the tournament match with final scores and winner
+        const winnerId = teamAScore > teamBScore ? teamAId : teamBId;
+        
+        // Update match status and scores
+        dispatch(updateTournamentMatch({
+          tournamentId: game.tournamentId,
+          round: game.tournamentRound,
+          matchIndex: game.tournamentMatchIndex,
+          updates: {
+            status: 'completed',
+            winnerId: winnerId,
+            teamAScore: teamAScore,
+            teamBScore: teamBScore
+          }
+        }));
+
+        // Advance the winning team to the next round
+        dispatch(advanceTeamInTournament({
+          tournamentId: game.tournamentId,
+          round: game.tournamentRound,
+          matchIndex: game.tournamentMatchIndex,
+          teamId: winnerId,
+          score: Math.max(teamAScore, teamBScore)
+        }));
+
+        // Navigate back to the tournament
+        navigate(`/tournaments/${game.tournamentId}`);
+      } else {
+        // For regular games, navigate to the games list
+        navigate('/games');
+      }
     };
 
     return (

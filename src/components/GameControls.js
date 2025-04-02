@@ -19,20 +19,25 @@ import GameResult from "./GameResults";
 
 const GameControls = ({ currentGameId, currentPlayer }) => {
   const dispatch = useDispatch();
-  const state = useSelector((state) => state);
   const currentGame = useSelector((state) => state.games.byId[currentGameId]);
   const teamA = useSelector((state) => state.teams.byId[currentGame.teamAId]);
   const teamB = useSelector((state) => state.teams.byId[currentGame.teamBId]);
   const players = useSelector((state) => state.players);
   const allPlayers = useMemo(() => {
-    return players.allIds.map((playerId) => players.byId[playerId]);
-  }, [players.allIds]);
+    return players.allIds
+      .map((playerId) => players.byId[playerId])
+      .filter(player => player !== undefined);
+  }, [players.allIds, players.byId]);
   const teamAPlayers = useMemo(() => {
-    return (teamA?.players || []).map((playerId) => players.byId[playerId]);
-  }, [teamA?.players]);
+    return (teamA?.players || [])
+      .map((playerId) => players.byId[playerId])
+      .filter(player => player !== undefined);
+  }, [teamA?.players, players.byId]);
   const teamBPlayers = useMemo(() => {
-    return (teamB?.players || []).map((playerId) => players.byId[playerId]);
-  }, [teamB?.players]);
+    return (teamB?.players || [])
+      .map((playerId) => players.byId[playerId])
+      .filter(player => player !== undefined);
+  }, [teamB?.players, players.byId]);
   const mode = currentGame.type;
 
   const [selectedTeam, setSelectedTeam] = useState(
