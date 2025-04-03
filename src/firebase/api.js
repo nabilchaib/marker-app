@@ -153,21 +153,24 @@ export const addMadeShotApi = async ({ game, selectedTeam, playerId, points, typ
       let newGame;
 
       if (type_of_game === "drill") {
-        // Directly access the player for drill mode without a team context
-        if (!game.playerId || game.playerId !== playerId) {
-          throw new Error(`Player with ID ${playerId} not found in the game`);
+        // Check if player is part of the drill
+        if (!game.playerIds?.includes(playerId)) {
+          throw new Error(`Player with ID ${playerId} not found in the drill`);
         }
 
         // Define new stats for drill mode
         newStats = {
-          drill_attempts: (game.drill_attempts || 0) + 1,
-          drill_made: (game.drill_made || 0) + 1,
+          attempts: (game.stats[playerId]?.attempts || 0) + 1,
+          completions: (game.stats[playerId]?.completions || 0) + 1,
         };
 
         // Update game directly without player/team structure
         newGame = {
           ...game,
-          stats: { ...game.stats, [playerId]: newStats },
+          stats: { 
+            ...game.stats, 
+            [playerId]: newStats 
+          },
         };
         console.log('addMadeShotApi',newGame)
       } else {
@@ -209,26 +212,20 @@ export const addAttemptedShotApi = async ({ game, selectedTeam, playerId, points
       let newGame;
 
       if (type_of_game === "drill") {
-        // For drill mode, directly access and update player stats
-        if (!game.playerId || game.playerId !== playerId) {
-          throw new Error(`Player with ID ${playerId} not found in the game`);
+        // Check if player is part of the drill
+        if (!game.playerIds?.includes(playerId)) {
+          throw new Error(`Player with ID ${playerId} not found in the drill`);
         }
 
         newStats = {
-          drill_attempts: (game.players[playerId].stats.drill_attempts || 0) + 1,
+          attempts: (game.stats[playerId]?.attempts || 0) + 1,
         };
 
         newGame = {
           ...game,
-          players: {
-            ...game.players,
-            [playerId]: {
-              ...game.players[playerId],
-              stats: {
-                ...game.players[playerId].stats,
-                ...newStats
-              }
-            }
+          stats: { 
+            ...game.stats, 
+            [playerId]: newStats 
           }
         };
 

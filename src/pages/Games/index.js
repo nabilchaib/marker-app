@@ -43,14 +43,22 @@ export default function AddGame() {
   };
 
   const getGameTitle = (game) => {
-    const teamA = teams.byId[game.teamAId];
-    const teamB = teams.byId[game.teamBId];
     if (game.type === 'pick-up') {
+      const teamA = teams.byId[game.teamAId];
+      const teamB = teams.byId[game.teamBId];
       return `${teamA.name} vs ${teamB.name}`;
     }
 
     if (game.type === 'drill') {
-      return players.byId[game.playerId].name;
+      if (game.playerIds?.length > 0) {
+        const playerNames = game.playerIds
+          .map(id => players.byId[id]?.name)
+          .filter(Boolean);
+        return playerNames.length === 1 
+          ? playerNames[0] 
+          : `Drill with ${playerNames.length} players`;
+      }
+      return game.playerId ? players.byId[game.playerId]?.name || 'Drill' : 'Drill';
     }
 
     return game.category;

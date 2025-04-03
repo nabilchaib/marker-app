@@ -17,7 +17,7 @@ import "../css/main.css";
 import PlayerSelection from "./PlayerSelection";
 import GameResult from "./GameResults";
 
-const GameControls = ({ currentGameId, currentPlayer }) => {
+const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerSelect }) => {
   const dispatch = useDispatch();
   const currentGame = useSelector((state) => state.games.byId[currentGameId]);
   const teamA = useSelector((state) => state.teams.byId[currentGame.teamAId]);
@@ -63,8 +63,8 @@ const GameControls = ({ currentGameId, currentPlayer }) => {
   useEffect(() => {
     if (mode === "drill") {
       setPlayerOptionsMap({
-        teamA: allPlayers,
-        teamB: allPlayers,
+        teamA: selectedPlayers || [],
+        teamB: selectedPlayers || [],
       });
     } else if (mode === "pick-up") {
       setPlayerOptionsMap({
@@ -72,7 +72,7 @@ const GameControls = ({ currentGameId, currentPlayer }) => {
         teamB: teamBPlayers,
       });
     }
-  }, [mode, teamA, teamB, navigate]);
+  }, [mode, teamA, teamB, selectedPlayers]);
 
   useEffect(() => {
     dispatch(
@@ -89,6 +89,9 @@ const GameControls = ({ currentGameId, currentPlayer }) => {
     console.log('PP: ', player, currentPlayer)
     setSelectedPlayer(player);
     setShowPlayerSelection(false);
+    if (onPlayerSelect) {
+      onPlayerSelect(player);
+    }
   };
 
   const handleAttempt = async (points) => {
@@ -327,17 +330,15 @@ const GameControls = ({ currentGameId, currentPlayer }) => {
       {/* Player Selection */}
       {showPlayerSelection ? (
         <PlayerSelection
-          team={mode === "pick-up" ? selectedTeam : null} // Pass `null` or handle differently for drills
-          players={
-            mode === "drill" ? allPlayers : playerOptionsMap[selectedTeam]
-          } // Show all players in drill mode
+          team={mode === "pick-up" ? selectedTeam : null}
+          players={mode === "drill" ? selectedPlayers : playerOptionsMap[selectedTeam]}
           onSelect={handlePlayerSelect}
           onClose={setShowPlayerSelection}
         />
       ) : (
         <div className="flex flex-col items-center space-y-4">
           <button
-            disabled={!!currentPlayer}
+            disabled={mode === "pick-up" && !!currentPlayer}
             className="relative w-full sm:w-auto py-2 px-4 md:py-4 md:px-8 text-base md:text-xl font-bold text-white bg-[#0aa6d6]
                       rounded-lg shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105 hover:rotate-2 duration-200
                       focus:outline-none focus:ring-4 focus:ring-[#0aa6d6]"
