@@ -26,7 +26,7 @@ export default function Demo() {
               {
                 title: 'Team Management',
                 description: 'Create and manage teams, add players, and track team statistics all in one place.',
-                image: '/images/landing/player_stats.png'
+                image: '/images/landing/player-stats.png'
               },
               {
                 title: 'Tournament Mode',

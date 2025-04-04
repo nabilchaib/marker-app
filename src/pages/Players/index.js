@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useCallback} from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { TrashIcon, PlusIcon, PencilIcon } from '@heroicons/react/24/solid';
+import { TrashIcon, PlusIcon, PencilIcon, MagnifyingGlassIcon } from '@heroicons/react/24/solid';
 
 import { getPlayersApi, deletePlayerApi } from '../../firebase/api';
 import { addPlayers, addPlayerCache, deletePlayer } from '../../redux/players-reducer';
@@ -17,6 +17,7 @@ export default function Players() {
   const [playerToDelete, setPlayerToDelete] = useState(null);
   const [deletePlayerLoading, setDeletePlayerLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const user = useSelector(state => state.user);
   const players = useSelector(state => state.players);
@@ -71,6 +72,13 @@ export default function Players() {
     navigate('/players/create');
   };
 
+  const filteredPlayers = players.allIds
+    .map(id => players.byId[id])
+    .filter(player => 
+      player.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      player.number.toString().includes(searchQuery)
+    );
+
   const renderListItem = useCallback(
     ({ item }) => {
       return (
@@ -120,19 +128,28 @@ export default function Players() {
         </button>
       </div>
 
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search players by name or number"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full p-2 border rounded-md"
+        />
+      </div>
 
-      {!getPlayersLoading && players.allIds.length > 0 && (
+      {!getPlayersLoading && filteredPlayers.length > 0 && (
         <div className="mt-4">
-          <List items={players} dropdownItems={dropdownItems}>
+          <List items={{ allIds: filteredPlayers.map(p => p.id), byId: filteredPlayers.reduce((acc, p) => ({ ...acc, [p.id]: p }), {}) }} dropdownItems={dropdownItems}>
             {renderListItem}
           </List>
         </div>
       )}
-      {!getPlayersLoading && players.allIds.length <= 0 && (
+      {!getPlayersLoading && filteredPlayers.length <= 0 && (
         <div className="mt-4 border text-center rounded-md p-6">
           <Icon type="jersey" className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-semibold text-gray-900">No players</h3>
-          <p className="mt-1 text-sm text-gray-500">Get started by creating a new player.</p>
+          <h3 className="mt-2 text-sm font-semibold text-gray-900">No players found</h3>
+          <p className="mt-1 text-sm text-gray-500">Try adjusting your search query.</p>
         </div>
       )}
       <Dialog

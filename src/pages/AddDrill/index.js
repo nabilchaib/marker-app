@@ -17,9 +17,8 @@ export default function AddDrill() {
   const user = useSelector(state => state.user);
   const players = useSelector(state => state.players);
 
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [selectedPlayers, setSelectedPlayers] = useState([]);
 
-  // Fetch players if not already loaded
   useEffect(() => {
     const fetchPlayers = async () => {
       try {
@@ -39,12 +38,16 @@ export default function AddDrill() {
   }, [user?.email, players.allIds.length]);
 
   const onSelectPlayer = playerId => {
-    setSelectedPlayer(playerId === selectedPlayer ? null : playerId);
+    setSelectedPlayers(prev => 
+      prev.includes(playerId) 
+        ? prev.filter(id => id !== playerId)
+        : [...prev, playerId]
+    );
   };
 
   const onStartDrill = () => {
-    if (!selectedPlayer) {
-      toast.error('Select a player to start the drill', {
+    if (selectedPlayers.length === 0) {
+      toast.error('Select at least one player to start the drill', {
         position: 'top-center',
       });
       return;
@@ -52,7 +55,7 @@ export default function AddDrill() {
 
     const newDrill = {
       id: uuid(),
-      playerId: selectedPlayer,
+      playerIds: selectedPlayers,
       type: 'drill',
       createdBy: user.id,
       createdOn: new Date().getTime(),
@@ -65,32 +68,38 @@ export default function AddDrill() {
     navigate(`/games/drill/${newDrill.id}`);
   };
 
-  const selectedPlayerData = players.byId[selectedPlayer];
-
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <h2 className="text-base font-semibold leading-6 text-gray-900">Create a New Drill</h2>
-      <p className="mt-1 text-sm text-gray-500">Choose a player to begin tracking drill attempts and completions.</p>
+      <p className="mt-1 text-sm text-gray-500">Choose players to begin tracking drill attempts and completions.</p>
 
-      <div className="mt-4 flex flex-col items-center justify-center">
-        {/* Selected Player Display */}
-        <div className="flex flex-col items-center">
-          {!selectedPlayerData?.avatarUrl && (
-            <div className="mb-2 border border-gray-300 relative inline-flex p-2 h-32 w-32 items-center justify-center rounded-full">
-              <Icon type="jersey" className="mx-auto h-24 w-24 text-gray-400" />
-            </div>
-          )}
-          {selectedPlayerData?.avatarUrl && (
-            <img className="mb-2 rounded-full h-32 w-32" src={selectedPlayerData.avatarUrl} alt="Player Avatar" />
-          )}
-          {selectedPlayerData?.name && <div>{selectedPlayerData.name}</div>}
+      {/* Selected Players Display */}
+      {selectedPlayers.length > 0 && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {selectedPlayers.map(playerId => {
+            const player = players.byId[playerId];
+            return (
+              <span
+                key={player.id}
+                className="inline-flex items-center rounded-full bg-cyan-100 text-cyan-800 px-3 py-1 text-sm font-medium"
+              >
+                {player.name}
+                <button
+                  onClick={() => onSelectPlayer(player.id)}
+                  className="ml-2 text-cyan-500 hover:text-cyan-700 focus:outline-none"
+                >
+                  ×
+                </button>
+              </span>
+            );
+          })}
         </div>
-      </div>
+      )}
 
       {players.allIds.length > 0 && (
         <div className="mt-4">
           <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center justify-between">
-            <h2 className="text-base font-semibold leading-6 text-gray-900">Select a Player</h2>
+            <h2 className="text-base font-semibold leading-6 text-gray-900">Select Players</h2>
           </div>
           <ul role="list" className="mt-6 divide-y divide-gray-200 border-b border-t border-gray-200">
             {players.allIds.map((playerId) => {
@@ -99,7 +108,7 @@ export default function AddDrill() {
                 <li
                   onClick={() => onSelectPlayer(playerId)}
                   key={player.id}
-                  className={`hover:bg-orange-100 cursor-pointer ${selectedPlayer === playerId ? 'bg-orange-100' : ''}`}
+                  className={`hover:bg-orange-100 cursor-pointer ${selectedPlayers.includes(playerId) ? 'bg-orange-100' : ''}`}
                 >
                   <div className="group flex items-center p-4">
                     <div className="mr-3">
