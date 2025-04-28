@@ -963,3 +963,17 @@ export const updatePlayerStatsApi = async (playerStatsId, updatedFields) => {
     console.error('Error updating player stats:', err);
   }
 };
+
+export const endGameApi = async (gameId) => {
+  try {
+    const gameRef = doc(db, 'game', gameId);
+    await updateDoc(gameRef, {
+      finished: true,
+      endedAt: serverTimestamp()
+    });
+    return true;
+  } catch (err) {
+    console.log('END GAME API ERR: ', err);
+    return false;
+  }
+};

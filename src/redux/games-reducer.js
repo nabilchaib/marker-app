@@ -208,6 +208,13 @@ export const gamesSlice = createSlice({
     resetGameCache: (state) => {
       state.editing = initialState.editing;
     },
+    endGame: (state, action) => {
+      const gameId = action.payload;
+      if (state.byId[gameId]) {
+        state.byId[gameId].finished = true;
+        state.byId[gameId].endedAt = new Date().getTime();
+      }
+    },
   },
   extraReducers: (builder) => {
     builder.addCase('resetStore', () => initialState);
@@ -229,6 +236,7 @@ export const {
   addGameToCache,
   removeGameFromCache,
   resetGameCache,
+  endGame,
 } = gamesSlice.actions;
 
 export default gamesSlice.reducer;

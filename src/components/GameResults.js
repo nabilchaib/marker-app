@@ -1,11 +1,12 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { initialStats } from '../redux/games-reducer';
+import { initialStats, endGame } from '../redux/games-reducer';
 
 const GameResults = ({ game, onBackClick }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const isDrillMode = game.type === 'drill';
   const { teamAId, teamAScore, teamBId, teamBScore } = game;
 
@@ -16,6 +17,15 @@ const GameResults = ({ game, onBackClick }) => {
 
   const drillStats = isDrillMode && game.stats;
   const drillPlayer = players.byId[game.playerId];
+
+  const handleEndGame = async () => {
+    try {
+      dispatch(endGame(game.id));
+      navigate('/games');
+    } catch (err) {
+      console.error('Error ending game:', err);
+    }
+  };
 
   const getGameTitle = (game) => {
     if (game.type === 'pick-up') {
@@ -95,12 +105,18 @@ const GameResults = ({ game, onBackClick }) => {
         </table>
       </div>
 
-      <div className="mt-6 text-center">
+      <div className="mt-6 flex justify-center space-x-4">
         <button
           onClick={onBackClick || (() => navigate('/games'))}
           className="inline-flex items-center px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium rounded-md"
         >
-          ← Back to Games
+          ← Back to Game
+        </button>
+        <button
+          onClick={handleEndGame}
+          className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md"
+        >
+          End {isDrillMode ? 'Drill' : 'Game'}
         </button>
       </div>
     </div>

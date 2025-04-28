@@ -12,10 +12,12 @@ import {
   addDrillCompletion,
   updateLastActions,
   undoLastAction,
+  endGame,
 } from "../redux/games-reducer";
 import "../css/main.css";
 import PlayerSelection from "./PlayerSelection";
 import GameResult from "./GameResults";
+import { buttonStyles } from '../utils/buttonStyles';
 
 const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerSelect }) => {
   const dispatch = useDispatch();
@@ -59,6 +61,7 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
   const navigate = useNavigate();
 
   const [lastActions, setLastActions] = useState(currentGame.actions || []);
+  const [showAllActions, setShowAllActions] = useState(false);
 
   useEffect(() => {
     if (mode === "drill") {
@@ -298,349 +301,135 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
     });
   };
 
+  const handleEndGame = async () => {
+    try {
+      // For freemium version, we only update the Redux store
+      dispatch(endGame(currentGame.id));
+      navigate('/games');
+    } catch (err) {
+      console.error('Error ending game:', err);
+    }
+  };
+
+  const displayedActions = showAllActions
+    ? lastActions.slice(-10)
+    : lastActions.length > 0
+      ? [lastActions[lastActions.length - 1]]
+      : [];
+
   return (
-    <div className="Controls">
-      {/* Team Selection */}
-      {mode === "pick-up" && (
-        <div className="flex justify-around py-4">
-          <button
-            className={`py-4 px-8 md:py-5 md:px-10 text-lg md:text-xl font-bold rounded-lg transition-transform duration-200 transform ${
-              selectedTeam === "teamA"
-                ? "bg-[#f64e07] text-white scale-110"
-                : "bg-gray-300 text-gray-700"
-            }`}
-            onClick={() => handleTeamChange("teamA")}
-          >
-            {teamA?.name || "Team A"}
-          </button>
-
-          <button
-            className={`py-4 px-8 md:py-5 md:px-10 text-lg md:text-xl font-bold rounded-lg transition-transform duration-200 transform ${
-              selectedTeam === "teamB"
-                ? "bg-[#f64e07] text-white scale-110"
-                : "bg-gray-300 text-gray-700"
-            }`}
-            onClick={() => handleTeamChange("teamB")}
-          >
-            {teamB?.name || "Team B"}
-          </button>
-        </div>
-      )}
-
+    <div className="flex flex-col space-y-4 p-4">
       {/* Player Selection */}
-      {showPlayerSelection ? (
-        <PlayerSelection
-          team={mode === "pick-up" ? selectedTeam : null}
-          players={mode === "drill" ? selectedPlayers : playerOptionsMap[selectedTeam]}
-          onSelect={handlePlayerSelect}
-          onClose={setShowPlayerSelection}
-        />
-      ) : (
-        <div className="flex flex-col items-center space-y-4">
-          <button
-            disabled={mode === "pick-up" && !!currentPlayer}
-            className="relative w-full sm:w-auto py-2 px-4 md:py-4 md:px-8 text-base md:text-xl font-bold text-white bg-[#0aa6d6]
-                      rounded-lg shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105 hover:rotate-2 duration-200
-                      focus:outline-none focus:ring-4 focus:ring-[#0aa6d6]"
-            onClick={() => setShowPlayerSelection(true)}
-          >
-            <span className="absolute inset-0 bg-[#0a355e] opacity-75 blur-lg rounded-lg animate-pulse"></span>
-            <span className="relative z-10">
-              {selectedPlayer
-                ? `#${selectedPlayer.number} - ${selectedPlayer.name}`
-                : "Select Player"}
-            </span>
-          </button>
-
-          {/* Drill or Game Mode Scoring Controls */}
-          {mode === "drill" && (
-            <div className="flex space-x-4 w-full">
-              <button
-                onClick={handleDrillAttempt}
-                disabled={attemptLoading}
-                className="w-full sm:w-1/2 py-4 text-lg sm:text-xl font-bold text-white bg-red-600 rounded-lg shadow-md hover:bg-red-500 focus:outline-none"
-              >
-                {attemptLoading ? "Loading..." : "Miss"}
-              </button>
-              <button
-                onClick={handleDrillCompletion}
-                disabled={madeLoading}
-                className="w-full sm:w-1/2 py-4 text-lg sm:text-xl font-bold text-white bg-green-600 rounded-lg shadow-md hover:bg-green-500 focus:outline-none"
-              >
-                {madeLoading ? "Loading..." : "Made"}
-              </button>
-            </div>
-          )}
-
-          {mode === "pick-up" && (
-            <div className="addpoints flex flex-wrap justify-between items-center space-y-4 md:space-y-2 md:space-x-4">
-              <div className="grid grid-cols-3 gap-4 text-center py-4">
-                {/* Free Throw */}
-                <div>
-                  <h3 className="font-semibold text-white">Free Throw</h3>
-                  <button
-                    disabled={madeLoading === 1}
-                    className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white
-                      ${
-                        madeLoading === 1
-                          ? "bg-gray-400"
-                          : "bg-[#f64e07] hover:bg-orange-600"
-                      }
-                      shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                    onClick={() => handleMade(1)}
-                  >
-                    <span className="inline-block w-8 text-center">
-                      {madeLoading === 1 ? "Loading..." : "+1"}
-                    </span>
-                  </button>
-                  <button
-                    disabled={attemptLoading === 1}
-                    className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white mt-2
-                      ${
-                        attemptLoading === 1
-                          ? "bg-gray-400"
-                          : "bg-red-500 hover:bg-red-600"
-                      }
-                      shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                    onClick={() => handleAttempt(1)}
-                  >
-                    <span className="inline-block w-8 text-center">
-                      {attemptLoading === 1 ? "Loading..." : "Miss"}
-                    </span>
-                  </button>
-                </div>
-
-                {/* Two Points */}
-                <div>
-                  <h3 className="font-semibold text-white">2 Points</h3>
-                  <button
-                    disabled={madeLoading === 2}
-                    className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white
-                      ${
-                        madeLoading === 2
-                          ? "bg-gray-400"
-                          : "bg-[#f64e07] hover:bg-orange-600"
-                      }
-                      shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                    onClick={() => handleMade(2)}
-                  >
-                    <span className="inline-block w-8 text-center">
-                      {madeLoading === 2 ? "Loading..." : "+2"}
-                    </span>
-                  </button>
-                  <button
-                    disabled={attemptLoading === 2}
-                    className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white mt-2
-                      ${
-                        attemptLoading === 2
-                          ? "bg-gray-400"
-                          : "bg-red-500 hover:bg-red-600"
-                      }
-                      shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                    onClick={() => handleAttempt(2)}
-                  >
-                    <span className="inline-block w-8 text-center">
-                      {attemptLoading === 2 ? "Loading..." : "Miss"}
-                    </span>
-                  </button>
-                </div>
-
-                {/* Three Points */}
-                <div>
-                  <h3 className="font-semibold text-white">3 Points</h3>
-                  <button
-                    disabled={madeLoading === 3}
-                    className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white
-                      ${
-                        madeLoading === 3
-                          ? "bg-gray-400"
-                          : "bg-[#f64e07] hover:bg-orange-600"
-                      }
-                      shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                    onClick={() => handleMade(3)}
-                  >
-                    <span className="inline-block w-8 text-center">
-                      {madeLoading === 3 ? "Loading..." : "+3"}
-                    </span>
-                  </button>
-                  <button
-                    disabled={attemptLoading === 3}
-                    className={`py-2 px-4 md:py-3 md:px-6 lg:py-4 lg:px-8 w-full rounded-lg font-bold text-white mt-2
-                      ${
-                        attemptLoading === 3
-                          ? "bg-gray-400"
-                          : "bg-red-500 hover:bg-red-600"
-                      }
-                      shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                    onClick={() => handleAttempt(3)}
-                  >
-                    <span className="inline-block w-8 text-center">
-                      {attemptLoading === 3 ? "Loading..." : "Miss"}
-                    </span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Rebounds, Assists, Fouls - Shown only in Game Mode */}
-          {mode === "pick-up" && (
-            <div className="addpoints flex flex-wrap justify-between items-center space-y-4 md:space-y-2 md:space-x-4">
-              {/* Rebound */}
-              <div className="stat flex flex-col items-center w-full md:w-1/3 space-y-2">
-                <h3 className="font-semibold text-white mb-2">Rebound</h3>
-                <div className="flex space-x-2">
-                  <button
-                    disabled={reboundLoading === "offensive"}
-                    className={`py-2 px-4 text-sm md:text-base rounded-lg font-bold text-white
-                      ${
-                        reboundLoading === "offensive"
-                          ? "bg-gray-400"
-                          : "bg-[#f64e07] hover:bg-orange-600"
-                      }
-                      shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                    onClick={() => handleRebound("offensive")}
-                  >
-                    <span className="inline-block w-12 text-center">
-                      {reboundLoading === "offensive"
-                        ? "Loading..."
-                        : "Offense"}
-                    </span>
-                  </button>
-
-                  <button
-                    disabled={reboundLoading === "defensive"}
-                    className={`py-2 px-4 text-sm md:text-base rounded-lg font-bold text-white
-                      ${
-                        reboundLoading === "defensive"
-                          ? "bg-gray-400"
-                          : "bg-[#f64e07] hover:bg-orange-600"
-                      }
-                      shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                    onClick={() => handleRebound("defensive")}
-                  >
-                    <span className="inline-block w-12 text-center">
-                      {reboundLoading === "defensive"
-                        ? "Loading..."
-                        : "Defense"}
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Assist and Foul */}
-              <div className="stat flex flex-col items-center w-full md:w-1/3 space-y-4">
-                <button
-                  disabled={assistLoading}
-                  className={`py-2 px-6 md:py-3 md:px-8 lg:py-4 lg:px-10 w-full rounded-lg font-bold text-white
-                    ${
-                      assistLoading
-                        ? "bg-gray-400"
-                        : "bg-[#0aa6d6] hover:bg-blue-600"
-                    }
-                    shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                  onClick={handleAssist}
-                >
-                  <span className="inline-block w-12 text-center">
-                    {assistLoading ? "Loading..." : "Assist"}
-                  </span>
-                </button>
-
-                <button
-                  disabled={foulLoading}
-                  className={`py-2 px-6 md:py-3 md:px-8 lg:py-4 lg:px-10 w-full rounded-lg font-bold text-white
-                    ${
-                      foulLoading
-                        ? "bg-gray-400"
-                        : "bg-red-500 hover:bg-red-600"
-                    }
-                    shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-                  onClick={handleFoul}
-                >
-                  <span className="inline-block w-12 text-center">
-                    {foulLoading ? "Loading..." : "Foul"}
-                  </span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Undo Last Action */}
-      <div className="controls py-8 px-6 flex flex-col items-center space-y-6">
+      <div className="flex flex-col space-y-2">
+        <h2 className="text-white font-bold text-lg">Select Player</h2>
         <button
-          disabled={undoLoading}
-          className={`py-2 px-6 w-full md:w-auto rounded-lg font-bold text-white ${
-            undoLoading ? "bg-gray-400" : "bg-[#f64e07] hover:bg-orange-600"
-          } shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105`}
-          onClick={handleDeleteLastAction}
+          className={buttonStyles.playerSelect}
+          onClick={() => setShowPlayerSelection(true)}
         >
-          {undoLoading ? "Loading..." : "Undo Last Action"}
+          {selectedPlayer ? selectedPlayer.name : "Select Player"}
         </button>
+      </div>
 
-        {/* Show Game Result */}
-        <div className="addpoints py-4 px-6 flex justify-center">
-          <button
-            className="py-4 px-6 w-full md:w-auto rounded-lg font-bold text-white bg-[#0aa6d6] hover:bg-blue-600 shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105"
-            onClick={handleShowGameResult}
+      {/* Shot Controls Grid */}
+      <div className="grid grid-cols-3 gap-4 w-full">
+        {/* Free Throw Column */}
+        <div className="flex flex-col items-center space-y-2">
+          <h3 className="text-white font-semibold">Free Throw</h3>
+          <button 
+            className={`${buttonStyles.madeShot} w-full`} 
+            onClick={() => handleMade(1)}
+            disabled={madeLoading === 1}
           >
-            {mode === "drill" ? "Drill Stats" : "Game Stats"}
+            {madeLoading === 1 ? "Loading..." : "+1"}
+          </button>
+          <button 
+            className={`${buttonStyles.missedShot} w-full`} 
+            onClick={() => handleAttempt(1)}
+            disabled={attemptLoading === 1}
+          >
+            {attemptLoading === 1 ? "Loading..." : "Miss"}
+          </button>
+        </div>
+
+        {/* 2 Points Column */}
+        <div className="flex flex-col items-center space-y-2">
+          <h3 className="text-white font-semibold">2 Points</h3>
+          <button 
+            className={`${buttonStyles.madeShot} w-full`} 
+            onClick={() => handleMade(2)}
+            disabled={madeLoading === 2}
+          >
+            {madeLoading === 2 ? "Loading..." : "+2"}
+          </button>
+          <button 
+            className={`${buttonStyles.missedShot} w-full`} 
+            onClick={() => handleAttempt(2)}
+            disabled={attemptLoading === 2}
+          >
+            {attemptLoading === 2 ? "Loading..." : "Miss"}
+          </button>
+        </div>
+
+        {/* 3 Points Column */}
+        <div className="flex flex-col items-center space-y-2">
+          <h3 className="text-white font-semibold">3 Points</h3>
+          <button 
+            className={`${buttonStyles.madeShot} w-full`} 
+            onClick={() => handleMade(3)}
+            disabled={madeLoading === 3}
+          >
+            {madeLoading === 3 ? "Loading..." : "+3"}
+          </button>
+          <button 
+            className={`${buttonStyles.missedShot} w-full`} 
+            onClick={() => handleAttempt(3)}
+            disabled={attemptLoading === 3}
+          >
+            {attemptLoading === 3 ? "Loading..." : "Miss"}
           </button>
         </div>
       </div>
 
-      {/* Last Actions Table */}
-      <div className="py-4">
-        <h2 className="text-lg sm:text-xl font-bold text-orange-600 mb-4 text-center">
-          Last Actions
-        </h2>
-        <div className="overflow-x-auto">
-          <table className="min-w-full table-auto bg-gray-100 border border-gray-300 rounded-lg shadow-sm">
-            <thead>
-              <tr className="bg-gray-200 text-gray-800">
-                <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">
-                  Action
-                </th>
-                <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">
-                  Points
-                </th>
-                <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">
-                  Player #
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {lastActions.slice(-10).map((action, index) => (
-                <tr
-                  key={action.id}
-                  className={`${
-                    index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                  } hover:bg-gray-200 transition-colors`}
-                >
-                  <td className="py-3 px-6 text-sm text-gray-900 border-b border-gray-300">
-                    {action.action}
-                  </td>
-                  <td className="py-3 px-6 text-sm text-green-600 font-semibold border-b border-gray-300">
-                    {action.points}
-                  </td>
-                  <td className="py-3 px-6 text-sm text-orange-500 font-semibold border-b border-gray-300">
-                    #{action.playerNumber}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Other Controls */}
+      <div className="grid grid-cols-2 gap-4 w-full">
+        <button className={buttonStyles.assist} onClick={handleAssist}>
+          Assist
+        </button>
+        <button className={buttonStyles.rebound} onClick={() => handleRebound("offensive")}>
+          Rebound
+        </button>
+        <button className={buttonStyles.foul} onClick={handleFoul}>
+          Foul
+        </button>
+        <button className={buttonStyles.undo} onClick={handleDeleteLastAction}>
+          Undo
+        </button>
       </div>
+
+      {/* Game End Button */}
+      <button 
+        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-colors duration-200"
+        onClick={handleShowGameResult}
+      >
+        End Game
+      </button>
+
+      {/* Player Selection Modal */}
+      {showPlayerSelection && (
+        <PlayerSelection
+          players={mode === "pick-up" ? allPlayers : selectedTeam === "teamA" ? teamAPlayers : teamBPlayers}
+          onSelect={handlePlayerSelect}
+          onClose={() => setShowPlayerSelection(false)}
+        />
+      )}
 
       {/* Game Result Modal */}
       {showGameResult && (
-        <div className="game-result-overlay fixed inset-0 flex justify-center items-center bg-black bg-opacity-80 z-50">
-          <div className="game-result-container w-full max-w-4xl rounded-lg shadow-2xl bg-white text-center relative overflow-y-auto max-h-screen">
-            <GameResult game={currentGame} onBackClick={handleBackClick} />
-          </div>
-        </div>
+        <GameResult
+          game={currentGame}
+          onClose={() => setShowGameResult(false)}
+          onEndGame={handleEndGame}
+        />
       )}
     </div>
   );
