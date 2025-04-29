@@ -7,7 +7,7 @@ export const actionColors = {
   undo: 'bg-gray-400 hover:bg-gray-500',       // Gray = Undo
 };
 
-export const baseButtonStyles = 'text-white font-bold py-2 px-4 rounded-lg shadow-md transition-transform duration-150 transform hover:scale-105 w-full sm:w-auto';
+export const baseButtonStyles = 'text-white font-bold py-2 px-6 rounded-lg shadow-md transition-transform duration-150 transform hover:scale-105 w-full sm:w-auto';
 
 export const buttonStyles = {
   madeShot: `${baseButtonStyles} ${actionColors.made}`,

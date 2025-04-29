@@ -63,6 +63,19 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
   const [lastActions, setLastActions] = useState(currentGame.actions || []);
   const [showAllActions, setShowAllActions] = useState(false);
 
+  // Calculate drill stats
+  const drillStats = useMemo(() => {
+    if (mode === "drill" && selectedPlayer) {
+      return currentGame.stats[selectedPlayer.id] || { attempts: 0, completions: 0 };
+    }
+    return { attempts: 0, completions: 0 };
+  }, [mode, selectedPlayer, currentGame.stats]);
+
+  const successRate = useMemo(() => {
+    if (drillStats.attempts === 0) return 0;
+    return ((drillStats.completions / drillStats.attempts) * 100).toFixed(1);
+  }, [drillStats]);
+
   useEffect(() => {
     if (mode === "drill") {
       setPlayerOptionsMap({
@@ -104,7 +117,7 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
       dispatch(
         addAttemptedShot({
           gameId: currentGame.id,
-          teamId: selectedTeam === "teamA" ? teamA.id : teamB.id,
+          teamId: mode === "pick-up" ? (selectedTeam === "teamA" ? teamA.id : teamB.id) : selectedPlayer.id,
           playerId: selectedPlayer.id,
           gameMode: mode,
           points,
@@ -116,9 +129,9 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
           id: uuid(),
           action: "addAttemptedShot",
           gameId: currentGame.id,
-          teamId: selectedTeam === "teamA" ? teamA.id : teamB.id,
+          teamId: mode === "pick-up" ? (selectedTeam === "teamA" ? teamA.id : teamB.id) : selectedPlayer.id,
           playerId: selectedPlayer.id,
-          points: points,
+          points,
           playerNumber: selectedPlayer.number,
           gameMode: mode,
         },
@@ -133,7 +146,7 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
       dispatch(
         addMadeShot({
           gameId: currentGame.id,
-          teamId: selectedTeam === "teamA" ? teamA.id : teamB.id,
+          teamId: mode === "pick-up" ? (selectedTeam === "teamA" ? teamA.id : teamB.id) : selectedPlayer.id,
           playerId: selectedPlayer.id,
           gameMode: mode,
           points,
@@ -145,7 +158,7 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
           id: uuid(),
           action: "addMadeShot",
           gameId: currentGame.id,
-          teamId: selectedTeam === "teamA" ? teamA.id : teamB.id,
+          teamId: mode === "pick-up" ? (selectedTeam === "teamA" ? teamA.id : teamB.id) : selectedPlayer.id,
           playerId: selectedPlayer.id,
           points,
           playerNumber: selectedPlayer.number,
@@ -288,6 +301,7 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
 
   const handleShowGameResult = () => {
     setShowGameResult(true);
+    handleEndGame();
   };
 
   const handleBackClick = () => {
@@ -318,118 +332,234 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
       : [];
 
   return (
-    <div className="flex flex-col space-y-4 p-4">
+    <div className="Controls">
+      {/* Team Selection */}
+      {mode === "pick-up" && (
+        <div className="flex justify-around py-4">
+          <button
+            className={`py-4 px-8 md:py-5 md:px-10 text-lg md:text-xl font-bold rounded-lg transition-transform duration-200 transform ${
+              selectedTeam === "teamA"
+                ? "bg-[#f64e07] text-white scale-110"
+                : "bg-gray-300 text-gray-700"
+            }`}
+            onClick={() => handleTeamChange("teamA")}
+          >
+            {teamA?.name || "Team A"}
+          </button>
+
+          <button
+            className={`py-4 px-8 md:py-5 md:px-10 text-lg md:text-xl font-bold rounded-lg transition-transform duration-200 transform ${
+              selectedTeam === "teamB"
+                ? "bg-[#f64e07] text-white scale-110"
+                : "bg-gray-300 text-gray-700"
+            }`}
+            onClick={() => handleTeamChange("teamB")}
+          >
+            {teamB?.name || "Team B"}
+          </button>
+        </div>
+      )}
+
       {/* Player Selection */}
-      <div className="flex flex-col space-y-2">
-        <h2 className="text-white font-bold text-lg">Select Player</h2>
-        <button
-          className={buttonStyles.playerSelect}
-          onClick={() => setShowPlayerSelection(true)}
-        >
-          {selectedPlayer ? selectedPlayer.name : "Select Player"}
-        </button>
-      </div>
-
-      {/* Shot Controls Grid */}
-      <div className="grid grid-cols-3 gap-4 w-full">
-        {/* Free Throw Column */}
-        <div className="flex flex-col items-center space-y-2">
-          <h3 className="text-white font-semibold">Free Throw</h3>
-          <button 
-            className={`${buttonStyles.madeShot} w-full`} 
-            onClick={() => handleMade(1)}
-            disabled={madeLoading === 1}
-          >
-            {madeLoading === 1 ? "Loading..." : "+1"}
-          </button>
-          <button 
-            className={`${buttonStyles.missedShot} w-full`} 
-            onClick={() => handleAttempt(1)}
-            disabled={attemptLoading === 1}
-          >
-            {attemptLoading === 1 ? "Loading..." : "Miss"}
-          </button>
-        </div>
-
-        {/* 2 Points Column */}
-        <div className="flex flex-col items-center space-y-2">
-          <h3 className="text-white font-semibold">2 Points</h3>
-          <button 
-            className={`${buttonStyles.madeShot} w-full`} 
-            onClick={() => handleMade(2)}
-            disabled={madeLoading === 2}
-          >
-            {madeLoading === 2 ? "Loading..." : "+2"}
-          </button>
-          <button 
-            className={`${buttonStyles.missedShot} w-full`} 
-            onClick={() => handleAttempt(2)}
-            disabled={attemptLoading === 2}
-          >
-            {attemptLoading === 2 ? "Loading..." : "Miss"}
-          </button>
-        </div>
-
-        {/* 3 Points Column */}
-        <div className="flex flex-col items-center space-y-2">
-          <h3 className="text-white font-semibold">3 Points</h3>
-          <button 
-            className={`${buttonStyles.madeShot} w-full`} 
-            onClick={() => handleMade(3)}
-            disabled={madeLoading === 3}
-          >
-            {madeLoading === 3 ? "Loading..." : "+3"}
-          </button>
-          <button 
-            className={`${buttonStyles.missedShot} w-full`} 
-            onClick={() => handleAttempt(3)}
-            disabled={attemptLoading === 3}
-          >
-            {attemptLoading === 3 ? "Loading..." : "Miss"}
-          </button>
-        </div>
-      </div>
-
-      {/* Other Controls */}
-      <div className="grid grid-cols-2 gap-4 w-full">
-        <button className={buttonStyles.assist} onClick={handleAssist}>
-          Assist
-        </button>
-        <button className={buttonStyles.rebound} onClick={() => handleRebound("offensive")}>
-          Rebound
-        </button>
-        <button className={buttonStyles.foul} onClick={handleFoul}>
-          Foul
-        </button>
-        <button className={buttonStyles.undo} onClick={handleDeleteLastAction}>
-          Undo
-        </button>
-      </div>
-
-      {/* Game End Button */}
-      <button 
-        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-colors duration-200"
-        onClick={handleShowGameResult}
-      >
-        End Game
-      </button>
-
-      {/* Player Selection Modal */}
-      {showPlayerSelection && (
+      {showPlayerSelection ? (
         <PlayerSelection
-          players={mode === "pick-up" ? allPlayers : selectedTeam === "teamA" ? teamAPlayers : teamBPlayers}
+          team={mode === "pick-up" ? selectedTeam : null}
+          players={mode === "drill" ? selectedPlayers : playerOptionsMap[selectedTeam]}
           onSelect={handlePlayerSelect}
-          onClose={() => setShowPlayerSelection(false)}
+          onClose={setShowPlayerSelection}
         />
+      ) : (
+        <div className="flex flex-col items-center space-y-4">
+          <button
+            disabled={mode === "pick-up" && !!currentPlayer}
+            className="relative w-full sm:w-auto py-2 px-4 md:py-4 md:px-8 text-base md:text-xl font-bold text-white bg-[#0aa6d6]
+                      rounded-lg shadow-lg hover:shadow-2xl transition-transform transform hover:scale-105 hover:rotate-2 duration-200
+                      focus:outline-none focus:ring-4 focus:ring-[#0aa6d6]"
+            onClick={() => setShowPlayerSelection(true)}
+          >
+            <span className="absolute inset-0 bg-[#0a355e] opacity-75 blur-lg rounded-lg animate-pulse"></span>
+            <span className="relative z-10">
+              {selectedPlayer
+                ? `#${selectedPlayer.number} - ${selectedPlayer.name}`
+                : "Select Player"}
+            </span>
+          </button>
+
+          {mode === "drill" ? (
+            <div className="flex flex-col items-center justify-center space-y-6 p-4 w-full">
+              <h2 className="text-xl font-bold text-white">
+                Drill Mode: {selectedPlayer?.name}
+              </h2>
+
+              <div className="flex space-x-4">
+                <button 
+                  className={`${buttonStyles.madeShot} py-4 px-8 text-xl`} 
+                  onClick={handleDrillCompletion}
+                >
+                  Made 
+                </button>
+                <button 
+                  className={`${buttonStyles.missedShot} py-4 px-8 text-xl`} 
+                  onClick={handleDrillAttempt}
+                >
+                  Miss 
+                </button>
+              </div>
+
+              <div className="flex space-x-4">
+                <button className={buttonStyles.undo} onClick={handleDeleteLastAction}>Undo</button>
+                <button 
+                  className="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-lg" 
+                  onClick={handleShowGameResult}
+                >
+                  End Drill
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Shot Controls Grid */}
+              <div className="grid grid-cols-3 gap-2 w-full px-4">
+                {/* Free Throw Column */}
+                <div className="flex flex-col items-center space-y-2">
+                  <h3 className="text-white font-semibold">Free Throw</h3>
+                  <button 
+                    className={`${buttonStyles.madeShot} w-full py-4 px-16 text-xl`} 
+
+                    onClick={() => mode === "drill" ? handleDrillCompletion() : handleMade(1)}
+                    disabled={madeLoading === 1}
+                  >
+                    {madeLoading === 1 ? "Loading..." : "+1"}
+                  </button>
+                  <button 
+                    className={`${buttonStyles.missedShot} w-full py-4 px-6 text-xl`} 
+                    onClick={() => mode === "drill" ? handleDrillAttempt() : handleAttempt(1)}
+                    disabled={attemptLoading === 1}
+                  >
+                    {attemptLoading === 1 ? "Loading..." : "Miss"}
+                  </button>
+                </div>
+
+                {/* 2 Points Column */}
+                <div className="flex flex-col items-center space-y-2">
+                  <h3 className="text-white font-semibold">2 Points</h3>
+                  <button 
+                    className={`${buttonStyles.madeShot} w-full py-4 px-16 text-xl`} 
+                    onClick={() => mode === "drill" ? handleDrillCompletion() : handleMade(2)}
+                    disabled={madeLoading === 2}
+                  >
+                    {madeLoading === 2 ? "Loading..." : "+2"}
+                  </button>
+                  <button 
+                    className={`${buttonStyles.missedShot} w-full py-4 px-6 text-xl`} 
+                    onClick={() => mode === "drill" ? handleDrillAttempt() : handleAttempt(2)}
+                    disabled={attemptLoading === 2}
+                  >
+                    {attemptLoading === 2 ? "Loading..." : "Miss"}
+                  </button>
+                </div>
+
+                {/* 3 Points Column */}
+                <div className="flex flex-col items-center space-y-2">
+                  <h3 className="text-white font-semibold">3 Points</h3>
+                  <button 
+                    className={`${buttonStyles.madeShot} w-full py-4 px-16 text-xl`} 
+                    onClick={() => mode === "drill" ? handleDrillCompletion() : handleMade(3)}
+                    disabled={madeLoading === 3}
+                  >
+                    {madeLoading === 3 ? "Loading..." : "+3"}
+                  </button>
+                  <button 
+                    className={`${buttonStyles.missedShot} w-full py-4 px-6 text-xl`} 
+                    onClick={() => mode === "drill" ? handleDrillAttempt() : handleAttempt(3)}
+                    disabled={attemptLoading === 3}
+                  >
+                    {attemptLoading === 3 ? "Loading..." : "Miss"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Other Controls */}
+              <div className="grid grid-cols-2 gap-4 w-full">
+                <button className={buttonStyles.assist} onClick={handleAssist}>
+                  Assist
+                </button>
+                <button className={buttonStyles.rebound} onClick={() => handleRebound("offensive")}>
+                  Rebound
+                </button>
+                <button className={buttonStyles.foul} onClick={handleFoul}>
+                  Foul
+                </button>
+                <button className={buttonStyles.undo} onClick={handleDeleteLastAction}>
+                  Undo
+                </button>
+              </div>
+
+              {/* Game End Button */}
+              <button 
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-colors duration-200"
+                onClick={handleShowGameResult}
+              >
+                End Game
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Last Actions Table */}
+      {mode === "pick-up" && (
+        <div className="py-4">
+          <h2 className="text-lg sm:text-xl font-bold text-orange-600 mb-4 text-center">
+            Last Actions
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto bg-gray-100 border border-gray-300 rounded-lg shadow-sm">
+              <thead>
+                <tr className="bg-gray-200 text-gray-800">
+                  <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">
+                    Action
+                  </th>
+                  <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">
+                    Points
+                  </th>
+                  <th className="py-3 px-6 text-left text-sm font-semibold border-b border-gray-300">
+                    Player #
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {lastActions.slice(-10).map((action, index) => (
+                  <tr
+                    key={action.id}
+                    className={`${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    } hover:bg-gray-200 transition-colors`}
+                  >
+                    <td className="py-3 px-6 text-sm text-gray-900 border-b border-gray-300">
+                      {action.action}
+                    </td>
+                    <td className="py-3 px-6 text-sm text-green-600 font-semibold border-b border-gray-300">
+                      {action.points}
+                    </td>
+                    <td className="py-3 px-6 text-sm text-orange-500 font-semibold border-b border-gray-300">
+                      #{action.playerNumber}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       {/* Game Result Modal */}
       {showGameResult && (
-        <GameResult
-          game={currentGame}
-          onClose={() => setShowGameResult(false)}
-          onEndGame={handleEndGame}
-        />
+        <div className="game-result-overlay fixed inset-0 flex justify-center items-center bg-black bg-opacity-80 z-50">
+          <div className="game-result-container w-full max-w-4xl rounded-lg shadow-2xl bg-white text-center relative overflow-y-auto max-h-screen">
+            <GameResult game={currentGame} onBackClick={handleBackClick} />
+          </div>
+        </div>
       )}
     </div>
   );

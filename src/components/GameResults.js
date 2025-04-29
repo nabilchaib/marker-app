@@ -68,46 +68,42 @@ const GameResults = ({ game, onBackClick }) => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-cyan-500 text-center mb-6">
-        {getGameTitle(game)}
-      </h2>
-
-      <div className="overflow-x-auto shadow-md rounded-lg">
-        <table className="min-w-full text-sm text-left text-gray-700">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-100">
-            <tr>
-              <th scope="col" className="p-3">Player</th>
-              {isDrillMode ? (
-                <>
-                  <th scope="col" className="p-3">Attempts</th>
-                  <th scope="col" className="p-3">Completions</th>
-                  <th scope="col" className="p-3">Success Rate</th>
-                </>
-              ) : (
-                <>
-                  <th scope="col" className="p-3">Points</th>
-                  <th scope="col" className="p-3">Rebounds</th>
-                  <th scope="col" className="p-3">Assists</th>
-                  <th scope="col" className="p-3">Fouls</th>
-                </>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {isDrillMode ? drillPlayerStats() : (
-              <>
-                {teamA && playerStats(teamA)}
-                {teamB && playerStats(teamB)}
-              </>
-            )}
-          </tbody>
-        </table>
-      </div>
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-4">{getGameTitle(game)}</h2>
+      
+      {isDrillMode ? (
+        <div className="mb-6">
+          <h3 className="text-xl font-semibold mb-2">Drill Stats</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-100 p-4 rounded-lg">
+              <p className="text-sm text-gray-600">Completions</p>
+              <p className="text-2xl font-bold">{drillStats?.completions || 0}</p>
+            </div>
+            <div className="bg-gray-100 p-4 rounded-lg">
+              <p className="text-sm text-gray-600">Attempts</p>
+              <p className="text-2xl font-bold">{drillStats?.attempts || 0}</p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="mb-6">
+          <h3 className="text-xl font-semibold mb-2">Final Score</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-gray-100 p-4 rounded-lg">
+              <p className="text-sm text-gray-600">{teamA?.name || 'Team A'}</p>
+              <p className="text-2xl font-bold">{teamAScore || 0}</p>
+            </div>
+            <div className="bg-gray-100 p-4 rounded-lg">
+              <p className="text-sm text-gray-600">{teamB?.name || 'Team B'}</p>
+              <p className="text-2xl font-bold">{teamBScore || 0}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 flex justify-center space-x-4">
         <button
-          onClick={onBackClick || (() => navigate('/games'))}
+          onClick={onBackClick}
           className="inline-flex items-center px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium rounded-md"
         >
           ← Back to Game
