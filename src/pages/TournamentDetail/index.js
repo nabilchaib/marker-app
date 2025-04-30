@@ -6,6 +6,7 @@ import { getTournamentByIdApi, addGameApi, updateTournamentApi } from '../../fir
 import { updateTournament, addGameToTournament } from '../../redux/tournaments-reducer';
 import { addNewGame } from '../../redux/games-reducer';
 import Icon from '../../components/Icon';
+import ManualScoreModal from '../../components/ManualScoreModal';
 
 const TournamentDetail = () => {
   const { tournamentId } = useParams();
@@ -14,6 +15,8 @@ const TournamentDetail = () => {
   const [loading, setLoading] = useState(true);
   const user = useSelector(state => state.user);
   const teams = useSelector(state => state.teams.byId);
+  const [showManualScoreModal, setShowManualScoreModal] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState(null);
 
   // Get tournament from Redux store
   const tournament = useSelector(state => state.tournaments.byId[tournamentId]);
@@ -112,6 +115,19 @@ const TournamentDetail = () => {
     }
   };
 
+  const handleManualScore = (round, matchIndex) => {
+    const match = tournament.rounds.find(r => r.name === round)?.games[matchIndex];
+    if (match) {
+      setSelectedMatch({
+        round,
+        matchIndex,
+        teamA: teams[match.teamAId],
+        teamB: teams[match.teamBId]
+      });
+      setShowManualScoreModal(true);
+    }
+  };
+
   const renderKnockoutBracket = () => {
     if (!tournament || !tournament.rounds) {
       return <div>No bracket data available</div>;
@@ -132,6 +148,12 @@ const TournamentDetail = () => {
                   const matchSpacing = matchesInPreviousRound > round.games.length
                     ? `${matchesInPreviousRound / round.games.length * 8}rem`
                     : '8rem';
+
+                  // Get team names
+                  const teamA = teams[match.teamAId];
+                  const teamB = teams[match.teamBId];
+                  const teamAName = teamA ? teamA.name : match.teamAName || 'TBD';
+                  const teamBName = teamB ? teamB.name : match.teamBName || 'TBD';
 
                   return (
                     <div
@@ -159,7 +181,7 @@ const TournamentDetail = () => {
                       <div className={`flex items-center justify-between p-2 ${match.winnerId === match.teamAId ? 'bg-[#f64e07] bg-opacity-10' : ''}`}>
                         <div className="flex items-center">
                           {match.teamAId ? (
-                            <span>{match.teamAName}</span>
+                            <span>{teamAName}</span>
                           ) : (
                             <span className="text-gray-400">TBD</span>
                           )}
@@ -172,7 +194,7 @@ const TournamentDetail = () => {
                       <div className={`flex items-center justify-between p-2 ${match.winnerId === match.teamBId ? 'bg-[#f64e07] bg-opacity-10' : ''}`}>
                         <div className="flex items-center">
                           {match.teamBId ? (
-                            <span>{match.teamBName}</span>
+                            <span>{teamBName}</span>
                           ) : (
                             <span className="text-gray-400">TBD</span>
                           )}
@@ -191,12 +213,20 @@ const TournamentDetail = () => {
                               View Game
                             </Link>
                           ) : (
-                            <button
-                              onClick={() => handleStartGame(round.name, matchIndex)}
-                              className="bg-[#f64e07] hover:bg-[#d84307] text-white font-bold py-1 px-3 rounded-lg shadow-md transition-all"
-                            >
-                              Start Game
-                            </button>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => handleStartGame(round.name, matchIndex)}
+                                className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                              >
+                                Start Game
+                              </button>
+                              <button
+                                onClick={() => handleManualScore(round.name, matchIndex)}
+                                className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                              >
+                                Enter Score
+                              </button>
+                            </div>
                           )}
                         </div>
                       )}
@@ -319,12 +349,20 @@ const TournamentDetail = () => {
                                 View Game
                               </Link>
                             ) : (
-                              <button
-                                onClick={() => handleStartGame(round.name, matchIndex)}
-                                className="text-sm bg-blue-500 hover:bg-blue-700 text-white py-1 px-3 rounded"
-                              >
-                                Start Game
-                              </button>
+                              <div className="flex space-x-2">
+                                <button
+                                  onClick={() => handleStartGame(round.name, matchIndex)}
+                                  className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
+                                >
+                                  Start Game
+                                </button>
+                                <button
+                                  onClick={() => handleManualScore(round.name, matchIndex)}
+                                  className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                >
+                                  Enter Score
+                                </button>
+                              </div>
                             )}
                           </div>
                         )}
@@ -440,6 +478,21 @@ const TournamentDetail = () => {
           : renderRoundRobinSchedule()
         }
       </div>
+
+      {selectedMatch && (
+        <ManualScoreModal
+          isOpen={showManualScoreModal}
+          onClose={() => {
+            setShowManualScoreModal(false);
+            setSelectedMatch(null);
+          }}
+          tournamentId={tournamentId}
+          round={selectedMatch.round}
+          matchIndex={selectedMatch.matchIndex}
+          teamA={selectedMatch.teamA}
+          teamB={selectedMatch.teamB}
+        />
+      )}
     </div>
   );
 };

@@ -76,6 +76,8 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
     return ((drillStats.completions / drillStats.attempts) * 100).toFixed(1);
   }, [drillStats]);
 
+  const [showEndGameConfirmation, setShowEndGameConfirmation] = useState(false);
+
   useEffect(() => {
     if (mode === "drill") {
       setPlayerOptionsMap({
@@ -301,7 +303,16 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
 
   const handleShowGameResult = () => {
     setShowGameResult(true);
+  };
+
+  const handleConfirmEndGame = () => {
+    setShowEndGameConfirmation(false);
+    setShowGameResult(true);
     handleEndGame();
+  };
+
+  const handleCancelEndGame = () => {
+    setShowEndGameConfirmation(false);
   };
 
   const handleBackClick = () => {
@@ -409,31 +420,30 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
               <div className="flex space-x-4">
                 <button className={buttonStyles.undo} onClick={handleDeleteLastAction}>Undo</button>
                 <button 
-                  className="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-3 rounded-lg" 
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-lg" 
                   onClick={handleShowGameResult}
                 >
-                  End Drill
+                  Game Results
                 </button>
               </div>
             </div>
           ) : (
             <>
               {/* Shot Controls Grid */}
-              <div className="grid grid-cols-3 gap-2 w-full px-4">
+              <div className="grid grid-cols-3 gap-1 w-full px-2">
                 {/* Free Throw Column */}
                 <div className="flex flex-col items-center space-y-2">
                   <h3 className="text-white font-semibold">Free Throw</h3>
                   <button 
-                    className={`${buttonStyles.madeShot} w-full py-4 px-16 text-xl`} 
-
-                    onClick={() => mode === "drill" ? handleDrillCompletion() : handleMade(1)}
+                    className={`${buttonStyles.madeShot} w-full py-4 px-20 text-xl`} 
+                    onClick={() => handleMade(1)}
                     disabled={madeLoading === 1}
                   >
                     {madeLoading === 1 ? "Loading..." : "+1"}
                   </button>
                   <button 
-                    className={`${buttonStyles.missedShot} w-full py-4 px-6 text-xl`} 
-                    onClick={() => mode === "drill" ? handleDrillAttempt() : handleAttempt(1)}
+                    className={`${buttonStyles.missedShot} w-full py-4 px-8 text-xl`} 
+                    onClick={() => handleAttempt(1)}
                     disabled={attemptLoading === 1}
                   >
                     {attemptLoading === 1 ? "Loading..." : "Miss"}
@@ -444,15 +454,15 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
                 <div className="flex flex-col items-center space-y-2">
                   <h3 className="text-white font-semibold">2 Points</h3>
                   <button 
-                    className={`${buttonStyles.madeShot} w-full py-4 px-16 text-xl`} 
-                    onClick={() => mode === "drill" ? handleDrillCompletion() : handleMade(2)}
+                    className={`${buttonStyles.madeShot} w-full py-4 px-20 text-xl`} 
+                    onClick={() => handleMade(2)}
                     disabled={madeLoading === 2}
                   >
                     {madeLoading === 2 ? "Loading..." : "+2"}
                   </button>
                   <button 
-                    className={`${buttonStyles.missedShot} w-full py-4 px-6 text-xl`} 
-                    onClick={() => mode === "drill" ? handleDrillAttempt() : handleAttempt(2)}
+                    className={`${buttonStyles.missedShot} w-full py-4 px-8 text-xl`} 
+                    onClick={() => handleAttempt(2)}
                     disabled={attemptLoading === 2}
                   >
                     {attemptLoading === 2 ? "Loading..." : "Miss"}
@@ -463,15 +473,15 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
                 <div className="flex flex-col items-center space-y-2">
                   <h3 className="text-white font-semibold">3 Points</h3>
                   <button 
-                    className={`${buttonStyles.madeShot} w-full py-4 px-16 text-xl`} 
-                    onClick={() => mode === "drill" ? handleDrillCompletion() : handleMade(3)}
+                    className={`${buttonStyles.madeShot} w-full py-4 px-20 text-xl`} 
+                    onClick={() => handleMade(3)}
                     disabled={madeLoading === 3}
                   >
                     {madeLoading === 3 ? "Loading..." : "+3"}
                   </button>
                   <button 
-                    className={`${buttonStyles.missedShot} w-full py-4 px-6 text-xl`} 
-                    onClick={() => mode === "drill" ? handleDrillAttempt() : handleAttempt(3)}
+                    className={`${buttonStyles.missedShot} w-full py-4 px-8 text-xl`} 
+                    onClick={() => handleAttempt(3)}
                     disabled={attemptLoading === 3}
                   >
                     {attemptLoading === 3 ? "Loading..." : "Miss"}
@@ -495,12 +505,12 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
                 </button>
               </div>
 
-              {/* Game End Button */}
+              {/* Game Results Button */}
               <button 
-                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-colors duration-200"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition-colors duration-200"
                 onClick={handleShowGameResult}
               >
-                End Game
+                Game Results
               </button>
             </>
           )}
@@ -549,6 +559,35 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* End Game Confirmation Modal */}
+      {showEndGameConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-2xl font-bold mb-4 text-center">
+              End {mode === "drill" ? "Drill" : "Game"}?
+            </h2>
+            <p className="text-gray-600 mb-6 text-center">
+              Are you sure you want to end this {mode === "drill" ? "drill" : "game"}? 
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={handleCancelEndGame}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmEndGame}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
+              >
+                End {mode === "drill" ? "Drill" : "Game"}
+              </button>
+            </div>
           </div>
         </div>
       )}
