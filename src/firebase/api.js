@@ -113,15 +113,29 @@ export const addGameApi = async (game) => {
     const newGameRef = await addDoc(gameRef, gameToAdd)
     const newGameSnapshot = await getDoc(newGameRef);
     const newGameData = newGameSnapshot.data();
+    
+    // Safely handle the date conversion
+    let dateString;
+    if (newGameData.date) {
+      if (typeof newGameData.date.toDate === 'function') {
+        dateString = newGameData.date.toDate().toISOString();
+      } else if (newGameData.date instanceof Date) {
+        dateString = newGameData.date.toISOString();
+      } else {
+        dateString = newGameData.date;
+      }
+    }
+
     const newGame = {
       id: newGameRef.id,
       ...newGameData,
-      date: newGameData.date?.toDate().toISOString(),
+      date: dateString,
       players: game.players  // Ensure players structure is included in the return object
     };
     return newGame;
   } catch (err) {
-    console.log('ADD GAME API ERR: ', err);
+    console.error('ADD GAME API ERR: ', err);
+    throw new Error('Failed to save game to database');
   }
 };
 
@@ -961,5 +975,19 @@ export const updatePlayerStatsApi = async (playerStatsId, updatedFields) => {
     await updateDoc(playerStatsRef, updatedFields);
   } catch (err) {
     console.error('Error updating player stats:', err);
+  }
+};
+
+export const endGameApi = async (gameId) => {
+  try {
+    const gameRef = doc(db, 'game', gameId);
+    await updateDoc(gameRef, {
+      finished: true,
+      endedAt: serverTimestamp()
+    });
+    return true;
+  } catch (err) {
+    console.log('END GAME API ERR: ', err);
+    return false;
   }
 };

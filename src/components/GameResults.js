@@ -1,13 +1,15 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
+import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { initialStats } from '../redux/games-reducer';
+import { initialStats, endGame } from '../redux/games-reducer';
 
 const GameResults = ({ game, onBackClick }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const isDrillMode = game.type === 'drill';
   const { teamAId, teamAScore, teamBId, teamBScore } = game;
+  const [showEndGameConfirmation, setShowEndGameConfirmation] = useState(false);
 
   const teams = useSelector(state => state.teams);
   const players = useSelector(state => state.players);
@@ -17,12 +19,30 @@ const GameResults = ({ game, onBackClick }) => {
   const drillStats = isDrillMode && game.stats;
   const drillPlayer = players.byId[game.playerId];
 
+  const handleEndGame = async () => {
+    try {
+      dispatch(endGame(game.id));
+      navigate('/games');
+    } catch (err) {
+      console.error('Error ending game:', err);
+    }
+  };
+
+  const handleConfirmEndGame = () => {
+    setShowEndGameConfirmation(false);
+    handleEndGame();
+  };
+
+  const handleCancelEndGame = () => {
+    setShowEndGameConfirmation(false);
+  };
+
   const getGameTitle = (game) => {
     if (game.type === 'pick-up') {
       return `🏀 ${teamA?.name || 'Team A'} vs ${teamB?.name || 'Team B'}`;
     }
     if (game.type === 'drill') {
-      return `🎯 Drill – ${players.byId[game.playerId]?.name || 'Player'}`;
+      return `🎯 Drill – ${drillPlayer?.name || 'Player'}`;
     }
     return `📋 ${game.category || 'Game'}`;
   };
@@ -95,14 +115,49 @@ const GameResults = ({ game, onBackClick }) => {
         </table>
       </div>
 
-      <div className="mt-6 text-center">
+      <div className="mt-6 text-center space-x-4">
         <button
-          onClick={onBackClick || (() => navigate('/games'))}
+          onClick={onBackClick}
           className="inline-flex items-center px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium rounded-md"
         >
-          ← Back to Games
+          ← Back to Game
+        </button>
+        <button
+          onClick={() => setShowEndGameConfirmation(true)}
+          className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md"
+        >
+          End {isDrillMode ? 'Drill' : 'Game'}
         </button>
       </div>
+
+      {/* End Game Confirmation Modal */}
+      {showEndGameConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-2xl font-bold mb-4 text-center">
+              End {isDrillMode ? "Drill" : "Game"}?
+            </h2>
+            <p className="text-gray-600 mb-6 text-center">
+              Are you sure you want to end this {isDrillMode ? "drill" : "game"}? 
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={handleCancelEndGame}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmEndGame}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md"
+              >
+                End {isDrillMode ? "Drill" : "Game"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
