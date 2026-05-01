@@ -14,8 +14,9 @@ import {
   documentId,
   serverTimestamp,
   runTransaction,
+  writeBatch,
 } from 'firebase/firestore';
-import { db, storage, ref, uploadBytes, getDownloadURL, deleteObject } from '.';
+import { db, auth, storage, ref, uploadBytes, getDownloadURL, deleteObject } from '.';
 
 const emptyStats = {
   points: {
@@ -451,79 +452,75 @@ export const undoLastActionApi = async (lastActions, game) => {
 };
 
 export const pushStatsToFirebase = async (game, teamA, teamB) => {
-  // const stats = {
-  //   date: new Date(),
-  //   teamA: {
-  //     name: teamA.name,
-  //     score: teamA.score
-  //   },
-  //   teamB: {
-  //     name: teamB.name,
-  //     score: teamB.score
-  //   },
-  //   players: []
-  // };
+  // Feature flag: keep OFF in production until Q2 player-profile feature is ready.
+  // Set REACT_APP_PERSIST_PLAYER_STATS=true in .env to enable.
+  if (process.env.REACT_APP_PERSIST_PLAYER_STATS !== 'true') {
+    const gameRef = doc(db, 'game', game.id);
+    await updateDoc(gameRef, { finished: true, endedAt: serverTimestamp() });
+    return;
+  }
 
-  // teamA.players.forEach((player) => {
-  //   const pointsMade = player.stats.points.made;
-  //   const pointsMissed = player.stats.points.attempted;
-  //   const playerStats = {
-  //     name: player.name,
-  //     points: player.stats.points.made[1] + player.stats.points.made[2] * 2 + player.stats.points.made[3] * 3,
-  //     rebounds: player.stats.rebounds.offensive + player.stats.rebounds.defensive,
-  //     assists: player.stats.assists,
-  //     fouls: player.stats.fouls,
-  //     team: teamA.name,
-  //     pointsMade: pointsMade,
-  //     pointsMissed: pointsMissed,
-  //     percentages: {
-  //       'FT': (player.stats.points.made[1] / (player.stats.points.made[1] + player.stats.points.attempted[1])) * 100 + '%',
-  //       '2PT': (player.stats.points.made[2] / (player.stats.points.made[2] + player.stats.points.attempted[2])) * 100 + '%',
-  //       '3PT': (player.stats.points.made[3] / (player.stats.points.made[3] + player.stats.points.attempted[3])) * 100 + '%'
-  //     },
-  //     id: player.id
-  //   };
-  //   stats.players.push(playerStats);
-  // });
-
-  // teamB.players.forEach((player) => {
-  //   const pointsMade = player.stats.points.made;
-  //   const pointsMissed = player.stats.points.attempted;
-  //   const playerStats = {
-  //     name: player.name,
-  //     points: player.stats.points.made[1] + player.stats.points.made[2] * 2 + player.stats.points.made[3] * 3,
-  //     rebounds: player.stats.rebounds.offensive + player.stats.rebounds.defensive,
-  //     assists: player.stats.assists,
-  //     fouls: player.stats.fouls,
-  //     team: teamB.name,
-  //     pointsMade: pointsMade,
-  //     pointsMissed: pointsMissed,
-  //     percentages: {
-  //       'FT': (player.stats.points.made[1] / (player.stats.points.made[1] + player.stats.points.attempted[1])) * 100 + '%',
-  //       '2PT': (player.stats.points.made[2] / (player.stats.points.made[2] + player.stats.points.attempted[2])) * 100 + '%',
-  //       '3PT': (player.stats.points.made[3] / (player.stats.points.made[3] + player.stats.points.attempted[3])) * 100 + '%'
-  //     },
-  //     id: player.id
-  //   };
-  //   stats.players.push(playerStats);
-  // });
+  const isDrill = game.type === 'drill';
+  const createdBy = auth.currentUser?.email || '';
+  const batch = writeBatch(db);
 
   try {
-    // await updateDoc(teamA, {
-    //   score: 0
-    // });
-    // await updateDoc(teamB, {
-    //   score: 0
-    // });
-
-    const newGame = {
-      finished: true
-    };
+    if (isDrill) {
+      const drillStats = game.stats || {};
+      for (const [playerId, stats] of Object.entries(drillStats)) {
+        // Deterministic ID prevents duplicate docs if game is ended twice
+        const playerStatsRef = doc(db, 'player_stats', `${game.id}_${playerId}`);
+        batch.set(playerStatsRef, {
+          playerId,
+          gameId: game.id,
+          date: serverTimestamp(),
+          type_of_game: 'drill',
+          attempts: stats.attempts || 0,
+          completions: stats.completions || 0,
+          createdBy,
+        }, { merge: true });
+      }
+    } else {
+      const teams = [teamA, teamB].filter(Boolean);
+      for (const team of teams) {
+        const teamStats = game.stats?.[team.id] || {};
+        for (const [playerId, stats] of Object.entries(teamStats)) {
+          const ft = stats.freeThrows || 0;
+          const twos = stats.twos || 0;
+          const threes = stats.threes || 0;
+          // Deterministic ID prevents duplicate docs if game is ended twice
+          const playerStatsRef = doc(db, 'player_stats', `${game.id}_${playerId}`);
+          batch.set(playerStatsRef, {
+            playerId,
+            gameId: game.id,
+            teamId: team.id,
+            teamName: team.name,
+            date: serverTimestamp(),
+            type_of_game: game.type || 'pick-up',
+            points_scored: ft + twos * 2 + threes * 3,
+            shots_made: { ft, twos, threes },
+            shots_attempted: {
+              ft: ft + (stats.attemptedFreeThrows || 0),
+              twos: twos + (stats.attemptedTwos || 0),
+              threes: threes + (stats.attemptedThrees || 0),
+            },
+            rebounds_offensive: stats.offensiveRebounds || 0,
+            rebounds_defensive: stats.defensiveRebounds || 0,
+            assists: stats.assists || 0,
+            fouls: stats.fouls || 0,
+            createdBy,
+          }, { merge: true });
+        }
+      }
+    }
 
     const gameRef = doc(db, 'game', game.id);
-    await updateDoc(gameRef, newGame);
+    batch.update(gameRef, { finished: true, endedAt: serverTimestamp() });
+
+    await batch.commit();
   } catch (err) {
-    console.log('PUSH STATS TO FIREBASE ERR: ', err);
+    console.error('PUSH STATS TO FIREBASE ERR: ', err);
+    throw err;
   }
 };
 
@@ -534,12 +531,12 @@ export const addOrGetUserApi = async (user) => {
     const userSnapshot = await getDocs(userQuery);
     if (!userSnapshot.empty) {
       const userData = userSnapshot.docs[0].data();
-      return userData;
+      return { ...userData, isNew: false };
     } else {
       const userDocRef = await addDoc(usersRef, user);
       const newUserSnapshot = await getDoc(userDocRef);
       const userData = newUserSnapshot.data();
-      return userData;
+      return { ...userData, isNew: true };
     }
   } catch (err) {
     console.log('ADD USER API ERR: ', err);

@@ -8,6 +8,7 @@ import Icon from '../../components/Icon';
 import { getPlayersApi } from '../../firebase/api';
 import { addPlayers } from '../../redux/players-reducer';
 import { addNewGame } from '../../redux/games-reducer';
+import { trackDrillStarted } from '../../analytics';
 
 export default function AddDrill() {
   const navigate = useNavigate();
@@ -65,6 +66,7 @@ export default function AddDrill() {
     };
 
     dispatch(addNewGame(newDrill));
+    trackDrillStarted();
     navigate(`/games/drill/${newDrill.id}`);
   };
 

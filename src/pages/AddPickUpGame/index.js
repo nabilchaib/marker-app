@@ -11,6 +11,7 @@ import { addTeams } from '../../redux/teams-reducer';
 import { addPlayers } from '../../redux/players-reducer';
 import { addGameToCache, removeGameFromCache, addNewGame } from '../../redux/games-reducer';
 import { colors } from '../../utils';
+import { trackGameStarted } from '../../analytics';
 
 
 export default function AddPickUpGame() {
@@ -20,7 +21,6 @@ export default function AddPickUpGame() {
   const [getTeamsLoading, setGetTeamsLoading] = useState(false);
 
   const user = useSelector(state => state.user);
-  console.log('LALA: ', user)
   const teams = useSelector(state => state.teams);
   const games = useSelector(state => state.games);
 
@@ -100,6 +100,7 @@ export default function AddPickUpGame() {
     };
 
     dispatch(addNewGame(newGame));
+    trackGameStarted('pick-up');
     navigate(`/games/pick-up-game/${newGame.id}`);
   };
 

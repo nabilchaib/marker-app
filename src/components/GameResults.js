@@ -2,7 +2,10 @@ import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { initialStats, endGame } from '../redux/games-reducer';
+import { pushStatsToFirebase } from '../firebase/api';
+import { trackGameFinished } from '../analytics';
 
 const GameResults = ({ game, onBackClick }) => {
   const navigate = useNavigate();
@@ -10,6 +13,7 @@ const GameResults = ({ game, onBackClick }) => {
   const isDrillMode = game.type === 'drill';
   const { teamAId, teamAScore, teamBId, teamBScore } = game;
   const [showEndGameConfirmation, setShowEndGameConfirmation] = useState(false);
+  const [endingGame, setEndingGame] = useState(false);
 
   const teams = useSelector(state => state.teams);
   const players = useSelector(state => state.players);
@@ -20,11 +24,17 @@ const GameResults = ({ game, onBackClick }) => {
   const drillPlayer = players.byId[game.playerId];
 
   const handleEndGame = async () => {
+    setEndingGame(true);
     try {
+      await pushStatsToFirebase(game, teamA, teamB);
+      trackGameFinished(game.type || 'pick-up');
       dispatch(endGame(game.id));
       navigate('/games');
     } catch (err) {
       console.error('Error ending game:', err);
+      toast.error('Failed to save game stats. Please try again.');
+    } finally {
+      setEndingGame(false);
     }
   };
 
@@ -124,9 +134,10 @@ const GameResults = ({ game, onBackClick }) => {
         </button>
         <button
           onClick={() => setShowEndGameConfirmation(true)}
-          className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md"
+          disabled={endingGame}
+          className="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-md disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          End {isDrillMode ? 'Drill' : 'Game'}
+          {endingGame ? 'Saving...' : `End ${isDrillMode ? 'Drill' : 'Game'}`}
         </button>
       </div>
 

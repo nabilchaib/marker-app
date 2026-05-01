@@ -1,8 +1,49 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner() {
+      return request.auth.token.email == resource.data.createdBy;
+    }
+
+    // Users: authenticated users can read/write their own record
+    match /users/{userId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Players: creator owns; anyone authenticated can create
+    match /players/{playerId} {
+      allow get, list: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && isOwner();
+    }
+
+    // Teams: creator owns; anyone authenticated can create
+    match /teams/{teamId} {
+      allow get, list: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && isOwner();
+    }
+
+    // Games: any authenticated user can read/write (no createdBy field yet)
+    match /game/{gameId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Player stats: any authenticated user can read/write
+    match /player_stats/{statId} {
+      allow read, write: if isAuthenticated();
+    }
+
+    // Tournaments: creator owns; anyone authenticated can create
+    match /tournaments/{tournamentId} {
+      allow get, list: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && isOwner();
     }
   }
 }
