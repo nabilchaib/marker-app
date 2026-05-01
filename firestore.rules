@@ -29,14 +29,18 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && isOwner();
     }
 
-    // Games: any authenticated user can read/write (no createdBy field yet)
+    // Games: creator owns; authenticated users can create
     match /game/{gameId} {
-      allow read, write: if isAuthenticated();
+      allow get, list: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && isOwner();
     }
 
-    // Player stats: any authenticated user can read/write
+    // Player stats: creator owns; authenticated users can create
     match /player_stats/{statId} {
-      allow read, write: if isAuthenticated();
+      allow get, list: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && isOwner();
     }
 
     // Tournaments: creator owns; anyone authenticated can create
