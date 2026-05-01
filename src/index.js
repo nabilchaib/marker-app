@@ -163,7 +163,7 @@ const router = createBrowserRouter([
 ]);
 
 const MainApp = () => {
-  const [user, loading] = useAuthState(auth);
+  const [, loading] = useAuthState(auth);
 
   useEffect(() => {
     onAuthStateChanged(auth, async (user) => {
