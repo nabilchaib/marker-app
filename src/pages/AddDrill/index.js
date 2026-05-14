@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
-import { v4 as uuid } from 'uuid';
 
 import Icon from '../../components/Icon';
-import { getPlayersApi } from '../../firebase/api';
+import { getPlayersApi, addGameApi } from '../../firebase/api';
 import { addPlayers } from '../../redux/players-reducer';
 import { addNewGame } from '../../redux/games-reducer';
 import { trackDrillStarted } from '../../analytics';
@@ -15,6 +14,7 @@ export default function AddDrill() {
   const dispatch = useDispatch();
 
   const [getPlayersLoading, setGetPlayersLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const user = useSelector(state => state.user);
   const players = useSelector(state => state.players);
 
@@ -46,7 +46,7 @@ export default function AddDrill() {
     );
   };
 
-  const onStartDrill = () => {
+  const onStartDrill = async () => {
     if (selectedPlayers.length === 0) {
       toast.error('Select at least one player to start the drill', {
         position: 'top-center',
@@ -54,20 +54,26 @@ export default function AddDrill() {
       return;
     }
 
-    const newDrill = {
-      id: uuid(),
-      playerIds: selectedPlayers,
-      type: 'drill',
-      createdBy: user.id,
-      createdOn: new Date().getTime(),
-      actions: [],
-      notSaved: true,
-      stats: {},
-    };
-
-    dispatch(addNewGame(newDrill));
-    trackDrillStarted();
-    navigate(`/games/drill/${newDrill.id}`);
+    setSaving(true);
+    try {
+      const drillData = {
+        playerIds: selectedPlayers,
+        type: 'drill',
+        createdBy: user.email,
+        createdOn: new Date().getTime(),
+        actions: [],
+        stats: {},
+      };
+      const savedDrill = await addGameApi(drillData);
+      dispatch(addNewGame(savedDrill));
+      trackDrillStarted();
+      navigate(`/games/drill/${savedDrill.id}`);
+    } catch (err) {
+      console.error('CREATE DRILL ERR:', err);
+      toast.error('Failed to create drill. Please try again.', { position: 'top-center' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -144,10 +150,11 @@ export default function AddDrill() {
       <div className="mt-6">
         <button
           type="button"
-          className="w-full sm:w-auto inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
+          disabled={saving}
+          className="w-full sm:w-auto inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 disabled:opacity-60 disabled:cursor-not-allowed"
           onClick={onStartDrill}
         >
-          Start Drill
+          {saving ? 'Creating...' : 'Start Drill'}
         </button>
       </div>
     </div>

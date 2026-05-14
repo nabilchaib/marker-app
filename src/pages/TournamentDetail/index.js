@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { v4 as uuid } from 'uuid';
 import { getTournamentByIdApi, addGameApi, updateTournamentApi } from '../../firebase/api';
 import { updateTournament, addGameToTournament } from '../../redux/tournaments-reducer';
 import { addNewGame } from '../../redux/games-reducer';
@@ -60,7 +59,6 @@ const TournamentDetail = () => {
 
       // Create a new game
       const gameData = {
-        id: uuid(),
         teamAId: teamA.id,
         teamBId: teamB.id,
         createdBy: user.email,
@@ -69,7 +67,6 @@ const TournamentDetail = () => {
         type: 'pick-up',
         teamAScore: 0,
         teamBScore: 0,
-        notSaved: true,
         stats: {},
         tournamentId: tournamentId,
         tournamentRound: round,

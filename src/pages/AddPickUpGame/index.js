@@ -2,11 +2,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify'
-import { v4 as uuid } from 'uuid';
 
 import Icon from '../../components/Icon';
 import List from '../../components/List';
-import { getTeamsApi, getPlayersApi } from '../../firebase/api';
+import { getTeamsApi, getPlayersApi, addGameApi } from '../../firebase/api';
 import { addTeams } from '../../redux/teams-reducer';
 import { addPlayers } from '../../redux/players-reducer';
 import { addGameToCache, removeGameFromCache, addNewGame } from '../../redux/games-reducer';
@@ -19,6 +18,7 @@ export default function AddPickUpGame() {
   const dispatch = useDispatch();
 
   const [getTeamsLoading, setGetTeamsLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const user = useSelector(state => state.user);
   const teams = useSelector(state => state.teams);
@@ -63,7 +63,7 @@ export default function AddPickUpGame() {
     dispatch(addGameToCache({ teamA: team.id }))
   };
 
-  const onCreateNewPickUpGame = () => {
+  const onCreateNewPickUpGame = async () => {
     if (!games.editing.teamA || !games.editing.teamB) {
       toast.error('Select 2 teams before starting your pick-up game', {
         position: 'top-center'
@@ -85,23 +85,29 @@ export default function AddPickUpGame() {
       return false;
     }
 
-    const newGame = {
-      id: uuid(),
-      teamAId: teamA.id,
-      teamBId: teamB.id,
-      createdBy: user.id,
-      createdOn: new Date().getTime(),
-      actions: [],
-      type: 'pick-up',
-      teamAScore: 0,
-      teamBScore: 0,
-      notSaved: true,
-      stats: {},
-    };
-
-    dispatch(addNewGame(newGame));
-    trackGameStarted('pick-up');
-    navigate(`/games/pick-up-game/${newGame.id}`);
+    setSaving(true);
+    try {
+      const gameData = {
+        teamAId: teamA.id,
+        teamBId: teamB.id,
+        createdBy: user.email,
+        createdOn: new Date().getTime(),
+        actions: [],
+        type: 'pick-up',
+        teamAScore: 0,
+        teamBScore: 0,
+        stats: {},
+      };
+      const savedGame = await addGameApi(gameData);
+      dispatch(addNewGame(savedGame));
+      trackGameStarted('pick-up');
+      navigate(`/games/pick-up-game/${savedGame.id}`);
+    } catch (err) {
+      console.error('CREATE GAME ERR:', err);
+      toast.error('Failed to create game. Please try again.', { position: 'top-center' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const teamA = teams.byId[games.editing.teamA];
@@ -195,13 +201,14 @@ export default function AddPickUpGame() {
       <div className="mt-6">
         <button
           type="button"
-          className="w-full sm:w-auto inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600"
+          disabled={saving}
+          className="w-full sm:w-auto inline-flex items-center rounded-md bg-orange-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600 disabled:opacity-60 disabled:cursor-not-allowed"
           onClick={onCreateNewPickUpGame}
         >
-          {false && (
+          {saving && (
             <Icon type="loader" className="h-5 w-5 mr-2" spinnerColor={colors.orange600} spinnerBackgroundColor={colors.grey300} />
           )}
-          Create new pick-up game
+          {saving ? 'Creating...' : 'Create new pick-up game'}
         </button>
       </div>
     </div>

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { v4 as uuid } from 'uuid';
 import { addNewGame } from '../redux/games-reducer';
 import { addGameToTournament, updateTournamentMatch } from '../redux/tournaments-reducer';
 import { addGameApi, updateTournamentApi } from '../firebase/api';
@@ -37,7 +36,6 @@ const ManualScoreModal = ({ isOpen, onClose, tournamentId, round, matchIndex, te
     try {
       // Create a new game with the manual scores
       const newGame = {
-        id: uuid(),
         teamAId: teamA.id,
         teamBId: teamB.id,
         teamAName: teamA.name,
@@ -48,7 +46,6 @@ const ManualScoreModal = ({ isOpen, onClose, tournamentId, round, matchIndex, te
         type: 'pick-up',
         teamAScore: scoreA,
         teamBScore: scoreB,
-        notSaved: true,
         stats: {},
         players: {},
         tournamentId: tournamentId,
