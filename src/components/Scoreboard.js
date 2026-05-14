@@ -1,40 +1,182 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 
 const Scoreboard = ({ currentGameId }) => {
   const currentGame = useSelector((state) => state.games.byId[currentGameId]);
+  const teams = useSelector((state) => state.teams);
+  const teamA = teams.byId[currentGame.teamAId];
+  const teamB = teams.byId[currentGame.teamBId];
   const teamAScore = currentGame.teamAScore;
   const teamBScore = currentGame.teamBScore;
 
-  return (
-    <div className="Scoreboard flex flex-col items-center w-4/5 justify-center space-y-6 p-6 bg-black bg-opacity-50 rounded-lg shadow-xl text-white">
-      {/* Scoreboard Title */}
-      <h2 className="text-3xl md:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#f64e07] to-[#0aa6d6] tracking-wider relative">
-        Scoreboard
-        <span className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-[#f64e07] via-transparent to-[#0aa6d6]"></span>
-      </h2>
+  const [flashTeam, setFlashTeam] = useState(null);
+  const prevScores = useRef({ a: teamAScore, b: teamBScore });
 
-      {/* Team Scores */}
-      <div className="flex flex-row justify-around w-full max-w-lg items-center">
-        {/* Home Team Score */}
-        <div className="flex flex-col items-center space-y-2 bg-gray-800 bg-opacity-90 py-4 px-6 sm:px-8 md:px-10 lg:px-12 rounded-lg shadow-md w-full sm:w-3/4 lg:w-1/2">
-          <h3 className="text-lg sm:text-xl font-semibold tracking-widest text-center">
-            Home
-          </h3>
-          <div className="points text-4xl sm:text-5xl md:text-6xl font-extrabold text-white">
+  useEffect(() => {
+    if (teamAScore > prevScores.current.a) {
+      setFlashTeam("teamA");
+      setTimeout(() => setFlashTeam(null), 450);
+    } else if (teamBScore > prevScores.current.b) {
+      setFlashTeam("teamB");
+      setTimeout(() => setFlashTeam(null), 450);
+    }
+    prevScores.current = { a: teamAScore, b: teamBScore };
+  }, [teamAScore, teamBScore]);
+
+  return (
+    <div
+      style={{
+        background: "linear-gradient(to bottom, #0a1115, var(--ht-bg1))",
+        padding: "14px 18px 12px",
+        borderBottom: "1px solid rgba(255,255,255,0.055)",
+        flexShrink: 0,
+      }}
+    >
+      {/* Top bar: live pill + logo + end button placeholder */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 12,
+        }}
+      >
+        <div
+          style={{
+            fontSize: "0.72rem",
+            color: "var(--ht-muted)",
+            letterSpacing: "0.08em",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: "50%",
+              background: "#4ade80",
+              display: "inline-block",
+              animation: "ht-pulse-dot 1.5s infinite",
+            }}
+          />
+          LIVE
+        </div>
+        <div
+          style={{
+            fontFamily: "var(--ff-display)",
+            fontSize: "0.75rem",
+            color: "var(--ht-orange)",
+            letterSpacing: "0.08em",
+          }}
+        >
+          HOOPTRACKR
+        </div>
+        {/* spacer to match width */}
+        <div style={{ width: 60 }} />
+      </div>
+
+      {/* Scores */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 16,
+        }}
+      >
+        {/* Team A */}
+        <div style={{ flex: 1, textAlign: "center" }}>
+          <div
+            style={{
+              fontSize: "0.7rem",
+              color: "var(--ht-orange)",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              marginBottom: 4,
+              fontWeight: 700,
+              fontFamily: "var(--ff-body)",
+            }}
+          >
+            {teamA?.name || "Home"}
+          </div>
+          <div
+            className={flashTeam === "teamA" ? "ht-score-pop" : ""}
+            style={{
+              fontFamily: "var(--ff-display)",
+              fontSize: "3.4rem",
+              fontWeight: 800,
+              color: "var(--ht-orange)",
+              lineHeight: 1,
+              transition: "color 0.3s",
+            }}
+          >
             {teamAScore}
           </div>
         </div>
 
-        {/* Glowing Divider */}
-        <div className="w-px h-16 mx-4 sm:mx-6 bg-gradient-to-b from-[#f64e07] to-[#0aa6d6] opacity-80"></div>
+        {/* Divider */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 3,
+          }}
+        >
+          <div
+            style={{
+              width: 1,
+              height: 18,
+              background: "linear-gradient(to bottom, var(--ht-orange), var(--ht-cyan))",
+            }}
+          />
+          <div
+            style={{
+              fontSize: "0.65rem",
+              color: "var(--ht-dim)",
+              letterSpacing: "0.08em",
+              fontFamily: "var(--ff-body)",
+            }}
+          >
+            VS
+          </div>
+          <div
+            style={{
+              width: 1,
+              height: 18,
+              background: "linear-gradient(to bottom, var(--ht-cyan), transparent)",
+            }}
+          />
+        </div>
 
-        {/* Away Team Score */}
-        <div className="flex flex-col items-center space-y-2 bg-gray-800 bg-opacity-90 py-4 px-6 sm:px-8 md:px-10 lg:px-12 rounded-lg shadow-md w-full sm:w-3/4 lg:w-1/2">
-          <h3 className="text-lg sm:text-xl font-semibold tracking-widest text-center">
-            Away
-          </h3>
-          <div className="points text-4xl sm:text-5xl md:text-6xl font-extrabold text-white">
+        {/* Team B */}
+        <div style={{ flex: 1, textAlign: "center" }}>
+          <div
+            style={{
+              fontSize: "0.7rem",
+              color: "var(--ht-cyan)",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+              marginBottom: 4,
+              fontWeight: 700,
+              fontFamily: "var(--ff-body)",
+            }}
+          >
+            {teamB?.name || "Away"}
+          </div>
+          <div
+            className={flashTeam === "teamB" ? "ht-score-pop" : ""}
+            style={{
+              fontFamily: "var(--ff-display)",
+              fontSize: "3.4rem",
+              fontWeight: 800,
+              color: "var(--ht-cyan)",
+              lineHeight: 1,
+              transition: "color 0.3s",
+            }}
+          >
             {teamBScore}
           </div>
         </div>
