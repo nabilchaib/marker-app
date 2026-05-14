@@ -18,6 +18,7 @@ import "../css/main.css";
 import PlayerSelection from "./PlayerSelection";
 import GameResult from "./GameResults";
 import { buttonStyles } from '../utils/buttonStyles';
+import { pushStatsToFirebase } from '../firebase/api';
 
 const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerSelect }) => {
   const dispatch = useDispatch();
@@ -328,7 +329,7 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
 
   const handleEndGame = async () => {
     try {
-      // For freemium version, we only update the Redux store
+      await pushStatsToFirebase(currentGame, teamA, teamB);
       dispatch(endGame(currentGame.id));
       navigate('/games');
     } catch (err) {

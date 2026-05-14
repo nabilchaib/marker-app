@@ -448,9 +448,19 @@ export const undoLastActionApi = async (lastActions, game) => {
 export const pushStatsToFirebase = async (game, teamA, teamB) => {
   // Feature flag: keep OFF in production until Q2 player-profile feature is ready.
   // Set REACT_APP_PERSIST_PLAYER_STATS=true in .env to enable.
+  const finalGameUpdate = {
+    finished: true,
+    endedAt: serverTimestamp(),
+    stats: game.stats ?? {},
+    ...(game.type !== 'drill' && {
+      teamAScore: game.teamAScore ?? 0,
+      teamBScore: game.teamBScore ?? 0,
+    }),
+  };
+
   if (process.env.REACT_APP_PERSIST_PLAYER_STATS !== 'true') {
     const gameRef = doc(db, 'game', game.id);
-    await setDoc(gameRef, { finished: true, endedAt: serverTimestamp() }, { merge: true });
+    await setDoc(gameRef, finalGameUpdate, { merge: true });
     return;
   }
 
@@ -509,7 +519,7 @@ export const pushStatsToFirebase = async (game, teamA, teamB) => {
     }
 
     const gameRef = doc(db, 'game', game.id);
-    batch.set(gameRef, { finished: true, endedAt: serverTimestamp() }, { merge: true });
+    batch.set(gameRef, finalGameUpdate, { merge: true });
 
     await batch.commit();
   } catch (err) {
