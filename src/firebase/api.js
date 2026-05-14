@@ -3,6 +3,7 @@ import {
   addDoc,
   getDocs,
   deleteDoc,
+  setDoc,
   query,
   collection,
   where,
@@ -107,15 +108,14 @@ export const initializeGameApi = async (selectedTeams, mode = "game") => {
   });
 };
 export const addGameApi = async (game) => {
-  console.log('addGameApi called with:', game);
   try {
-    const gameToAdd = game.date ? game : {...game, date:serverTimestamp()}
+    const { id: _localId, notSaved: _notSaved, ...gameData } = game;
+    const gameToAdd = gameData.date ? gameData : { ...gameData, date: serverTimestamp() };
     const gameRef = collection(db, 'game');
-    const newGameRef = await addDoc(gameRef, gameToAdd)
+    const newGameRef = await addDoc(gameRef, gameToAdd);
     const newGameSnapshot = await getDoc(newGameRef);
     const newGameData = newGameSnapshot.data();
-    
-    // Safely handle the date conversion
+
     let dateString;
     if (newGameData.date) {
       if (typeof newGameData.date.toDate === 'function') {
@@ -127,13 +127,7 @@ export const addGameApi = async (game) => {
       }
     }
 
-    const newGame = {
-      id: newGameRef.id,
-      ...newGameData,
-      date: dateString,
-      players: game.players  // Ensure players structure is included in the return object
-    };
-    return newGame;
+    return { ...newGameData, id: newGameRef.id, date: dateString };
   } catch (err) {
     console.error('ADD GAME API ERR: ', err);
     throw new Error('Failed to save game to database');
@@ -456,7 +450,7 @@ export const pushStatsToFirebase = async (game, teamA, teamB) => {
   // Set REACT_APP_PERSIST_PLAYER_STATS=true in .env to enable.
   if (process.env.REACT_APP_PERSIST_PLAYER_STATS !== 'true') {
     const gameRef = doc(db, 'game', game.id);
-    await updateDoc(gameRef, { finished: true, endedAt: serverTimestamp() });
+    await setDoc(gameRef, { finished: true, endedAt: serverTimestamp() }, { merge: true });
     return;
   }
 
@@ -515,7 +509,7 @@ export const pushStatsToFirebase = async (game, teamA, teamB) => {
     }
 
     const gameRef = doc(db, 'game', game.id);
-    batch.update(gameRef, { finished: true, endedAt: serverTimestamp() });
+    batch.set(gameRef, { finished: true, endedAt: serverTimestamp() }, { merge: true });
 
     await batch.commit();
   } catch (err) {
