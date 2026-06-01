@@ -1,3 +1,215 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── HoopTrackr v2 Design System ── */
+:root {
+  --ht-bg: #080f12;
+  --ht-bg1: #0e191d;
+  --ht-card: #14232a;
+  --ht-card2: #1c2f38;
+  --ht-card3: #243545;
+  --ht-orange: #f64e07;
+  --ht-orange-dim: rgba(246, 78, 7, 0.14);
+  --ht-orange-glow: rgba(246, 78, 7, 0.4);
+  --ht-cyan: #0aa6d6;
+  --ht-cyan-dim: rgba(10, 166, 214, 0.14);
+  --ht-miss: #ef4444;
+  --ht-miss-dim: rgba(239, 68, 68, 0.12);
+  --ht-gold: #fbbf24;
+  --ht-green: #4ade80;
+  --ht-text: #fff;
+  --ht-muted: #6b8899;
+  --ht-dim: #2e4a57;
+  --ht-r: 14px;
+  --ht-rs: 9px;
+  --ff-display: 'Audiowide', sans-serif;
+  --ff-body: 'Barlow Condensed', sans-serif;
+}
+
+/* ── Game screen full-page wrapper ── */
+.ht-game-screen {
+  min-height: 100vh;
+  background: var(--ht-bg);
+  display: flex;
+  flex-direction: column;
+  font-family: var(--ff-body);
+  color: var(--ht-text);
+  overflow: hidden;
+}
+
+/* ── Keyframes ── */
+@keyframes ht-confetti-fall {
+  0%   { transform: translateY(-30px) rotate(0deg); opacity: 1; }
+  85%  { opacity: 0.8; }
+  100% { transform: translateY(110vh) rotate(800deg); opacity: 0; }
+}
+@keyframes ht-score-float {
+  0%   { transform: translateY(0) scale(1.1); opacity: 1; }
+  100% { transform: translateY(-90px) scale(0.7); opacity: 0; }
+}
+@keyframes ht-score-pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.4); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+@keyframes ht-made-flash {
+  0%   { box-shadow: 0 6px 28px rgba(246,78,7,.45); }
+  40%  { box-shadow: 0 0 60px rgba(246,78,7,.9), 0 0 120px rgba(246,78,7,.4); }
+  100% { box-shadow: 0 6px 28px rgba(246,78,7,.45); }
+}
+@keyframes ht-drill-flash {
+  0%   { box-shadow: 0 6px 28px rgba(34,197,94,.4); }
+  40%  { box-shadow: 0 0 60px rgba(34,197,94,.9); }
+  100% { box-shadow: 0 6px 28px rgba(34,197,94,.4); }
+}
+@keyframes ht-slide-up {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+@keyframes ht-slide-in {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+@keyframes ht-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes ht-win-reveal {
+  0%   { transform: scale(0.6) translateY(16px); opacity: 0; }
+  65%  { transform: scale(1.06) translateY(-3px); }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+@keyframes ht-shimmer {
+  0%   { transform: translateX(-200%); }
+  100% { transform: translateX(400%); }
+}
+@keyframes ht-fire-glow {
+  0%, 100% { text-shadow: 0 0 8px rgba(251,191,36,.8); }
+  50%       { text-shadow: 0 0 20px rgba(251,191,36,1), 0 0 40px rgba(246,78,7,.5); }
+}
+@keyframes ht-pulse-ring {
+  0%   { box-shadow: 0 0 0 0 rgba(246,78,7,.5); }
+  100% { box-shadow: 0 0 0 10px rgba(246,78,7,0); }
+}
+@keyframes ht-pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+/* ── Reusable animation classes ── */
+.ht-score-pop  { animation: ht-score-pop  0.4s cubic-bezier(.36,.07,.19,.97); }
+.ht-slide-up   { animation: ht-slide-up   0.35s ease both; }
+.ht-fade-in    { animation: ht-fade-in    0.15s ease; }
+.ht-win-reveal { animation: ht-win-reveal 0.6s ease both; }
+
+/* ── MADE button ── */
+.ht-btn-made {
+  width: 100%;
+  border: none;
+  border-radius: var(--ht-r);
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--ff-display);
+  letter-spacing: 0.08em;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  background: linear-gradient(145deg, #ff6b2a, var(--ht-orange), #cc3d00);
+  box-shadow: 0 6px 28px rgba(246,78,7,.45), inset 0 1px 0 rgba(255,255,255,.18);
+  transition: transform 0.1s, box-shadow 0.1s;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.ht-btn-made:active { transform: scale(0.96); box-shadow: 0 2px 12px rgba(246,78,7,.6); }
+.ht-btn-made::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,.14) 0%, transparent 50%);
+  pointer-events: none;
+}
+.ht-btn-made.flash { animation: ht-made-flash 0.35s ease; }
+
+/* ── MADE (drill) button ── */
+.ht-btn-made-drill {
+  width: 100%;
+  border: none;
+  border-radius: var(--ht-r);
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--ff-display);
+  letter-spacing: 0.08em;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  background: linear-gradient(145deg, #22c55e, #16a34a, #15803d);
+  box-shadow: 0 6px 28px rgba(34,197,94,.4), inset 0 1px 0 rgba(255,255,255,.18);
+  transition: transform 0.1s;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+.ht-btn-made-drill:active { transform: scale(0.96); }
+.ht-btn-made-drill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(255,255,255,.14) 0%, transparent 50%);
+  pointer-events: none;
+}
+.ht-btn-made-drill.flash { animation: ht-drill-flash 0.35s ease; }
+
+/* ── MISS button ── */
+.ht-btn-miss {
+  width: 100%;
+  border-radius: var(--ht-r);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  background: var(--ht-miss-dim);
+  border: 1.5px solid rgba(239,68,68,.28);
+  color: #f87171;
+  font-family: var(--ff-body);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  transition: transform 0.1s, background 0.1s;
+}
+.ht-btn-miss:active { transform: scale(0.96); background: rgba(239,68,68,.22); }
+
+/* ── Ghost button ── */
+.ht-btn-ghost {
+  background: var(--ht-card);
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: var(--ht-rs);
+  color: var(--ht-muted);
+  font-family: var(--ff-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.ht-btn-ghost:active { background: var(--ht-card2); }
+
+/* ── Stat buttons ── */
+.ht-btn-stat {
+  flex: 1;
+  border-radius: var(--ht-rs);
+  border: 1.5px solid rgba(255,255,255,.07);
+  background: var(--ht-card2);
+  color: var(--ht-text);
+  font-family: var(--ff-body);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s, background 0.15s;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.ht-btn-stat:active { transform: scale(0.94); background: var(--ht-card3); }
