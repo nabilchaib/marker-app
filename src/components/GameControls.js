@@ -14,6 +14,7 @@ import {
 } from "../redux/games-reducer";
 import PlayerSelection from "./PlayerSelection";
 import GameResult from "./GameResults";
+import { pushStatsToFirebase } from "../firebase/api";
 
 /* ── helpers ── */
 const getPlayerPts = (s) =>
@@ -530,7 +531,12 @@ const GameControls = ({ currentGameId, currentPlayer, selectedPlayers, onPlayerS
     setLastActions((prev) => prev.slice(0, -1)); // remove newest (at end)
   };
 
-  const handleEndGame = () => {
+  const handleEndGame = async () => {
+    try {
+      await pushStatsToFirebase(currentGame, teamA, teamB);
+    } catch (err) {
+      console.error("Error persisting final stats:", err);
+    }
     dispatch(endGame(currentGame.id));
     navigate("/games");
   };
