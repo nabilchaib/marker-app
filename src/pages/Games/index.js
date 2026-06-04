@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import {
   TrashIcon,
   PlusIcon,
+  ChartBarIcon,
 } from "@heroicons/react/24/solid";
 import SportsBasketballIcon from '@mui/icons-material/SportsBasketball';
 
@@ -74,12 +75,24 @@ export default function AddGame() {
     }
   };
 
+  const onViewStats = game => {
+    if (game.type === 'pick-up') {
+      navigate(`/games/pick-up-game/${game.id}/stats`);
+      return;
+    }
+
+    if (game.type === 'drill') {
+      navigate(`/games/drill/${game.id}/stats`);
+    }
+  };
+
   const onDeleteGame = game => {
     dispatch(deleteGame(game.id))
   };
 
 
   const dropdownItems = [
+    { text: 'View stats', icon: ChartBarIcon, onClick: onViewStats },
     { text: 'Resume game', icon: () => <SportsBasketballIcon className="!w-4 !h-4" />, onClick: onResumeGame },
     { text: 'Delete', icon: TrashIcon, onClick: onDeleteGame },
   ];

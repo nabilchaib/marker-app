@@ -469,12 +469,22 @@ const GameResults = ({ game, onBackClick }) => {
           {shownPlayers.map((p, i) => {
             const s = game.stats?.[shownTeamId]?.[p.id] || { ...initialStats };
             const isMvp = mvp?.player?.id === p.id;
+            const fg2m = getFgm(s) - getTpm(s);
+            const fg2a = getFga(s) - getTpa(s);
+            const fg2Pct = fg2a > 0 ? Math.round((fg2m / fg2a) * 100) : 0;
+            const tpm = getTpm(s);
+            const tpa = getTpa(s);
+            const tpPct = getTpPct(s);
+            const ftm = getFtm(s);
+            const fta = getFta(s);
+            const ftPct = getFtPct(s);
+            const hasShots = fg2a > 0 || tpa > 0 || fta > 0;
             return (
               <div
                 key={p.id}
                 onClick={() => setProfilePlayer(p)}
                 style={{
-                  display: "grid", gridTemplateColumns: "2fr repeat(4, 1fr)", gap: 4, padding: "10px 12px",
+                  padding: "10px 12px",
                   borderBottom: i < shownPlayers.length - 1 ? "1px solid rgba(255,255,255,.03)" : "none",
                   background: isMvp ? "rgba(251,191,36,.035)" : "transparent",
                   cursor: "pointer", transition: "background 0.15s",
@@ -482,16 +492,87 @@ const GameResults = ({ game, onBackClick }) => {
                 onMouseEnter={(e) => e.currentTarget.style.background = isMvp ? "rgba(251,191,36,.07)" : "rgba(255,255,255,.03)"}
                 onMouseLeave={(e) => e.currentTarget.style.background = isMvp ? "rgba(251,191,36,.035)" : "transparent"}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                  <span style={{ fontSize: "0.7rem", color: "var(--ht-muted)", fontFamily: "var(--ff-display)", minWidth: 22 }}>#{p.number}</span>
-                  <span style={{ fontSize: "0.83rem", fontWeight: isMvp ? 700 : 400, color: isMvp ? "var(--ht-gold)" : "var(--ht-text)" }}>
-                    {p.name}{isMvp ? " 👑" : ""}
-                  </span>
-                  <span style={{ fontSize: "0.55rem", color: "var(--ht-dim)", marginLeft: "auto" }}>›</span>
+                <div style={{ display: "grid", gridTemplateColumns: "2fr repeat(4, 1fr)", gap: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                    <span style={{ fontSize: "0.7rem", color: "var(--ht-muted)", fontFamily: "var(--ff-display)", minWidth: 22 }}>#{p.number}</span>
+                    <span style={{ fontSize: "0.83rem", fontWeight: isMvp ? 700 : 400, color: isMvp ? "var(--ht-gold)" : "var(--ht-text)" }}>
+                      {p.name}{isMvp ? " 👑" : ""}
+                    </span>
+                    <span style={{ fontSize: "0.55rem", color: "var(--ht-dim)", marginLeft: "auto" }}>›</span>
+                  </div>
+                  {[getPts(s), getReb(s), getAst(s), getFouls(s)].map((v, j) => (
+                    <div key={j} style={{ textAlign: "center", fontFamily: "var(--ff-display)", fontSize: "0.82rem", color: v > 0 ? "var(--ht-text)" : "var(--ht-dim)" }}>{v}</div>
+                  ))}
                 </div>
-                {[getPts(s), getReb(s), getAst(s), getFouls(s)].map((v, j) => (
-                  <div key={j} style={{ textAlign: "center", fontFamily: "var(--ff-display)", fontSize: "0.82rem", color: v > 0 ? "var(--ht-text)" : "var(--ht-dim)" }}>{v}</div>
-                ))}
+                {hasShots ? (
+                  <div
+                    style={{
+                      display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6,
+                      marginTop: 6, paddingLeft: 30,
+                    }}
+                  >
+                    {[
+                      { label: "2PT", made: fg2m, att: fg2a, pct: fg2Pct, color: "var(--ht-orange)" },
+                      { label: "3PT", made: tpm, att: tpa, pct: tpPct, color: "var(--ht-gold)" },
+                      { label: "FT", made: ftm, att: fta, pct: ftPct, color: "var(--ht-cyan)" },
+                    ].map(({ label, made, att, pct, color }) => {
+                      const miss = att - made;
+                      const attempted = att > 0;
+                      return (
+                        <div
+                          key={label}
+                          style={{
+                            display: "flex", flexDirection: "column", alignItems: "center",
+                            background: "rgba(255,255,255,.025)",
+                            borderLeft: `2px solid ${attempted ? color : "rgba(255,255,255,.06)"}`,
+                            borderRadius: 4, padding: "4px 6px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: "0.52rem", color: "var(--ht-muted)",
+                              letterSpacing: "0.08em", fontWeight: 700,
+                              marginBottom: 2, fontFamily: "var(--ff-body)",
+                            }}
+                          >
+                            {label}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "0.72rem", color: attempted ? "var(--ht-text)" : "var(--ht-dim)",
+                              fontFamily: "var(--ff-display)", lineHeight: 1.1,
+                            }}
+                          >
+                            {made}/{att}
+                          </div>
+                          <div
+                            style={{
+                              fontSize: "0.56rem",
+                              color: attempted ? color : "var(--ht-dim)",
+                              fontWeight: 700, marginTop: 2, fontFamily: "var(--ff-body)",
+                            }}
+                          >
+                            {attempted ? `${pct}%` : "—"}
+                            {miss > 0 && (
+                              <span style={{ color: "var(--ht-muted)", marginLeft: 4, fontWeight: 400 }}>
+                                · {miss} miss
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      fontSize: "0.58rem", color: "var(--ht-dim)",
+                      marginTop: 4, paddingLeft: 30, fontFamily: "var(--ff-body)",
+                    }}
+                  >
+                    No shooting attempts
+                  </div>
+                )}
               </div>
             );
           })}
