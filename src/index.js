@@ -18,6 +18,7 @@ import AddPickUpGame from './pages/AddPickUpGame';
 import AddTeam from './pages/AddTeam';
 import PickUpGame from './pages/PickUpGame';
 import DrillTracking from './pages/DrillTracking';
+import GameStats from './pages/GameStats';
 import EditTeam from './pages/EditTeam';
 import EditPlayer from './pages/EditPlayer';
 import AddPlayer from './pages/AddPlayer';
@@ -158,6 +159,18 @@ const router = createBrowserRouter([
     path: 'games/drill/:id',
     element: <Protected>
       <DrillTracking />
+    </Protected>
+  },
+  {
+    path: 'games/pick-up-game/:id/stats',
+    element: <Protected>
+      <GameStats />
+    </Protected>
+  },
+  {
+    path: 'games/drill/:id/stats',
+    element: <Protected>
+      <GameStats />
     </Protected>
   },
 ]);
